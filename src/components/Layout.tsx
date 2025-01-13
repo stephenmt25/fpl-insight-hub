@@ -3,12 +3,13 @@ import { Outlet } from "react-router-dom";
 import { Header } from "./Header";
 import { Sidebar } from "./Sidebar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Footer } from "./Footer";
 
 export function Layout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   return (
-    <>
+    <div className="min-h-screen bg-background">
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent side="left" className="p-0">
           <Sidebar />
@@ -24,7 +25,8 @@ export function Layout() {
             <Outlet />
           </div>
         </main>
+        <Footer />
       </div>
-    </>
+    </div>
   );
 }
