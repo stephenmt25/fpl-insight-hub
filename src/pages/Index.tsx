@@ -11,7 +11,6 @@ import { OverallCaptains } from "@/components/overallCaptainsPieChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 
-
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
   const [liveGameweek, setLiveGameweek] = useState(20)
@@ -33,22 +32,26 @@ const Index = () => {
 
   useEffect(() => {
     const getHighScorePlayer = async () => {
-      const { data } = await supabase.from('plplayerdata')
-        .select()
-        .eq('id', currentGW?.top_element);
-
-      setHighScorePlayer(data)
+      // Only fetch if we have a valid top_element ID
+      if (currentGW?.top_element) {
+        const { data } = await supabase.from('plplayerdata')
+          .select()
+          .eq('id', currentGW.top_element);
+        setHighScorePlayer(data)
+      }
     }
     getHighScorePlayer()
   }, [currentGW])
 
   useEffect(() => {
     const getMostCaptPlayer = async () => {
-      const { data } = await supabase.from('plplayerdata')
-        .select()
-        .eq('id', currentGW?.most_captained);
-      console.log(data)
-      setMostCaptPlayer(data)
+      // Only fetch if we have a valid most_captained ID
+      if (currentGW?.most_captained) {
+        const { data } = await supabase.from('plplayerdata')
+          .select()
+          .eq('id', currentGW.most_captained);
+        setMostCaptPlayer(data)
+      }
     }
     getMostCaptPlayer()
   }, [currentGW])
@@ -96,7 +99,6 @@ const Index = () => {
                 Overall FPL data and statistics.
               </p>
             </div>
-
 
             <div className="flex flex-col gap-2 w-full max-w-xs ">
               <div className="flex items-center gap-2">
@@ -157,7 +159,7 @@ const Index = () => {
             description="MUN v LIV"
           /> :
           <StatsCard
-            title="Highest Scoring Player"
+            title="Most Captained"
             value="..."
             description="Loading..."
           />}
@@ -189,34 +191,10 @@ const Index = () => {
             </div>
             <AveragePtsLineChart />
             <AverageTeamValueAreaChart />
-            {/* <TransferSuggestion
-              playerName="Mohamed Salah"
-              team="Liverpool"
-              position="MID"
-              price="£12.5m"
-              prediction={8.5}
-            />
-            <TransferSuggestion
-              playerName="Erling Haaland"
-              team="Man City"
-              position="FWD"
-              price="£14.0m"
-              prediction={7.8}
-            />
-            <TransferSuggestion
-              playerName="Bukayo Saka"
-              team="Arsenal"
-              position="MID"
-              price="£9.2m"
-              prediction={7.2}
-            />
-            <Button variant="outline" className="w-full mt-4">
-              View Full Suggestions
-            </Button> */}
           </div>
         </div>
       </div>
-    </div >
+    </div>
   );
 };
 
