@@ -4,17 +4,54 @@ import { TransferSuggestion } from "@/components/TransferSuggestion";
 import { Button } from "@/components/ui/button";
 import { BarChart } from "lucide-react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
 import { AverageTeamValueAreaChart } from "@/components/averageTeamValueAreaChart";
 import { OverallCaptains } from "@/components/overallCaptainsPieChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
   const [liveGameweek, setLiveGameweek] = useState(20)
   const [signedIn, setSignedIn] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState("Overall");
+  const [gameweekData, setGameweekData] = useState<any[] | null>(null)
+  const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null)
+  const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null)
+
+  useEffect(() => {
+    const getData = async () => {
+      const { data } = await supabase.from('fploveralldata').select()
+      setGameweekData(data)
+    }
+    getData()
+  }, [])
+
+  const currentGW = gameweekData?.filter((gw) => gw.is_current === "true")[0]
+
+  useEffect(() => {
+    const getHighScorePlayer = async () => {
+      const { data } = await supabase.from('plplayerdata')
+        .select()
+        .eq('id', currentGW?.top_element);
+
+      setHighScorePlayer(data)
+    }
+    getHighScorePlayer()
+  }, [currentGW])
+
+  useEffect(() => {
+    const getMostCaptPlayer = async () => {
+      const { data } = await supabase.from('plplayerdata')
+        .select()
+        .eq('id', currentGW?.most_captained);
+      console.log(data)
+      setMostCaptPlayer(data)
+    }
+    getMostCaptPlayer()
+  }, [currentGW])
 
   return (
     <div className="space-y-8">
@@ -90,26 +127,51 @@ const Index = () => {
       />
       {/* Dashboard Overview */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCard
-          title="Highest GW Points"
-          value="136"
-          description="↓ 12 from last week"
-        />
-        <StatsCard
-          title="Average GW Points"
-          value="60"
-          description="↑ 9 from last week"
-        />
-        <StatsCard
-          title="Most Captained"
-          value="M.Salah"
-          description="MUN v LIV"
-        />
-        <StatsCard
-          title="Highest Scoring Player"
-          value="Mbeumo"
-          description="BRE v BHA"
-        />
+        {currentGW ?
+          <StatsCard
+            title="Highest GW Points"
+            value={currentGW.highest_score}
+            description="↓ 12 from last week"
+          /> :
+          <StatsCard
+            title="Highest GW Points"
+            value="..."
+            description="Loading..."
+          />}
+        {currentGW ?
+          <StatsCard
+            title="Average GW Points"
+            value={currentGW.average_entry_score}
+            description="↑ 9 from last week"
+          /> :
+          <StatsCard
+            title="Average GW Points"
+            value="..."
+            description="Loading..."
+          />
+        }
+        {mostCaptPlayer ?
+          <StatsCard
+            title="Most Captained"
+            value={mostCaptPlayer[0].web_name}
+            description="MUN v LIV"
+          /> :
+          <StatsCard
+            title="Highest Scoring Player"
+            value="..."
+            description="Loading..."
+          />}
+        {highScorePlayer ?
+          <StatsCard
+            title="Highest Scoring Player"
+            value={highScorePlayer[0].web_name}
+            description="BRE v BHA"
+          /> :
+          <StatsCard
+            title="Highest Scoring Player"
+            value="..."
+            description="Loading..."
+          />}
       </div>
 
       {/* League Standings and Transfer Suggestions */}
