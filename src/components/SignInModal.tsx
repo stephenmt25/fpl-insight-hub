@@ -30,6 +30,7 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
     data: manager,
     error: managerError,
     isLoading: isLoadingManager,
+    refetch
   } = useQuery({
     queryKey: ['manager', fplId],
     queryFn: () => managerService.getInfo(fplId),
@@ -46,10 +47,9 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
     }
 
     try {
-      // Store FPL ID in localStorage
-      localStorage.setItem('fplId', fplId);
+      const { data } = await refetch();
       
-      if (!manager) {
+      if (!data) {
         toast({
           title: "Error",
           description: "Unable to fetch manager data. Please try again.",
@@ -57,7 +57,8 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
         return;
       }
 
-      if (manager === 'The game is being updated.' || managerError) {
+      // Check if the response is an error message string
+      if (typeof data === 'string' && data === 'The game is being updated.') {
         toast({
           title: "Failed!",
           description: "The game is being updated.",
@@ -65,7 +66,9 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
         return;
       }
 
-      signIn(fplId, manager);
+      // Store FPL ID in localStorage
+      localStorage.setItem('fplId', fplId);
+      signIn(fplId, data);
       toast({
         title: "Success!",
         description: "You're now signed in!",
