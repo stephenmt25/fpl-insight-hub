@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { Menu, User, X } from "lucide-react"; // Import X icon
+import { Menu, User, X } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import { useContext } from 'react';
 import { TabContext } from '../context';
 
+import { SignInModal } from "./SignInModal";
 
 export function Header() {
   const { updateActiveTab } = useContext(TabContext);
@@ -20,6 +21,9 @@ export function Header() {
     updateActiveTab(tab);
   };
   
+  const [isSignedIn, setIsSignedIn] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
@@ -69,59 +73,40 @@ export function Header() {
             >
               Insights
             </Link>
-            {/* <Link
-              to="/settings"
-              className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
-            >
-              Settings
-            </Link> */}
           </nav>
+
           {/* Mobile Dropdown Menu */}
           <DropdownMenu open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
             <DropdownMenuTrigger asChild>
-              <span className="md:hidden"> 
-                {/* This span will render as a hidden element on desktop */}
-              </span>
+              <span className="md:hidden"></span>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem >
-                <Link to="/" className="w-full">
-                  Dashboard
-                </Link>
+              <DropdownMenuItem>
+                <Link to="/" className="w-full">Dashboard</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem >
-                <Link to="/standings" className="w-full">
-                  League Standings
-                </Link>
+              <DropdownMenuItem>
+                <Link to="/standings" className="w-full">League Standings</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem >
-                <Link
-                  to="/performance"
-                  className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
-                >
-                  Performance
-                </Link>
+              <DropdownMenuItem>
+                <Link to="/performance" className="w-full">Performance</Link>
               </DropdownMenuItem>
-              <DropdownMenuItem >
-                <Link
-                  to="/insights"
-                  className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
-                >
-                  Insights
-                </Link>
+              <DropdownMenuItem>
+                <Link to="/insights" className="w-full">Insights</Link>
               </DropdownMenuItem>
-              {/* <DropdownMenuItem >
-                <Link
-                  to="/settings"
-                  className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
-                >
-                  Settings
-                </Link>
-              </DropdownMenuItem> */}
             </DropdownMenuContent>
           </DropdownMenu>
 
+          {/* User Menu */}
           <div className="flex items-center gap-x-4 lg:gap-x-6">
+            {!isSignedIn && (
+              <Button
+                variant="outline"
+                className="hidden md:block"
+                onClick={() => setIsSignInModalOpen(true)}
+              >
+                Sign In
+              </Button>
+            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -131,15 +116,29 @@ export function Header() {
                   <User className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Profile</DropdownMenuItem>
-                {/* <DropdownMenuItem>Settings</DropdownMenuItem> */}
-                <DropdownMenuItem>Log out</DropdownMenuItem>
+              <DropdownMenuContent align="end" className="w-48">
+                {isSignedIn ? (
+                  <>
+                    <DropdownMenuItem>Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsSignedIn(false)}>
+                      Log out
+                    </DropdownMenuItem>
+                  </>
+                ) : (
+                  <DropdownMenuItem onClick={() => setIsSignInModalOpen(true)}>
+                    Sign In with FPL ID
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
         </div>
       </div>
+
+      <SignInModal
+        isOpen={isSignInModalOpen}
+        onOpenChange={setIsSignInModalOpen}
+      />
     </header>
   );
 }
