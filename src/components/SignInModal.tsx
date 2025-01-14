@@ -56,13 +56,17 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
             <div className="space-y-2">
               <h3 className="text-sm font-medium">How to Find Your FPL ID:</h3>
               <ol className="text-sm text-muted-foreground space-y-2">
-                <li>1. Log in to the Fantasy Premier League website</li>
-                <li>2. Go to the My Team page</li>
-                <li>3. Look at the URL in your browser</li>
-                <li>4. Your FPL ID is the number following /entry/</li>
-              </ol>
-              <p className="text-sm text-muted-foreground italic">
+                <li>1. <b>Log in</b> to the Fantasy Premier League website</li>
+                <li>2. Go to the <b>"Points" tab</b></li>
+                <li>3. <b>Find Your FPL ID:</b> Look at the URL in your browser. Your FPL ID is the number following /entry/</li>
+                <p className="text-sm text-muted-foreground italic">
                 Example: fantasy.premierleague.com/entry/1234567/event/1
+              </p>
+                <li>4. <b>For Mobile Users:</b> If you don’t see the full URL, select Request Desktop Site from your browser options.</li>
+              </ol>
+              
+              <p className="text-sm text-muted-foreground italic">
+                On Mobile 
               </p>
             </div>
 
