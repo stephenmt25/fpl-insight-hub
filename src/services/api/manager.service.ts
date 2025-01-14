@@ -4,17 +4,17 @@ import { handleApiResponse } from './response-handler';
 import { Manager, ManagerHistory, ManagerLeagues, OverallInfo } from '../../types/fpl';
 
 export const managerService = {
-  getInfo: (managerId: number) => 
+  getInfo: (managerId: string) => 
     handleApiResponse<Manager>(
       apiClient.get(ENDPOINTS.manager.info(managerId))
     ),
 
-  getHistory: (managerId: number) =>
+  getHistory: (managerId: string) =>
     handleApiResponse<ManagerHistory>(
       apiClient.get(ENDPOINTS.manager.history(managerId))
     ),
 
-  getLeagues: (managerId: number) =>
+  getLeagues: (managerId: string) =>
     handleApiResponse<ManagerLeagues>(
       apiClient.get(ENDPOINTS.manager.leagues(managerId))
     ),

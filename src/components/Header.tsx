@@ -122,6 +122,7 @@ export function Header() {
                     <DropdownMenuItem onClick={() => {
                       signOut();
                       localStorage.removeItem('fplId');
+                      localStorage.removeItem('managerData');
                     }}>
                       Log out
                     </DropdownMenuItem>

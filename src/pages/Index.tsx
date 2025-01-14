@@ -18,7 +18,7 @@ const Index = () => {
   const [gameweekData, setGameweekData] = useState<any[] | null>(null)
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null)
   const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null)
-  const { isSignedIn, fplId, signIn } = useAuth();
+  const { isSignedIn, signIn, currentManager } = useAuth();
 
   useEffect(() => {
     const getData = async () => {
@@ -57,9 +57,10 @@ const Index = () => {
   // Check for stored FPL ID on component mount
   useEffect(() => {
     const storedFplId = localStorage.getItem('fplId');
-    if (storedFplId && !isSignedIn) {
+    const storedManagerData = JSON.parse(localStorage.getItem('managerData'));
+    if (storedManagerData && storedFplId && !isSignedIn) {
       // Re-authenticate if FPL ID exists in localStorage
-      signIn(storedFplId);
+      signIn(storedFplId, storedManagerData);
     }
   }, []);
 
@@ -71,7 +72,7 @@ const Index = () => {
           <>
             <div>
               <h2 className="text-3xl font-bold tracking-tight">
-                Hello, John! Here's your FPL journey at a glance.
+                Hello, {currentManager?.player_first_name}! Here's your FPL journey at a glance.
               </h2>
               <p className="mt-2 text-muted-foreground">
                 Track your progress and make informed decisions for your team.

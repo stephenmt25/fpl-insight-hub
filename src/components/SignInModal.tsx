@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
+import { useQuery } from "@tanstack/react-query";
+import { managerService } from "@/services/fpl-api";
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -24,6 +26,16 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
   const { toast } = useToast();
   const { signIn } = useAuth();
 
+  
+  const {
+    data: manager,
+    error: managerError,
+    isLoading: isLoadingManager,
+  } = useQuery({
+    queryKey: ['manager', fplId],
+    queryFn: () => managerService.getInfo(fplId),
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
@@ -35,13 +47,19 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
 
     // Store FPL ID in localStorage and update auth context
     localStorage.setItem('fplId', fplId);
-    signIn(fplId);
-    
-    toast({
-      title: "Success!",
-      description: "You're now signed in!",
-    });
-    onOpenChange(false);
+    if (manager.toString() === 'The game is being updated.' || manager === null || managerError) {
+      toast({
+        title: "Failed!",
+        description: "The game is being updated.",
+      });
+    } else {
+      signIn(fplId, manager);
+      toast({
+        title: "Success!",
+        description: "You're now signed in!",
+      });
+      onOpenChange(false);
+    }  
   };
 
   return (
