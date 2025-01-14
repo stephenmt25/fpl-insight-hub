@@ -9,7 +9,6 @@ import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { CaptaincyImpact } from "@/components/CaptaincyImpact";
 import { LeagueComparison } from "@/components/LeagueComparison";
 import { ArrowRight } from "lucide-react";
-import { LeagueComparison } from "@/components/LeagueComparison";
 
 export default function Performance() {
   const [currentGameweek, setCurrentGameweek] = useState(20);
