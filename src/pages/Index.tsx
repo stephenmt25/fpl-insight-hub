@@ -1,6 +1,5 @@
 import { StatsCard } from "@/components/StatsCard";
 import { LeagueTable } from "@/components/LeagueTable";
-import { TransferSuggestion } from "@/components/TransferSuggestion";
 import { Button } from "@/components/ui/button";
 import { BarChart } from "lucide-react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
@@ -10,15 +9,16 @@ import { AverageTeamValueAreaChart } from "@/components/averageTeamValueAreaChar
 import { OverallCaptains } from "@/components/overallCaptainsPieChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/auth-context";
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
   const [liveGameweek, setLiveGameweek] = useState(20)
-  const [signedIn, setSignedIn] = useState(false);
   const [selectedLeague, setSelectedLeague] = useState("Overall");
   const [gameweekData, setGameweekData] = useState<any[] | null>(null)
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null)
   const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null)
+  const { isSignedIn, fplId } = useAuth();
 
   useEffect(() => {
     const getData = async () => {
@@ -32,7 +32,6 @@ const Index = () => {
 
   useEffect(() => {
     const getHighScorePlayer = async () => {
-      // Only fetch if we have a valid top_element ID
       if (currentGW?.top_element) {
         const { data } = await supabase.from('plplayerdata')
           .select()
@@ -45,7 +44,6 @@ const Index = () => {
 
   useEffect(() => {
     const getMostCaptPlayer = async () => {
-      // Only fetch if we have a valid most_captained ID
       if (currentGW?.most_captained) {
         const { data } = await supabase.from('plplayerdata')
           .select()
@@ -55,6 +53,15 @@ const Index = () => {
     }
     getMostCaptPlayer()
   }, [currentGW])
+
+  // Check for stored FPL ID on component mount
+  useEffect(() => {
+    const storedFplId = localStorage.getItem('fplId');
+    if (storedFplId && !isSignedIn) {
+      // Re-authenticate if FPL ID exists in localStorage
+      signIn(storedFplId);
+    }
+  }, []);
 
   return (
     <div className="space-y-8">

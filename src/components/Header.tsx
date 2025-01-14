@@ -10,19 +10,18 @@ import {
 import { Link } from "react-router-dom";
 import { useContext } from 'react';
 import { TabContext } from '../context';
-
+import { useAuth } from "@/context/auth-context";
 import { SignInModal } from "./SignInModal";
 
 export function Header() {
   const { updateActiveTab } = useContext(TabContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
+  const { isSignedIn, signOut } = useAuth();
 
   const handleClick = (tab: string) => {
     updateActiveTab(tab);
   };
-  
-  const [isSignedIn, setIsSignedIn] = useState(false);
-  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
@@ -120,7 +119,10 @@ export function Header() {
                 {isSignedIn ? (
                   <>
                     <DropdownMenuItem>Profile</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => setIsSignedIn(false)}>
+                    <DropdownMenuItem onClick={() => {
+                      signOut();
+                      localStorage.removeItem('fplId');
+                    }}>
                       Log out
                     </DropdownMenuItem>
                   </>

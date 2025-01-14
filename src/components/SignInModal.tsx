@@ -5,13 +5,13 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Label } from "@/components/ui/label";
+import { useAuth } from "@/context/auth-context";
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -22,6 +22,7 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
   const [fplId, setFplId] = useState("");
   const [error, setError] = useState("");
   const { toast } = useToast();
+  const { signIn } = useAuth();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,8 +33,10 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
       return;
     }
 
-    // Here you would typically make an API call to validate the FPL ID
-    // For now, we'll simulate a successful sign-in
+    // Store FPL ID in localStorage and update auth context
+    localStorage.setItem('fplId', fplId);
+    signIn(fplId);
+    
     toast({
       title: "Success!",
       description: "You're now signed in!",
