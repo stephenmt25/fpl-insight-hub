@@ -8,9 +8,18 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
+import { useContext } from 'react';
+import { TabContext } from '../context';
+
 
 export function Header() {
+  const { updateActiveTab } = useContext(TabContext);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
+  const handleClick = (tab: string) => {
+    updateActiveTab(tab);
+  };
+  
   return (
     <header className="sticky top-0 z-40 flex h-16 shrink-0 items-center gap-x-4 border-b border-gray-200 bg-white px-4 shadow-sm sm:gap-x-6 sm:px-6 lg:px-8">
       <div className="flex flex-1 gap-x-4 self-stretch lg:gap-x-6">
@@ -42,6 +51,7 @@ export function Header() {
               Dashboard
             </Link>
             <Link
+              onClick={() => handleClick('table')}
               to="/standings"
               className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
             >

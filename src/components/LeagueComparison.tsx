@@ -14,6 +14,7 @@ import {
 import { useContext } from 'react';
 import { TabContext } from '../context';
 import { useNavigate } from 'react-router-dom';
+import { BarChart } from "lucide-react";
 
 export function LeagueComparison() {
   const [selectedLeague, setSelectedLeague] = useState("1");
@@ -21,10 +22,10 @@ export function LeagueComparison() {
   const navigate = useNavigate();
   const { updateActiveTab } = useContext(TabContext);
 
-const handleClick = (tab: string) => {
-  updateActiveTab(tab);
-  navigate('/standings');
-};
+  const handleClick = (tab: string) => {
+    updateActiveTab(tab);
+    navigate('/standings');
+  };
 
   return (
     <div className="space-y-8">
@@ -36,6 +37,10 @@ const handleClick = (tab: string) => {
           Analyze your progress and stats against other FPL managers in your league
         </p>
         <div className="w-full max-w-xs">
+          <div className="flex items-center pb-2">
+            <BarChart className="h-4 w-4" />
+            <label className="text-sm font-medium">League Select</label>
+          </div>
           <Select value={selectedLeague} onValueChange={setSelectedLeague}>
             <SelectTrigger>
               <SelectValue placeholder="Select a league" />

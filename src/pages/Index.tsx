@@ -2,13 +2,13 @@ import { StatsCard } from "@/components/StatsCard";
 import { LeagueTable } from "@/components/LeagueTable";
 import { TransferSuggestion } from "@/components/TransferSuggestion";
 import { Button } from "@/components/ui/button";
-import * as Select from "@radix-ui/react-select"
 import { BarChart } from "lucide-react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { useState } from "react";
 import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
 import { AverageTeamValueAreaChart } from "@/components/averageTeamValueAreaChart";
 import { OverallCaptains } from "@/components/overallCaptainsPieChart";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
@@ -30,21 +30,22 @@ const Index = () => {
                 Track your progress and make informed decisions for your team.
               </p>
             </div>
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full max-w-xs ">
               <div className="flex items-center gap-2">
                 <BarChart className="h-4 w-4" />
                 <label className="text-sm font-medium">League Select</label>
               </div>
-              <select
-                value={selectedLeague}
-                onChange={(e) => setSelectedLeague(e.target.value)}
-                className="w-[300px] border rounded border-black"
-              >
-                <option value="Overall">Overall</option>
-                <option value="Man Utd">Man Utd</option>
-                <option value="India">India</option>
-                <option value="Second Chance">Second Chance</option>
-              </select>
+              <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a league" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Overall">Overall</SelectItem>
+                  <SelectItem value="Man Utd">Man Utd</SelectItem>
+                  <SelectItem value="India">India</SelectItem>
+                  <SelectItem value="Second Chance">Second Chance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </>
         }
@@ -60,21 +61,22 @@ const Index = () => {
             </div>
 
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 w-full max-w-xs ">
               <div className="flex items-center gap-2">
                 <BarChart className="h-4 w-4" />
                 <label className="text-sm font-medium">League Select</label>
               </div>
-              <select
-                value={selectedLeague}
-                onChange={(e) => setSelectedLeague(e.target.value)}
-                className="w-[300px] border rounded border-black"
-              >
-                <option value="Overall">Overall</option>
-                <option value="Man Utd">Man Utd</option>
-                <option value="India">India</option>
-                <option value="Second Chance">Second Chance</option>
-              </select>
+              <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a league" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Overall">Overall</SelectItem>
+                  <SelectItem value="Man Utd">Man Utd</SelectItem>
+                  <SelectItem value="India">India</SelectItem>
+                  <SelectItem value="Second Chance">Second Chance</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </>
         }

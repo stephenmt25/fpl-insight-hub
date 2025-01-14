@@ -6,6 +6,7 @@ import { LeagueTrends } from "@/components/LeagueTrends";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContext } from 'react';
 import { TabContext } from '../context';
+import { BarChart } from "lucide-react";
 
 export default function LeagueStandings() {
   const [selectedLeague, setSelectedLeague] = useState("1");
@@ -18,6 +19,10 @@ export default function LeagueStandings() {
           Track and analyze your mini-league performance
         </p>
         <div className="w-full max-w-xs">
+          <div className="flex items-center  pb-2">
+            <BarChart className="h-4 w-4" />
+            <label className="text-sm font-medium">League Select</label>
+          </div>
           <Select value={selectedLeague} onValueChange={setSelectedLeague}>
             <SelectTrigger>
               <SelectValue placeholder="Select a league" />
