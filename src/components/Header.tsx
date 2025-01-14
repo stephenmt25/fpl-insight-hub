@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Link } from "react-router-dom";
 import { useContext } from 'react';
-import { TabContext } from '../context';
+import { TabContext } from '../context/standings-tabs-context';
 
 import { SignInModal } from "./SignInModal";
 

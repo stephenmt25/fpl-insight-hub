@@ -5,7 +5,7 @@ import { LeagueInsights } from "@/components/LeagueInsights";
 import { LeagueTrends } from "@/components/LeagueTrends";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useContext } from 'react';
-import { TabContext } from '../context';
+import { TabContext } from '../context/standings-tabs-context';
 import { BarChart } from "lucide-react";
 
 export default function LeagueStandings() {

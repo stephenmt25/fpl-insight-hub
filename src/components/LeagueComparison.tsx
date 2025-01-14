@@ -12,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useContext } from 'react';
-import { TabContext } from '../context';
+import { TabContext } from '../context/standings-tabs-context';
 import { useNavigate } from 'react-router-dom';
 import { BarChart } from "lucide-react";
 

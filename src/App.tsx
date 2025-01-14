@@ -8,7 +8,7 @@ import Index from "./pages/Index";
 import Performance from "./pages/Performance";
 import Insights from "./pages/Insights";
 import LeagueStandings from "./pages/LeagueStandings";
-import { TabProvider } from './context.tsx';
+import { TabProvider } from './context/standings-tabs-context.tsx';
 import { AuthProvider } from "./context/auth-context";
 
 const queryClient = new QueryClient();
