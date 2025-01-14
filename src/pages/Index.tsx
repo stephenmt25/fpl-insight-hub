@@ -18,7 +18,7 @@ const Index = () => {
   const [gameweekData, setGameweekData] = useState<any[] | null>(null)
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null)
   const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null)
-  const { isSignedIn, fplId } = useAuth();
+  const { isSignedIn, fplId, signIn } = useAuth();
 
   useEffect(() => {
     const getData = async () => {
@@ -67,7 +67,7 @@ const Index = () => {
     <div className="space-y-8">
       {/* Welcome Banner */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        {signedIn &&
+        {isSignedIn &&
           <>
             <div>
               <h2 className="text-3xl font-bold tracking-tight">
@@ -96,7 +96,7 @@ const Index = () => {
             </div>
           </>
         }
-        {!signedIn &&
+        {!isSignedIn &&
           <>
             <div>
               <h2 className="text-3xl font-bold tracking-tight">
