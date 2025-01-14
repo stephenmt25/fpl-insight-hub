@@ -25,10 +25,6 @@ export default function Performance() {
         <p className="text-xl text-muted-foreground">
           Overall Points: 1,234 | Overall Rank: 100,000
         </p>
-        {/* <Button className="bg-fpl-secondary text-fpl-primary hover:bg-fpl-accent">
-          Compare League Members
-          <ArrowRight className="ml-2 h-4 w-4" />
-        </Button> */}
         <Button
           className="bg-fpl-secondary text-fpl-primary hover:bg-fpl-accent"
           onClick={() => setActiveTab("compare")}
