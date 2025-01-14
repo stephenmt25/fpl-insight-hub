@@ -64,10 +64,6 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
               </p>
                 <li>4. <b>For Mobile Users:</b> If you don’t see the full URL, select Request Desktop Site from your browser options.</li>
               </ol>
-              
-              <p className="text-sm text-muted-foreground italic">
-                On Mobile 
-              </p>
             </div>
 
             <div className="space-y-2">
