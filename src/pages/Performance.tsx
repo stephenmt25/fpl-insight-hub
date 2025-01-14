@@ -7,6 +7,7 @@ import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { GameweekAnalysis } from "@/components/GameweekAnalysis";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { CaptaincyImpact } from "@/components/CaptaincyImpact";
+import { LeagueComparison } from "@/components/LeagueComparison";
 import { ArrowRight } from "lucide-react";
 
 export default function Performance() {
@@ -66,6 +67,7 @@ export default function Performance() {
           <TabsTrigger value="gameweek">Gameweek Analysis</TabsTrigger>
           <TabsTrigger value="historical">Historical Trends</TabsTrigger>
           <TabsTrigger value="captaincy">Captaincy Impact</TabsTrigger>
+          <TabsTrigger value="compare">Compare League Members</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview">
@@ -82,6 +84,10 @@ export default function Performance() {
 
         <TabsContent value="captaincy">
           <CaptaincyImpact gameweek={currentGameweek} />
+        </TabsContent>
+
+        <TabsContent value="compare">
+          <LeagueComparison />
         </TabsContent>
       </Tabs>
     </div>

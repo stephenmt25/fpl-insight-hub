@@ -15,6 +15,10 @@ interface LeagueEntry {
   movement: "up" | "down" | "same";
 }
 
+interface LeagueTableProps {
+  onManagerSelect?: (manager: string) => void;
+}
+
 const mockData: LeagueEntry[] = [
   { rank: 1, team: "Team Alpha", points: 1587, movement: "up" },
   { rank: 2, team: "Your Team", points: 1234, movement: "down" },
@@ -23,7 +27,7 @@ const mockData: LeagueEntry[] = [
   { rank: 5, team: "Team Delta", points: 980, movement: "down" },
 ];
 
-export function LeagueTable() {
+export function LeagueTable({ onManagerSelect }: LeagueTableProps) {
   const getMovementIcon = (movement: string) => {
     switch (movement) {
       case "up":
@@ -50,7 +54,14 @@ export function LeagueTable() {
           {mockData.map((entry) => (
             <TableRow
               key={entry.rank}
-              className={entry.team === "Your Team" ? "bg-gray-50" : ""}
+              className={`${
+                entry.team === "Your Team" ? "bg-gray-50" : ""
+              } cursor-pointer hover:bg-gray-100`}
+              onClick={() =>
+                onManagerSelect?.(
+                  entry.team === "Your Team" ? null : entry.team
+                )
+              }
             >
               <TableCell className="font-medium">{entry.rank}</TableCell>
               <TableCell>{entry.team}</TableCell>

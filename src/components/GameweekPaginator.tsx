@@ -5,8 +5,6 @@ import {
   PaginationContent,
   PaginationItem,
   PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
 } from "@/components/ui/pagination";
 
 interface GameweekPaginatorProps {
@@ -40,10 +38,14 @@ export function GameweekPaginator({
       <Pagination>
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious
+            <Button
+              variant="outline"
+              size="icon"
               onClick={handlePrevious}
               disabled={currentGameweek === 1}
-            />
+            >
+              <ChevronLeft className="h-4 w-4" />
+            </Button>
           </PaginationItem>
           {[...Array(5)].map((_, i) => {
             const gameweek = currentGameweek - 2 + i;
@@ -62,10 +64,14 @@ export function GameweekPaginator({
             return null;
           })}
           <PaginationItem>
-            <PaginationNext
+            <Button
+              variant="outline"
+              size="icon"
               onClick={handleNext}
               disabled={currentGameweek === totalGameweeks}
-            />
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </PaginationItem>
         </PaginationContent>
       </Pagination>

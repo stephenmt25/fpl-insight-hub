@@ -1,0 +1,69 @@
+import { useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { LeagueTable } from "@/components/LeagueTable";
+import { ComparisonMetrics } from "@/components/ComparisonMetrics";
+import { HistoricalComparison } from "@/components/HistoricalComparison";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+export function LeagueComparison() {
+  const [selectedLeague, setSelectedLeague] = useState("1");
+  const [selectedManager, setSelectedManager] = useState<string | null>(null);
+
+  return (
+    <div className="space-y-8">
+      <div className="space-y-4">
+        <h1 className="text-4xl font-bold text-fpl-primary">
+          Compare Your Performance with League Members
+        </h1>
+        <p className="text-xl text-muted-foreground">
+          Analyze your progress and stats against other FPL managers in your league
+        </p>
+        <div className="w-full max-w-xs">
+          <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+            <SelectTrigger>
+              <SelectValue placeholder="Select a league" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="1">My Mini League</SelectItem>
+              <SelectItem value="2">Work League</SelectItem>
+              <SelectItem value="3">Friends League</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      <div className="grid gap-8 md:grid-cols-2">
+        <div className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>League Table</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <LeagueTable onManagerSelect={setSelectedManager} />
+            </CardContent>
+          </Card>
+          <Button className="w-full" variant="outline">
+            View League Insights
+          </Button>
+        </div>
+
+        <div className="space-y-4">
+          <ComparisonMetrics selectedManager={selectedManager} />
+          <HistoricalComparison selectedManager={selectedManager} />
+        </div>
+      </div>
+
+      <div className="flex justify-center gap-4">
+        <Button variant="outline">Analyze Another League</Button>
+        <Button>View Detailed League Trends</Button>
+      </div>
+    </div>
+  );
+}
