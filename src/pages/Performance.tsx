@@ -7,6 +7,7 @@ import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { GameweekAnalysis } from "@/components/GameweekAnalysis";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { CaptaincyImpact } from "@/components/CaptaincyImpact";
+import { LeagueComparison } from "@/components/LeagueComparison";
 import { ArrowRight } from "lucide-react";
 import { LeagueComparison } from "@/components/LeagueComparison";
 
