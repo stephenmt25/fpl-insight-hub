@@ -26,7 +26,6 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
   const { toast } = useToast();
   const { signIn } = useAuth();
 
-  
   const {
     data: manager,
     error: managerError,
@@ -34,9 +33,10 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
   } = useQuery({
     queryKey: ['manager', fplId],
     queryFn: () => managerService.getInfo(fplId),
+    enabled: false, // Only run the query when submitting
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -45,21 +45,38 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
       return;
     }
 
-    // Store FPL ID in localStorage and update auth context
-    localStorage.setItem('fplId', fplId);
-    if (manager.toString() === 'The game is being updated.' || manager === null || managerError) {
-      toast({
-        title: "Failed!",
-        description: "The game is being updated.",
-      });
-    } else {
+    try {
+      // Store FPL ID in localStorage
+      localStorage.setItem('fplId', fplId);
+      
+      if (!manager) {
+        toast({
+          title: "Error",
+          description: "Unable to fetch manager data. Please try again.",
+        });
+        return;
+      }
+
+      if (manager === 'The game is being updated.' || managerError) {
+        toast({
+          title: "Failed!",
+          description: "The game is being updated.",
+        });
+        return;
+      }
+
       signIn(fplId, manager);
       toast({
         title: "Success!",
         description: "You're now signed in!",
       });
       onOpenChange(false);
-    }  
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "An error occurred while signing in. Please try again.",
+      });
+    }
   };
 
   return (
@@ -81,9 +98,9 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
                 <li>2. Go to the <b>"Points" tab</b></li>
                 <li>3. <b>Find Your FPL ID:</b> Look at the URL in your browser. Your FPL ID is the number following /entry/</li>
                 <p className="text-sm text-muted-foreground italic">
-                Example: fantasy.premierleague.com/entry/1234567/event/1
-              </p>
-                <li>4. <b>For Mobile Users:</b> If you don’t see the full URL, select Request Desktop Site from your browser options.</li>
+                  Example: fantasy.premierleague.com/entry/1234567/event/1
+                </p>
+                <li>4. <b>For Mobile Users:</b> If you don't see the full URL, select Request Desktop Site from your browser options.</li>
               </ol>
             </div>
 
