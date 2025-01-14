@@ -11,19 +11,114 @@ import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 interface LeagueEntry {
   rank: number;
   team: string;
-  points: number;
+  manager: string;
+  gwPoints: number;
+  total_points: number;
   movement: "up" | "down" | "same";
+  transfers: number
+}
+
+interface LeagueTableProps {
+  onManagerSelect?: (manager: string) => void;
 }
 
 const mockData: LeagueEntry[] = [
-  { rank: 1, team: "Team Alpha", points: 1587, movement: "up" },
-  { rank: 2, team: "Your Team", points: 1234, movement: "down" },
-  { rank: 3, team: "Team Beta", points: 1100, movement: "same" },
-  { rank: 4, team: "Team Gamma", points: 1050, movement: "up" },
-  { rank: 5, team: "Team Delta", points: 980, movement: "down" },
-];
+  {
+    rank: 1,
+    team: "The Invincibles",
+    manager: "Alex Ferguson",
+    gwPoints: 85,
+    total_points: 1020,
+    movement: "up",
+    transfers: 2
+  },
+  {
+    rank: 2,
+    team: "Goal Diggers",
+    manager: "Pep Guardiola",
+    gwPoints: 78,
+    total_points: 1012,
+    movement: "down",
+    transfers: 2
+  },
+  {
+    rank: 3,
+    team: "Penalty Kings",
+    manager: "Jurgen Klopp",
+    gwPoints: 80,
+    total_points: 1008,
+    movement: "same",
+    transfers: 2
+  },
+  {
+    rank: 4,
+    team: "Clean Sheet Warriors",
+    manager: "Jose Mourinho",
+    gwPoints: 72,
+    total_points: 995,
+    movement: "same",
+    transfers: 2
+  },
+  {
+    rank: 5,
+    team: "The Flying Dutchmen",
+    manager: "Louis van Gaal",
+    gwPoints: 67,
+    total_points: 980,
+    movement: "up",
+    transfers: 2
+  },
+  {
+    rank: 6,
+    team: "Tactical Masters",
+    manager: "Antonio Conte",
+    gwPoints: 75,
+    total_points: 970,
+    movement: "up",
+    transfers: 2
+  },
+  {
+    rank: 7,
+    team: "Striker’s Army",
+    manager: "Carlo Ancelotti",
+    gwPoints: 65,
+    total_points: 950,
+    movement: "same",
+    transfers: 2
+  },
+  {
+    rank: 8,
+    team: "Midfield Magicians",
+    manager: "Zinedine Zidane",
+    gwPoints: 69,
+    total_points: 920,
+    movement: "down",
+    transfers: 2
+  },
+  {
+    rank: 9,
+    team: "Defensive Masters",
+    manager: "Rafael Benitez",
+    gwPoints: 60,
+    total_points: 900,
+    movement: "down",
+    transfers: 2
+  },
+  {
+    rank: 10,
+    team: "Super Strikers",
+    manager: "Mauricio Pochettino",
+    gwPoints: 63,
+    total_points: 880,
+    movement: "same",
+    transfers: 2
+  }
+]
 
-export function LeagueTable() {
+
+
+
+export function LeagueTable({ onManagerSelect }: LeagueTableProps) {
   const getMovementIcon = (movement: string) => {
     switch (movement) {
       case "up":
@@ -41,23 +136,36 @@ export function LeagueTable() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[100px]">Rank</TableHead>
-            <TableHead>Team</TableHead>
-            <TableHead className="text-right">Points</TableHead>
+            <TableHead>Team & Manager</TableHead>
+            <TableHead className="text-right">GW Points</TableHead>
+            <TableHead className="text-right">Total Points</TableHead>
             <TableHead className="w-[100px] text-right">Movement</TableHead>
+            <TableHead className="text-right">Transfers</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {mockData.map((entry) => (
             <TableRow
               key={entry.rank}
-              className={entry.team === "Your Team" ? "bg-gray-50" : ""}
+              // className={entry.team === "Your Team" ? "bg-gray-50" : ""}
+              className={`${entry.team === "Your Team" ? "bg-gray-50" : ""} cursor-pointer hover:bg-gray-100`}
+              onClick={() =>
+                onManagerSelect?.(
+                  entry.team === "Your Team" ? null : entry.team
+                )
+              }
             >
               <TableCell className="font-medium">{entry.rank}</TableCell>
-              <TableCell>{entry.team}</TableCell>
-              <TableCell className="text-right">{entry.points}</TableCell>
-              <TableCell className="text-right">
+              <TableCell>
+                <div className="font-medium">{entry.team}</div>
+                <div className="text-gray-600 text-xs">{entry.manager}</div>
+              </TableCell>
+              <TableCell className="text-right">{entry.gwPoints}</TableCell>
+              <TableCell className="text-right">{entry.total_points}</TableCell>
+              <TableCell className="align-right">
                 {getMovementIcon(entry.movement)}
               </TableCell>
+              <TableCell className="text-right">{entry.transfers}</TableCell>
             </TableRow>
           ))}
         </TableBody>

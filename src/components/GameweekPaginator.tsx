@@ -13,12 +13,14 @@ interface GameweekPaginatorProps {
   currentGameweek: number;
   setCurrentGameweek: (gameweek: number) => void;
   totalGameweeks: number;
+  liveGameweek: number;
 }
 
 export function GameweekPaginator({
   currentGameweek,
   setCurrentGameweek,
   totalGameweeks,
+  liveGameweek
 }: GameweekPaginatorProps) {
   const handlePrevious = () => {
     if (currentGameweek > 1) {
@@ -34,27 +36,27 @@ export function GameweekPaginator({
 
   return (
     <div className="flex items-center justify-between">
-      <h2 className="text-xl font-semibold text-fpl-primary">
+      <h2 className="text-xl font-semibold text-fpl-primary w-auto whitespace-nowrap">
         Gameweek {currentGameweek}
       </h2>
-      <Pagination>
+      <Pagination className="justify-end">
         <PaginationContent>
           <PaginationItem>
-            <PaginationPrevious
-              onClick={handlePrevious}
-              disabled={currentGameweek === 1}
-            />
+            {currentGameweek > 1 && (
+              <PaginationPrevious onClick={handlePrevious} />
+            )}
           </PaginationItem>
-          {[...Array(5)].map((_, i) => {
+          {[...Array(3)].map((_, i) => {
             const gameweek = currentGameweek - 2 + i;
             if (gameweek > 0 && gameweek <= totalGameweeks) {
               return (
-                <PaginationItem key={gameweek}>
+                <PaginationItem className="px-1" key={gameweek}>
                   <PaginationLink
+                    className="px-"
                     onClick={() => setCurrentGameweek(gameweek)}
                     isActive={gameweek === currentGameweek}
                   >
-                    {gameweek}
+                    GW{gameweek}
                   </PaginationLink>
                 </PaginationItem>
               );
@@ -62,10 +64,9 @@ export function GameweekPaginator({
             return null;
           })}
           <PaginationItem>
-            <PaginationNext
-              onClick={handleNext}
-              disabled={currentGameweek === totalGameweeks}
-            />
+            {currentGameweek !== liveGameweek && (
+              <PaginationNext onClick={handleNext} />
+            )}
           </PaginationItem>
         </PaginationContent>
       </Pagination>
