@@ -1,0 +1,95 @@
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
+
+interface SignInModalProps {
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
+  const [fplId, setFplId] = useState("");
+  const [error, setError] = useState("");
+  const { toast } = useToast();
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+
+    if (!fplId.match(/^\d+$/)) {
+      setError("Please enter a valid FPL ID (numbers only)");
+      return;
+    }
+
+    // Here you would typically make an API call to validate the FPL ID
+    // For now, we'll simulate a successful sign-in
+    toast({
+      title: "Success!",
+      description: "You're now signed in!",
+    });
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Sign In with Your FPL ID</DialogTitle>
+          <DialogDescription>
+            Connect your FPL account to personalize your experience
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <h3 className="text-sm font-medium">How to Find Your FPL ID:</h3>
+              <ol className="text-sm text-muted-foreground space-y-2">
+                <li>1. Log in to the Fantasy Premier League website</li>
+                <li>2. Go to the My Team page</li>
+                <li>3. Look at the URL in your browser</li>
+                <li>4. Your FPL ID is the number following /entry/</li>
+              </ol>
+              <p className="text-sm text-muted-foreground italic">
+                Example: fantasy.premierleague.com/entry/1234567/event/1
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fpl-id">Enter Your FPL ID</Label>
+              <Input
+                id="fpl-id"
+                placeholder="e.g., 1234567"
+                value={fplId}
+                onChange={(e) => setFplId(e.target.value)}
+                className={error ? "border-red-500" : ""}
+              />
+              {error && <p className="text-sm text-red-500">{error}</p>}
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col gap-2">
+            <Button type="submit" className="w-full">
+              Sign In
+            </Button>
+            <p className="text-xs text-center text-muted-foreground">
+              We only use your FPL ID to fetch public data from the Fantasy Premier League API.
+              Your account credentials remain secure.
+            </p>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
