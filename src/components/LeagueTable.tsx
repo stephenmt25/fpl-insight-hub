@@ -11,8 +11,11 @@ import { ArrowDown, ArrowUp, Minus } from "lucide-react";
 interface LeagueEntry {
   rank: number;
   team: string;
+  manager: string;
   points: number;
+  gwPoints: number;
   movement: "up" | "down" | "same";
+  transfers: number;
 }
 
 interface LeagueTableProps {
@@ -20,11 +23,51 @@ interface LeagueTableProps {
 }
 
 const mockData: LeagueEntry[] = [
-  { rank: 1, team: "Team Alpha", points: 1587, movement: "up" },
-  { rank: 2, team: "Your Team", points: 1234, movement: "down" },
-  { rank: 3, team: "Team Beta", points: 1100, movement: "same" },
-  { rank: 4, team: "Team Gamma", points: 1050, movement: "up" },
-  { rank: 5, team: "Team Delta", points: 980, movement: "down" },
+  {
+    rank: 1,
+    team: "Team Alpha",
+    manager: "John Doe",
+    points: 1587,
+    gwPoints: 78,
+    movement: "up",
+    transfers: 2,
+  },
+  {
+    rank: 2,
+    team: "Your Team",
+    manager: "You",
+    points: 1234,
+    gwPoints: 65,
+    movement: "down",
+    transfers: 1,
+  },
+  {
+    rank: 3,
+    team: "Team Beta",
+    manager: "Jane Smith",
+    points: 1100,
+    gwPoints: 55,
+    movement: "same",
+    transfers: 0,
+  },
+  {
+    rank: 4,
+    team: "Team Gamma",
+    manager: "Bob Wilson",
+    points: 1050,
+    gwPoints: 62,
+    movement: "up",
+    transfers: 1,
+  },
+  {
+    rank: 5,
+    team: "Team Delta",
+    manager: "Alice Brown",
+    points: 980,
+    gwPoints: 45,
+    movement: "down",
+    transfers: 2,
+  },
 ];
 
 export function LeagueTable({ onManagerSelect }: LeagueTableProps) {
@@ -44,10 +87,13 @@ export function LeagueTable({ onManagerSelect }: LeagueTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[100px]">Rank</TableHead>
+            <TableHead className="w-[80px]">Rank</TableHead>
             <TableHead>Team</TableHead>
+            <TableHead>Manager</TableHead>
             <TableHead className="text-right">Points</TableHead>
+            <TableHead className="text-right">GW Points</TableHead>
             <TableHead className="w-[100px] text-right">Movement</TableHead>
+            <TableHead className="text-right">Transfers</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -65,10 +111,13 @@ export function LeagueTable({ onManagerSelect }: LeagueTableProps) {
             >
               <TableCell className="font-medium">{entry.rank}</TableCell>
               <TableCell>{entry.team}</TableCell>
+              <TableCell>{entry.manager}</TableCell>
               <TableCell className="text-right">{entry.points}</TableCell>
+              <TableCell className="text-right">{entry.gwPoints}</TableCell>
               <TableCell className="text-right">
                 {getMovementIcon(entry.movement)}
               </TableCell>
+              <TableCell className="text-right">{entry.transfers}</TableCell>
             </TableRow>
           ))}
         </TableBody>
