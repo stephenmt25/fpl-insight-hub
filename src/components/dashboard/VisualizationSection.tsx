@@ -1,6 +1,7 @@
 import { TempRadarChart } from "@/components/tempRadarChart";
 import { AverageTeamValueAreaChart } from "@/components/averageTeamValueAreaChart";
 import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
+import { CaptaincyPieChart } from "../captainsPieChart";
 
 export function VisualizationSection() {
   return (
@@ -9,7 +10,7 @@ export function VisualizationSection() {
       <div className="grid gap-2 lg:grid-cols-2">
         <div className="col-span-2 lg:col-span-1">
           <p className="text-gray-600">Overall Captaincy</p>
-          <TempRadarChart />
+          <CaptaincyPieChart/>
         </div>
         <div className="col-span-2 lg:col-span-1">
           <p className="text-gray-600">Distribution</p>
