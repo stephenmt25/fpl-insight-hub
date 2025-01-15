@@ -10,6 +10,8 @@ import { OverallCaptains } from "@/components/overallCaptainsPieChart";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/auth-context";
+import { leagueService } from "@/services/fpl-api";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
@@ -19,6 +21,40 @@ const Index = () => {
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null)
   const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null)
   const { isSignedIn, signIn, currentManager } = useAuth();
+  const [pageNumber, setPageNumber] = useState("1")
+
+  const overallLeagueId = "314"
+  const secondChanceLeagueId = "321"
+  const gameweek1LeagueId = "276"
+
+  const [leagueId, setLeagueId] = useState(overallLeagueId)
+
+  const {
+    data: leagueData,
+    error: overallLeagueDataError,
+    isLoading: isLoadingoverallLeagueData,
+  } = useQuery({
+    queryKey: ['leagueData', leagueId, pageNumber],
+    queryFn: () => leagueService.getStandings(leagueId, pageNumber),
+  });
+
+  const updateSelectedLeague = (leagueName: string) => {
+    setSelectedLeague(leagueName);
+    switch (leagueName) {
+      case "Overall":
+        setLeagueId(overallLeagueId);
+        break;
+      case "Second Chance":
+        setLeagueId(secondChanceLeagueId);
+        break;
+      case "Gameweek 1":
+        setLeagueId(gameweek1LeagueId);
+        break;
+      default:
+        setLeagueId(overallLeagueId);
+        break;
+    }
+  }
 
   useEffect(() => {
     const getData = async () => {
@@ -83,7 +119,7 @@ const Index = () => {
                 <BarChart className="h-4 w-4" />
                 <label className="text-sm font-medium">League Select</label>
               </div>
-              <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+              <Select value={selectedLeague} onValueChange={(value) => updateSelectedLeague(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a league" />
                 </SelectTrigger>
@@ -113,15 +149,14 @@ const Index = () => {
                 <BarChart className="h-4 w-4" />
                 <label className="text-sm font-medium">League Select</label>
               </div>
-              <Select value={selectedLeague} onValueChange={setSelectedLeague}>
+              <Select value={selectedLeague} onValueChange={(value) => updateSelectedLeague(value)}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a league" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Overall">Overall</SelectItem>
-                  <SelectItem value="Man Utd">Man Utd</SelectItem>
-                  <SelectItem value="India">India</SelectItem>
                   <SelectItem value="Second Chance">Second Chance</SelectItem>
+                  <SelectItem value="Gameweek 1">Gameweek 1</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -185,10 +220,60 @@ const Index = () => {
       </div>
 
       {/* League Standings and Transfer Suggestions */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <h3 className="text-lg font-medium mb-4">{selectedLeague} League Standings</h3>
-          <LeagueTable />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+        <div className="lg:col-span-1">
+          <div className="mb-4 flex justify-between items-center">
+            <h3 className="text-lg font-medium">{selectedLeague} League Standings</h3>
+            <div className="flex gap-2 items-center">
+              <span>Page: {pageNumber}</span>
+              <Button
+                variant="outline"
+                disabled={parseInt(pageNumber) === 1}
+                onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!leagueData?.standings?.has_next}
+                onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
+
+          {
+            isLoadingoverallLeagueData ?
+              <StatsCard
+                title="Loading Table Data"
+                value="..."
+                description=""
+              /> :
+              <>
+                <LeagueTable leagueData={leagueData.standings.results} />
+                <div className="p-1 mt-4 flex justify-between">
+                  <span>Page: {pageNumber}</span>
+                  <div className="flex">
+
+                    <Button
+                      variant="outline"
+                      disabled={parseInt(pageNumber) === 1}
+                      onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      disabled={!leagueData?.standings?.has_next}
+                      onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
+                    >
+                      Next
+                    </Button>
+                  </div>
+                </div>
+              </>
+          }
         </div>
         <div>
           <h3 className="text-lg font-medium mb-4">Data Visualization</h3>

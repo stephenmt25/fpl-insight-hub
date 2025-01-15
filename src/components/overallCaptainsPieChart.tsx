@@ -70,7 +70,7 @@ export function OverallCaptains() {
     // <Card>
       // <CardHeader className="">Overall Captains</CardHeader>
       // <CardContent className="flex items-center">
-        <PieChart width={400} height={270}>
+        <PieChart width={600} height={270}>
           <Pie
             activeIndex={activeIndex}
             activeShape={renderActiveShape}

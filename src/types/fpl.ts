@@ -40,18 +40,23 @@ export interface League {
 }
 
 export interface LeagueStanding {
-  entry: number;
+  id: number;
+  event_total: number;
   player_name: string;
   rank: number;
   last_rank: number;
+  rank_sort: number;
   total: number;
+  entry: number;
   entry_name: string;
+  has_played: boolean;
 }
 
 export interface LeagueDetails {
   league: League;
   standings: {
     results: LeagueStanding[];
+    has_next: boolean
   };
 }
 
