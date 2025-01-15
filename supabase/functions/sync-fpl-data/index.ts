@@ -41,24 +41,22 @@ async function fetchFPLData(): Promise<FPLResponse> {
 }
 
 async function updateSupabaseData(supabase: any, event: FPLEvent) {
+  console.log(`Processing gameweek ${event.id}`);
+  console.log(`Is Current: ${event.is_current}, Is Previous: ${event.is_previous}, Is Next: ${event.is_next}`);
+
   const { data: existingData, error: fetchError } = await supabase
     .from('fploveralldata')
     .select('*')
     .eq('id', event.id)
-    .single();
+    .maybeSingle();
 
-  if (fetchError && fetchError.code !== 'PGRST116') {
+  if (fetchError) {
     console.error('Error fetching existing data:', fetchError);
     return;
   }
 
-  // If data exists and hasn't changed, skip update
-  if (existingData && 
-      existingData.average_entry_score === event.average_entry_score &&
-      existingData.highest_score === event.highest_score) {
-    console.log(`No changes detected for gameweek ${event.id}, skipping update`);
-    return;
-  }
+  // Convert boolean values to strings explicitly
+  const boolToString = (value: boolean) => value ? 'true' : 'false';
 
   const { error: upsertError } = await supabase
     .from('fploveralldata')
@@ -72,11 +70,11 @@ async function updateSupabaseData(supabase: any, event: FPLEvent) {
       highest_scoring_entry: event.highest_scoring_entry,
       deadline_time_epoch: event.deadline_time_epoch,
       highest_score: event.highest_score,
-      is_previous: event.is_previous.toString(),
-      is_current: event.is_current.toString(),
-      is_next: event.is_next.toString(),
-      cup_leagues_created: event.cup_leagues_created.toString(),
-      h2h_ko_matches_created: event.h2h_ko_matches_created.toString(),
+      is_previous: boolToString(event.is_previous),
+      is_current: boolToString(event.is_current),
+      is_next: boolToString(event.is_next),
+      cup_leagues_created: boolToString(event.cup_leagues_created),
+      h2h_ko_matches_created: boolToString(event.h2h_ko_matches_created),
       ranked_count: event.ranked_count,
       most_selected: event.most_selected,
       most_transferred_in: event.most_transferred_in,
