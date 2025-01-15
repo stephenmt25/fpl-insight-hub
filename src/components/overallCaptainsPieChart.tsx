@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { PieChart, Pie, Sector, Cell } from 'recharts';
-import { CardContent, Card, CardHeader } from './ui/card';
 
 const data = [
   { name: 'M.Salah', value: 400 },
@@ -67,10 +66,7 @@ export function OverallCaptains() {
   };
 
   return (
-    // <Card>
-      // <CardHeader className="">Overall Captains</CardHeader>
-      // <CardContent className="flex items-center">
-        <PieChart width={600} height={270}>
+        <PieChart width={400} height={400}>
           <Pie
             activeIndex={activeIndex}
             activeShape={renderActiveShape}
@@ -87,7 +83,5 @@ export function OverallCaptains() {
             ))}
           </Pie>
         </PieChart>
-      // </CardContent>
-    // </Card>
   );
 }

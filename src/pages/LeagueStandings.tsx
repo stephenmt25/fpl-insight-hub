@@ -80,6 +80,26 @@ export default function LeagueStandings() {
           <TabsTrigger value="trends">Detailed Trends</TabsTrigger>
         </TabsList>
         <TabsContent value="table">
+          <div className="p-2 flex justify-between items-center">
+            <h3 className="text-lg font-medium">{selectedLeague} League Standings</h3>
+            <div className="flex gap-2 items-center">
+              <span>Page: {pageNumber}</span>
+              <Button
+                variant="outline"
+                disabled={parseInt(pageNumber) === 1}
+                onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!leagueData?.standings?.has_next}
+                onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
+              >
+                Next
+              </Button>
+            </div>
+          </div>
           {
             isLoadingoverallLeagueData ?
               <StatsCard
@@ -88,26 +108,6 @@ export default function LeagueStandings() {
                 description=""
               /> :
               <>
-                <div className="p-2 flex justify-between items-center">
-                  <h3 className="text-lg font-medium">{selectedLeague} League Standings</h3>
-                  <div className="flex gap-2 items-center">
-                    <span>Page: {pageNumber}</span>
-                    <Button
-                      variant="outline"
-                      disabled={parseInt(pageNumber) === 1}
-                      onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={!leagueData?.standings?.has_next}
-                      onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
                 <LeagueTable leagueData={leagueData.standings.results} />
                 <div className="p-1 mt-4 flex justify-between">
                   <span>Page: {pageNumber}</span>

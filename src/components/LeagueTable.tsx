@@ -44,8 +44,8 @@ export function LeagueTable({ onManagerSelect, leagueData }: LeagueTableProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[50px]">Movement</TableHead>
-            <TableHead className="w-[100px] text-center">Rank</TableHead>
+            <TableHead className="max-w-[50px]">Movement</TableHead>
+            <TableHead className="max-w-[30px] text-center">Rank</TableHead>
             <TableHead>Team & Manager</TableHead>
             <TableHead className="text-center">GW Points</TableHead>
             <TableHead className="text-right">Total Points</TableHead>
