@@ -1,1 +1,3 @@
 project_id = "lyqozlofyngahpslmwti"
+[functions.sync-fpl-data]
+verify_jwt = false
