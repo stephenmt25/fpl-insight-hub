@@ -17,6 +17,16 @@ export function LeagueSection({
   isLoadingoverallLeagueData,
   leagueData,
 }: LeagueSectionProps) {
+  const handlePreviousPage = () => {
+    const newPage = (parseInt(pageNumber) - 1).toString();
+    setPageNumber(newPage);
+  };
+
+  const handleNextPage = () => {
+    const newPage = (parseInt(pageNumber) + 1).toString();
+    setPageNumber(newPage);
+  };
+
   return (
     <div className="lg:col-span-1 max-w-[95%] lg:max-w-full">
       <div className="mb-4 flex justify-between items-center">
@@ -26,14 +36,14 @@ export function LeagueSection({
           <Button
             variant="outline"
             disabled={parseInt(pageNumber) === 1}
-            onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
+            onClick={handlePreviousPage}
           >
             Previous
           </Button>
           <Button
             variant="outline"
             disabled={!leagueData?.standings?.has_next}
-            onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
+            onClick={handleNextPage}
           >
             Next
           </Button>
@@ -51,14 +61,14 @@ export function LeagueSection({
               <Button
                 variant="outline"
                 disabled={parseInt(pageNumber) === 1}
-                onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
+                onClick={handlePreviousPage}
               >
                 Previous
               </Button>
               <Button
                 variant="outline"
                 disabled={!leagueData?.standings?.has_next}
-                onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
+                onClick={handleNextPage}
               >
                 Next
               </Button>
