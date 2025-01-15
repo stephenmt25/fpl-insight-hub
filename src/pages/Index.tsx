@@ -14,6 +14,7 @@ import { leagueService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { ResponsiveContainer } from "recharts";
 import { TempRadarChart } from "@/components/tempRadarChart";
+import { toast } from "sonner";
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
@@ -102,6 +103,20 @@ const Index = () => {
     }
   }, []);
 
+  const triggerSync = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-fpl-data');
+      if (error) throw error;
+      toast.success('FPL data sync triggered successfully');
+      // Refresh the data after sync
+      const { data: newData } = await supabase.from('fploveralldata').select();
+      setGameweekData(newData);
+    } catch (error) {
+      console.error('Error triggering sync:', error);
+      toast.error('Failed to sync FPL data');
+    }
+  };
+
   return (
     <div className="space-y-8">
       {/* Welcome Banner */}
@@ -116,8 +131,11 @@ const Index = () => {
                 Track your progress and make informed decisions for your team.
               </p>
             </div>
-            <div className="flex flex-col gap-2 w-full max-w-xs ">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2">
+              <Button onClick={triggerSync} variant="outline" className="mb-2">
+                Sync FPL Data
+              </Button>
+              <div className="flex items-center gap-2 w-full max-w-xs">
                 <BarChart className="h-4 w-4" />
                 <label className="text-sm font-medium">League Select</label>
               </div>
@@ -282,9 +300,6 @@ const Index = () => {
           <div className="grid gap-2 lg:grid-cols-2">
             <div className="col-span-2 lg:col-span-1">
               <p className="text-gray-600">Overall Captaincy</p>
-              {/* <ResponsiveContainer width="100%" height="100%">
-                <OverallCaptains />
-              </ResponsiveContainer> */}
               <TempRadarChart />
             </div>
             <div className="col-span-2 lg:col-span-1">
