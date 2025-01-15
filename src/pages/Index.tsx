@@ -13,6 +13,7 @@ import { useAuth } from "@/context/auth-context";
 import { leagueService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { ResponsiveContainer } from "recharts";
+import { TempRadarChart } from "@/components/tempRadarChart";
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
@@ -278,13 +279,23 @@ const Index = () => {
         </div>
         <div className="max-w-[94%] lg:max-w-full">
           <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
-          <div className="grid gap-y-2">
-            <p className="text-gray-600">Overall Captaincy</p>
-            <ResponsiveContainer width="100%" height="100%">
-              <OverallCaptains />
-            </ResponsiveContainer>
-            <AveragePtsLineChart />
-            <AverageTeamValueAreaChart />
+          <div className="grid gap-y-2 lg:grid-cols-2">
+            <div className="col-span-1">
+              <p className="text-gray-600">Overall Captaincy</p>
+              <ResponsiveContainer width="100%" height="100%">
+                <OverallCaptains />
+              </ResponsiveContainer>
+            </div>
+            <div className="col-span-1">
+              <p className="text-gray-600">Distribution</p>
+              <TempRadarChart />
+            </div>
+            <div className="col-span-2">
+              <AverageTeamValueAreaChart />
+            </div>
+            <div className="col-span-2">
+              <AveragePtsLineChart />
+            </div>
           </div>
         </div>
       </div>
