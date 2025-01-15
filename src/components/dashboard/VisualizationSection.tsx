@@ -9,11 +9,9 @@ export function VisualizationSection() {
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-2 lg:grid-cols-2">
         <div className="col-span-2 lg:col-span-1">
-          <p className="text-gray-600">Overall Captaincy</p>
           <CaptaincyPieChart/>
         </div>
         <div className="col-span-2 lg:col-span-1">
-          <p className="text-gray-600">Distribution</p>
           <TempRadarChart />
         </div>
         <div className="col-span-2">
