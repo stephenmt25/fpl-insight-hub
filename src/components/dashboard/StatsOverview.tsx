@@ -13,7 +13,7 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: St
         <StatsCard
           title="Highest GW Points"
           value={currentGW.highest_score}
-          description="↓ 12 from last week"
+          description={`GW ${currentGW.id}`}
         />
       ) : (
         <StatsCard
@@ -26,7 +26,7 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: St
         <StatsCard
           title="Average GW Points"
           value={currentGW.average_entry_score}
-          description="↑ 9 from last week"
+          description={`GW ${currentGW.id}`}
         />
       ) : (
         <StatsCard
@@ -38,8 +38,8 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: St
       {mostCaptPlayer ? (
         <StatsCard
           title="Most Captained"
-          value={mostCaptPlayer[0].web_name}
-          description="MUN v LIV"
+          value={mostCaptPlayer[0]?.web_name || "N/A"}
+          description={`GW ${currentGW?.id || "..."}`}
         />
       ) : (
         <StatsCard
@@ -51,8 +51,8 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: St
       {highScorePlayer ? (
         <StatsCard
           title="Highest Scoring Player"
-          value={highScorePlayer[0].web_name}
-          description="BRE v BHA"
+          value={highScorePlayer[0]?.web_name || "N/A"}
+          description={`GW ${currentGW?.id || "..."}`}
         />
       ) : (
         <StatsCard
