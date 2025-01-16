@@ -68,13 +68,15 @@ export default function Performance() {
 
       {/* Tabs Navigation */}
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="w-full justify-start">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="gameweek">Gameweek Analysis</TabsTrigger>
-          <TabsTrigger value="historical">Historical Trends</TabsTrigger>
-          <TabsTrigger value="captaincy">Captaincy Impact</TabsTrigger>
-          <TabsTrigger value="compare">Compare League Members</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto no-scrollbar">
+          <TabsList className="w-full justify-start inline-flex min-w-max">
+            <TabsTrigger value="overview">Overview</TabsTrigger>
+            <TabsTrigger value="gameweek">Gameweek Analysis</TabsTrigger>
+            <TabsTrigger value="historical">Historical Trends</TabsTrigger>
+            <TabsTrigger value="captaincy">Captaincy Impact</TabsTrigger>
+            <TabsTrigger value="compare">Compare League Members</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="overview">
           <PerformanceMetrics gameweek={currentGameweek} />
