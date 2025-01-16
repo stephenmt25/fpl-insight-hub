@@ -38,10 +38,10 @@ export function MobileMenu({ isMobileMenuOpen, setIsMobileMenuOpen }: MobileMenu
           <Link to="/" className="w-full">Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link to="/standings" className="w-full">League Standings</Link>
+          <Link to="/performance" className="w-full">Performance</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link to="/performance" className="w-full">Performance</Link>
+          <Link to="/standings" className="w-full">League Standings</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Link to="/insights" className="w-full">Insights</Link>

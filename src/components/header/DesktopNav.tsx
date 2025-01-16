@@ -14,17 +14,17 @@ export function DesktopNav({ handleClick }: DesktopNavProps) {
         Dashboard
       </Link>
       <Link
+        to="/performance"
+        className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
+      >
+        Performance
+      </Link>
+      <Link
         onClick={() => handleClick('table')}
         to="/standings"
         className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
       >
         League Standings
-      </Link>
-      <Link
-        to="/performance"
-        className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
-      >
-        Performance
       </Link>
       <Link
         to="/insights"
