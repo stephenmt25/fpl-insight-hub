@@ -6,8 +6,8 @@ import { HistoricalTrends } from "@/components/HistoricalTrends";
 
 export default function Insights() {
   return (
-    <div className="space-y-8">
-      <div className="space-y-4">
+    <div className="space-y-2">
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold">
           Actionable Insights for Your FPL Success
         </h1>

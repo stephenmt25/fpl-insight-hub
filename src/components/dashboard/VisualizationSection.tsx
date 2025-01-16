@@ -14,10 +14,10 @@ export function VisualizationSection() {
         <div className="col-span-2 lg:col-span-1">
           <TempRadarChart />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2 lg:col-span-1">
           <AverageTeamValueAreaChart />
         </div>
-        <div className="col-span-2">
+        <div className="col-span-2 lg:col-span-1">
           <AveragePtsLineChart />
         </div>
       </div>

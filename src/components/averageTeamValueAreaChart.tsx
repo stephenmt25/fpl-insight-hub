@@ -39,7 +39,7 @@ const chartConfig = {
 
 export function AverageTeamValueAreaChart() {
   return (
-    <Card className="h-full">
+    <Card>
       <CardHeader>
         <CardDescription>
           Average Team Value

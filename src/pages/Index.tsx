@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
   const [liveGameweek, setLiveGameweek] = useState(20);
-  const [selectedLeague, setSelectedLeague] = useState("Overall");
   const [gameweekData, setGameweekData] = useState<any[] | null>(null);
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null);
   const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null);
@@ -26,8 +25,6 @@ const Index = () => {
   const [pageNumber, setPageNumber] = useState("1");
 
   const overallLeagueId = "314";
-  const secondChanceLeagueId = "321";
-  const gameweek1LeagueId = "276";
 
   const [leagueId, setLeagueId] = useState(overallLeagueId);
 
@@ -85,7 +82,7 @@ const Index = () => {
   }, []);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-1">
       <WelcomeBanner/>
 
       <GameweekPaginator
@@ -95,24 +92,20 @@ const Index = () => {
         liveGameweek={liveGameweek}
       />
 
-      <Tabs defaultValue="overall-stats" className="space-y-4">
+      <Tabs defaultValue="charts" className="space-y-4">
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
-            <TabsTrigger value="overall-stats">Stats Overview</TabsTrigger>
             <TabsTrigger value="charts">FPL Data Visualized</TabsTrigger>
-            <TabsTrigger value="table">FPL General Tables</TabsTrigger>
+            <TabsTrigger value="table">FPL Standings</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="charts" className="space-y-4">
-          <VisualizationSection />
-        </TabsContent>
-
-        <TabsContent value="overall-stats" className="space-y-4">
-          <StatsOverview
+        <StatsOverview
             currentGW={currentGW}
             mostCaptPlayer={mostCaptPlayer}
             highScorePlayer={highScorePlayer}
           />
+          <VisualizationSection />
         </TabsContent>
 
         <TabsContent value="table">
