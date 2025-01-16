@@ -11,8 +11,8 @@ import { VisualizationSection } from "@/components/dashboard/VisualizationSectio
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const Index = () => {
-  const [currentGameweek, setCurrentGameweek] = useState(1);
   const [gameweekData, setGameweekData] = useState<any[] | null>(null);
+  const [currentGameweek, setCurrentGameweek] = useState<number | null>(null);
   const [selectedGameweekData, setSelectedGameweekData] = useState<any | null>(null);
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null);
   const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null);
@@ -35,6 +35,12 @@ const Index = () => {
     const getData = async () => {
       const { data } = await supabase.from('fploveralldata').select();
       setGameweekData(data);
+      
+      // Find the current gameweek and set it
+      const currentGW = data?.find(gw => gw.is_current === "true");
+      if (currentGW) {
+        setCurrentGameweek(currentGW.id);
+      }
     };
     getData();
   }, []);
@@ -90,6 +96,8 @@ const Index = () => {
       signIn(storedFplId, storedManagerData);
     }
   }, []);
+
+  if (!currentGameweek) return null;
 
   return (
     <div className="space-y-1">
