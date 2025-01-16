@@ -8,6 +8,12 @@ import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
+import { FixtureDifficulty } from "@/components/FixtureDifficulty";
+import { HistoricalTrends } from "@/components/HistoricalTrends";
+import { PlayerInsights } from "@/components/PlayerInsights";
+import { TransferSuggestions } from "@/components/TransferSuggestions";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [currentGameweek, setCurrentGameweek] = useState(20);
@@ -33,24 +39,6 @@ const Index = () => {
     queryKey: ['leagueData', leagueId, pageNumber],
     queryFn: () => leagueService.getStandings(leagueId, pageNumber),
   });
-
-  const updateSelectedLeague = (leagueName: string) => {
-    setSelectedLeague(leagueName);
-    switch (leagueName) {
-      case "Overall":
-        setLeagueId(overallLeagueId);
-        break;
-      case "Second Chance":
-        setLeagueId(secondChanceLeagueId);
-        break;
-      case "Gameweek 1":
-        setLeagueId(gameweek1LeagueId);
-        break;
-      default:
-        setLeagueId(overallLeagueId);
-        break;
-    }
-  };
 
   useEffect(() => {
     const getData = async () => {
@@ -98,34 +86,45 @@ const Index = () => {
 
   return (
     <div className="space-y-8">
-      <WelcomeBanner
-        selectedLeague={selectedLeague}
-        updateSelectedLeague={updateSelectedLeague}
-      />
-      
+      <WelcomeBanner/>
+
       <GameweekPaginator
         currentGameweek={currentGameweek}
         setCurrentGameweek={setCurrentGameweek}
         totalGameweeks={38}
         liveGameweek={liveGameweek}
       />
-      
-      <StatsOverview
-        currentGW={currentGW}
-        mostCaptPlayer={mostCaptPlayer}
-        highScorePlayer={highScorePlayer}
-      />
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
-        <LeagueSection
-          selectedLeague={selectedLeague}
-          pageNumber={pageNumber}
-          setPageNumber={setPageNumber}
-          isLoadingoverallLeagueData={isLoadingoverallLeagueData}
-          leagueData={leagueData}
-        />
-        <VisualizationSection />
-      </div>
+      <Tabs defaultValue="overall-stats" className="space-y-4">
+        <div className="w-full overflow-x-auto no-scrollbar">
+          <TabsList className="w-full justify-start inline-flex min-w-max">
+            <TabsTrigger value="overall-stats">Stats Overview</TabsTrigger>
+            <TabsTrigger value="charts">FPL Data Visualized</TabsTrigger>
+            <TabsTrigger value="table">FPL General Tables</TabsTrigger>
+          </TabsList>
+        </div>
+        <TabsContent value="charts" className="space-y-4">
+          <VisualizationSection />
+        </TabsContent>
+
+        <TabsContent value="overall-stats" className="space-y-4">
+          <StatsOverview
+            currentGW={currentGW}
+            mostCaptPlayer={mostCaptPlayer}
+            highScorePlayer={highScorePlayer}
+          />
+        </TabsContent>
+
+        <TabsContent value="table">
+          <LeagueSection
+            pageNumber={pageNumber}
+            setPageNumber={setPageNumber}
+            isLoadingoverallLeagueData={isLoadingoverallLeagueData}
+            leagueData={leagueData}
+            setLeagueId={setLeagueId}
+          />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

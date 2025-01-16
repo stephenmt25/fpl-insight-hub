@@ -18,14 +18,17 @@ export default function Insights() {
       </div>
 
       <Tabs defaultValue="transfer-suggestions" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="player-insights">Player Insights</TabsTrigger>
-          <TabsTrigger value="fixture-difficulty">Fixture Difficulty</TabsTrigger>
-          <TabsTrigger value="transfer-suggestions">
-            Transfer Suggestions
-          </TabsTrigger>
-          <TabsTrigger value="historical-trends">Historical Trends</TabsTrigger>
-        </TabsList>
+        <div className="w-full overflow-x-auto no-scrollbar">
+          <TabsList className="w-full justify-start inline-flex min-w-max">
+            <TabsTrigger value="player-insights">Player Insights</TabsTrigger>
+            <TabsTrigger value="fixture-difficulty">Fixture Difficulty</TabsTrigger>
+            <TabsTrigger value="transfer-suggestions">
+              Transfer Suggestions
+            </TabsTrigger>
+            <TabsTrigger value="historical-trends">Historical Trends</TabsTrigger>
+          </TabsList>
+        </div>
+
 
         <TabsContent value="player-insights" className="space-y-4">
           <PlayerInsights />

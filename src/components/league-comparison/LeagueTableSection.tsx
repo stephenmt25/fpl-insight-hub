@@ -1,24 +1,24 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { LeagueTable } from "@/components/LeagueTable";
 import { StatsCard } from "@/components/StatsCard";
+import { useState } from "react";
 
 interface LeagueTableSectionProps {
   isLoadingoverallLeagueData: boolean;
   leagueData: any;
-  selectedLeague: string;
   pageNumber: string;
   setPageNumber: (value: string) => void;
   onManagerSelect: (manager: string) => void;
+  setLeagueId: (id: string) => void;
 }
 
 export function LeagueTableSection({
   isLoadingoverallLeagueData,
   leagueData,
-  selectedLeague,
   pageNumber,
   setPageNumber,
   onManagerSelect,
+  setLeagueId
 }: LeagueTableSectionProps) {
   const handlePreviousPage = () => {
     const newPage = (parseInt(pageNumber) - 1).toString();
@@ -30,63 +30,72 @@ export function LeagueTableSection({
     setPageNumber(newPage);
   };
 
+  const [selectedLeague, setSelectedLeague] = useState("Overall");
+  const [id, setId] = useState("314")
+
+  const updateSelectedLeague = (leagueId: string) => {
+    const managerData = localStorage.getItem("managerData");
+    if (managerData) {
+      const parsedData = JSON.parse(managerData);
+      const classicLeagues = parsedData?.leagues?.classic || [];
+      const leagueName = classicLeagues.find((league: any) => league.id === leagueId)?.name || 'Unknown League'
+      setLeagueId(leagueId)
+      setId(leagueId)
+      setSelectedLeague(leagueName)
+    } else {
+      setLeagueId(leagueId);
+      setId(leagueId)
+      switch (leagueId) {
+        case "314":
+          setSelectedLeague("Overall");
+          break;
+        case "321":
+          setSelectedLeague("Second Chance");
+          break;
+        case "276":
+          setSelectedLeague("Gameweek 1");
+          break;
+        default:
+          setSelectedLeague("Overall");
+          break;
+      }
+    }
+  }
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>League Table</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {isLoadingoverallLeagueData ? (
-          <StatsCard
-            title="Loading Table Data"
-            value="..."
-            description=""
-          />
-        ) : (
-          <>
-            <div className="p-2 flex justify-between items-center">
-              <h3 className="text-lg font-medium">{selectedLeague} League Standings</h3>
-              <div className="flex gap-2 items-center">
-                <span>Page: {pageNumber}</span>
-                <Button
-                  variant="outline"
-                  disabled={parseInt(pageNumber) === 1}
-                  onClick={handlePreviousPage}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={!leagueData?.standings?.has_next}
-                  onClick={handleNextPage}
-                >
-                  Next
-                </Button>
-              </div>
+    <div>
+      {isLoadingoverallLeagueData ? (
+        <StatsCard
+          title="Loading Table Data"
+          value="..."
+          description=""
+        />
+      ) : (
+        <>
+          <LeagueTable onManagerSelect={onManagerSelect} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+          <div className="mt-4 flex justify-between">
+            <span>Page: {pageNumber}</span>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                disabled={parseInt(pageNumber) === 1}
+                onClick={handlePreviousPage}
+              >
+                Previous
+              </Button>
+              <Button
+                variant="outline"
+                disabled={!leagueData?.standings?.has_next}
+                onClick={handleNextPage}
+              >
+                Next
+              </Button>
             </div>
-            <LeagueTable onManagerSelect={onManagerSelect} leagueData={leagueData.standings.results} />
-            <div className="p-1 mt-4 flex justify-between">
-              <span>Page: {pageNumber}</span>
-              <div className="flex">
-                <Button
-                  variant="outline"
-                  disabled={parseInt(pageNumber) === 1}
-                  onClick={handlePreviousPage}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  disabled={!leagueData?.standings?.has_next}
-                  onClick={handleNextPage}
-                >
-                  Next
-                </Button>
-              </div>
-            </div>
-          </>
-        )}
-      </CardContent>
-    </Card>
+          </div>
+        </>
+      )}
+    </div>
+
+
   );
 }

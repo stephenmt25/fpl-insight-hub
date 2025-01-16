@@ -15,17 +15,8 @@ const TabContext = createContext<TabContextType>({
 const TabProvider = ({ children }) => {
   const [activeTab, setActiveTab] = useState('table');
 
-  // You can potentially store this preference in localStorage
-  // useEffect(() => {
-  //   const storedTab = localStorage.getItem('activeTab');
-  //   if (storedTab) {
-  //     setActiveTab(storedTab);
-  //   }
-  // }, []);
-
   const updateActiveTab = (tab) => {
     setActiveTab(tab);
-    // localStorage.setItem('activeTab', tab);
   };
 
   return (

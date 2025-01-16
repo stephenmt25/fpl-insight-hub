@@ -1,22 +1,24 @@
 import { Button } from "@/components/ui/button";
 import { LeagueTable } from "@/components/LeagueTable";
 import { StatsCard } from "@/components/StatsCard";
+import { useState } from "react";
 
 interface LeagueSectionProps {
-  selectedLeague: string;
   pageNumber: string;
   setPageNumber: (value: string) => void;
   isLoadingoverallLeagueData: boolean;
   leagueData: any;
+  setLeagueId: (id: string) => void;
 }
 
 export function LeagueSection({
-  selectedLeague,
   pageNumber,
   setPageNumber,
   isLoadingoverallLeagueData,
   leagueData,
+  setLeagueId
 }: LeagueSectionProps) {
+  
   const handlePreviousPage = () => {
     const newPage = (parseInt(pageNumber) - 1).toString();
     setPageNumber(newPage);
@@ -27,37 +29,48 @@ export function LeagueSection({
     setPageNumber(newPage);
   };
 
-  return (
-    <div className="lg:col-span-1 max-w-[95%] lg:max-w-full">
-      <div className="mb-4 flex justify-between items-center">
-        <h3 className="text-lg font-medium">{selectedLeague} League Standings</h3>
-        <div className="flex gap-2 items-center">
-          <span>Page: {pageNumber}</span>
-          <Button
-            variant="outline"
-            disabled={parseInt(pageNumber) === 1}
-            onClick={handlePreviousPage}
-          >
-            Previous
-          </Button>
-          <Button
-            variant="outline"
-            disabled={!leagueData?.standings?.has_next}
-            onClick={handleNextPage}
-          >
-            Next
-          </Button>
-        </div>
-      </div>
+  const [selectedLeague, setSelectedLeague] = useState("Overall");
+  const [id, setId] = useState("314")
 
+  const updateSelectedLeague = (leagueId: string) => {
+    const managerData = localStorage.getItem("managerData");
+    if (managerData) {
+      const parsedData = JSON.parse(managerData);
+      const classicLeagues = parsedData?.leagues?.classic || [];
+      const leagueName = classicLeagues.find((league: any) => league.id === leagueId)?.name || 'Unknown League'
+      setLeagueId(leagueId)
+      setId(leagueId)
+      setSelectedLeague(leagueName)
+    } else {
+      setLeagueId(leagueId);
+      setId(leagueId)
+      switch (leagueId) {
+        case "314":
+          setSelectedLeague("Overall");
+          break;
+        case "321":
+          setSelectedLeague("Second Chance");
+          break;
+        case "276":
+          setSelectedLeague("Gameweek 1");
+          break;
+        default:
+          setSelectedLeague("Overall");
+          break;
+      }
+    }
+  }
+
+  return (
+    <div>
       {isLoadingoverallLeagueData ? (
         <StatsCard title="Loading Table Data" value="..." description="" />
       ) : (
         <>
-          <LeagueTable leagueData={leagueData.standings.results} />
-          <div className="p-1 mt-4 flex justify-between">
+          <LeagueTable leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+          <div className="mt-4 flex justify-between">
             <span>Page: {pageNumber}</span>
-            <div className="flex">
+            <div className="gap-2 flex">
               <Button
                 variant="outline"
                 disabled={parseInt(pageNumber) === 1}

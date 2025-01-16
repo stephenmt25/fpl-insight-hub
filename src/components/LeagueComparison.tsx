@@ -7,18 +7,14 @@ import { TabContext } from '../context/standings-tabs-context';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { leagueService } from "@/services/fpl-api";
-import { LeagueSelector } from "./league-comparison/LeagueSelector";
 import { LeagueTableSection } from "./league-comparison/LeagueTableSection";
 
 export function LeagueComparison() {
-  const [selectedLeague, setSelectedLeague] = useState("Overall");
   const [selectedManager, setSelectedManager] = useState<string | null>(null);
   const navigate = useNavigate();
   const { updateActiveTab } = useContext(TabContext);
 
   const overallLeagueId = "314"
-  const secondChanceLeagueId = "321"
-  const gameweek1LeagueId = "276"
 
   const [leagueId, setLeagueId] = useState(overallLeagueId)
   const [pageNumber, setPageNumber] = useState("1")
@@ -37,24 +33,6 @@ export function LeagueComparison() {
     navigate('/standings');
   };
 
-  const updateSelectedLeague = (leagueName: string) => {
-    setSelectedLeague(leagueName);
-    switch (leagueName) {
-      case "Overall":
-        setLeagueId(overallLeagueId);
-        break;
-      case "Second Chance":
-        setLeagueId(secondChanceLeagueId);
-        break;
-      case "Gameweek 1":
-        setLeagueId(gameweek1LeagueId);
-        break;
-      default:
-        setLeagueId(overallLeagueId);
-        break;
-    }
-  }
-
   return (
     <div className="space-y-8">
       <div className="space-y-4">
@@ -64,20 +42,16 @@ export function LeagueComparison() {
         <p className="text-xl text-muted-foreground">
           Analyze your progress and stats against other FPL managers in your league
         </p>
-        <LeagueSelector
-          selectedLeague={selectedLeague}
-          updateSelectedLeague={updateSelectedLeague}
-        />
       </div>
-      <div className="grid gap-8 md:grid-cols-2">
-        <div className="space-y-4">
+      <div className="lg:grid lg:gap-8 lg:grid-cols-2">
+        <div className="lg:space-y-4">
           <LeagueTableSection
             isLoadingoverallLeagueData={isLoadingoverallLeagueData}
             leagueData={leagueData}
-            selectedLeague={selectedLeague}
             pageNumber={pageNumber}
             setPageNumber={setPageNumber}
             onManagerSelect={setSelectedManager}
+            setLeagueId={setLeagueId}
           />
           <Button onClick={() => handleClick('insights')} className="w-full" variant="outline">
             View League Insights

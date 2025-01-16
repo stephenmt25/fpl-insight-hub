@@ -14,6 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/context/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/fpl-api";
+import { useNavigate } from 'react-router-dom';
 
 interface SignInModalProps {
   isOpen: boolean;
@@ -25,6 +26,7 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
   const [error, setError] = useState("");
   const { toast } = useToast();
   const { signIn } = useAuth();
+  const navigate = useNavigate();
 
   const {
     data: manager,
@@ -74,6 +76,7 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
         description: "You're now signed in!",
       });
       onOpenChange(false);
+      navigate('/performance');
     } catch (error) {
       toast({
         title: "Error",
