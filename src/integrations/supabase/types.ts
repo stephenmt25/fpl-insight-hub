@@ -9,78 +9,6 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      plteams: {
-        Row: {
-          code: bigint | null;
-          draw: string | null;
-          form: string | null;
-          id: bigint;
-          loss: string | null;
-          name: string | null;
-          played: string | null;
-          points: string | null;
-          position: string | null;
-          short_name: string | null;
-          strength: bigint | null;
-          team_division: string | null;
-          unavailable: boolean | null;
-          win: string | null;
-          strength_overall_home: bigint | null;
-          strength_overall_away: bigint | null;
-          strength_attack_home: bigint | null;
-          strength_attack_away: bigint | null;
-          strength_defence_home: bigint | null;
-          strength_defence_away: bigint | null;
-          pulse_id: bigint | null;
-        }
-        Insert: {
-          code?: bigint | null;
-          draw?: string | null;
-          form?: string | null;
-          id: bigint;
-          loss?: string | null;
-          name?: string | null;
-          played?: string | null;
-          points?: string | null;
-          position?: string | null;
-          short_name?: string | null;
-          strength?: bigint | null;
-          team_division?: string | null;
-          unavailable?: boolean | null;
-          win?: string | null;
-          strength_overall_home?: bigint | null;
-          strength_overall_away?: bigint | null;
-          strength_attack_home?: bigint | null;
-          strength_attack_away?: bigint | null;
-          strength_defence_home?: bigint | null;
-          strength_defence_away?: bigint | null;
-          pulse_id?: bigint | null;
-        }
-        Update: {
-          code?: bigint | null;
-          draw?: string | null;
-          form?: string | null;
-          id?: bigint;
-          loss?: string | null;
-          name?: string | null;
-          played?: string | null;
-          points?: string | null;
-          position?: string | null;
-          short_name?: string | null;
-          strength?: bigint | null;
-          team_division?: string | null;
-          unavailable?: boolean | null;
-          win?: string | null;
-          strength_overall_home?: bigint | null;
-          strength_overall_away?: bigint | null;
-          strength_attack_home?: bigint | null;
-          strength_attack_away?: bigint | null;
-          strength_defence_home?: bigint | null;
-          strength_defence_away?: bigint | null;
-          pulse_id?: bigint | null;
-        }
-        Relationships: []
-      }
       fploveralldata: {
         Row: {
           average_entry_score: number | null
@@ -444,6 +372,78 @@ export type Database = {
           value_season?: string | null
           web_name?: string | null
           yellow_cards?: string | null
+        }
+        Relationships: []
+      }
+      plteams: {
+        Row: {
+          code: number | null
+          draw: string | null
+          form: string | null
+          id: number
+          loss: string | null
+          name: string | null
+          played: string | null
+          points: string | null
+          position: string | null
+          pulse_id: number | null
+          short_name: string | null
+          strength: number | null
+          strength_attack_away: number | null
+          strength_attack_home: number | null
+          strength_defence_away: number | null
+          strength_defence_home: number | null
+          strength_overall_away: number | null
+          strength_overall_home: number | null
+          team_division: string | null
+          unavailable: boolean | null
+          win: string | null
+        }
+        Insert: {
+          code?: number | null
+          draw?: string | null
+          form?: string | null
+          id: number
+          loss?: string | null
+          name?: string | null
+          played?: string | null
+          points?: string | null
+          position?: string | null
+          pulse_id?: number | null
+          short_name?: string | null
+          strength?: number | null
+          strength_attack_away?: number | null
+          strength_attack_home?: number | null
+          strength_defence_away?: number | null
+          strength_defence_home?: number | null
+          strength_overall_away?: number | null
+          strength_overall_home?: number | null
+          team_division?: string | null
+          unavailable?: boolean | null
+          win?: string | null
+        }
+        Update: {
+          code?: number | null
+          draw?: string | null
+          form?: string | null
+          id?: number
+          loss?: string | null
+          name?: string | null
+          played?: string | null
+          points?: string | null
+          position?: string | null
+          pulse_id?: number | null
+          short_name?: string | null
+          strength?: number | null
+          strength_attack_away?: number | null
+          strength_attack_home?: number | null
+          strength_defence_away?: number | null
+          strength_defence_home?: number | null
+          strength_overall_away?: number | null
+          strength_overall_home?: number | null
+          team_division?: string | null
+          unavailable?: boolean | null
+          win?: string | null
         }
         Relationships: []
       }
