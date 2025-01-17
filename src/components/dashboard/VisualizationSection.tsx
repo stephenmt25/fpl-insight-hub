@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 
 export function VisualizationSection() {
   return (
-    <div className="max-w-[94%] lg:max-w-full">
+    <div className="w-full lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-4">
         <div className="grid gap-4 lg:grid-cols-3">
