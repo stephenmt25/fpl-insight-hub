@@ -34,11 +34,14 @@ export function DifferentialPicks() {
     fetchData();
   }, []);
 
-  const processedData = playerData.map(player => ({
-    name: player.web_name,
-    form: parseFloat(player.form || '0'),
-    ownership: parseFloat(player.selected_by_percent || '0'),
-  }));
+  const processedData = playerData
+    .filter(player => parseFloat(player.form || '0') >= 4) // Exclude players with form < 1
+    .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
+    .map(player => ({
+      name: player.web_name,
+      form: parseFloat(player.form || '0'),
+      ownership: parseFloat(player.selected_by_percent || '0'),
+    }));
 
   const OWNERSHIP_THRESHOLD = 15;
   const averageForm = processedData.reduce((acc, curr) => acc + curr.form, 0) / processedData.length;
@@ -63,20 +66,21 @@ export function DifferentialPicks() {
           <ResponsiveContainer width="100%" height="100%">
             <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
               <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                type="number" 
-                dataKey="ownership" 
-                name="Ownership" 
-                unit="%" 
+              <XAxis
+                type="number"
+                dataKey="ownership"
+                name="Ownership"
+                unit="%"
                 domain={[0, 100]}
               />
-              <YAxis 
-                type="number" 
-                dataKey="form" 
-                name="Form" 
+              <YAxis
+                type="number"
+                dataKey="form"
+                name="Form"
                 domain={['dataMin', 'dataMax']}
+                hide
               />
-              <Tooltip 
+              <Tooltip
                 cursor={{ strokeDasharray: '3 3' }}
                 content={({ active, payload }) => {
                   if (active && payload && payload.length) {
@@ -103,25 +107,19 @@ export function DifferentialPicks() {
           </ResponsiveContainer>
         </div>
         <div className="w-full lg:w-2/5">
-          <h4 className="font-semibold mb-4">Top 5 Differential Picks</h4>
+          <h4 className="font-semibold mb-2">Top 5 Differential Picks</h4>
           {differentialPicks.map((player, index) => (
-            <div 
-              key={index} 
-              className={`mb-3 p-3 rounded ${
-                index === 0 ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
-              }`}
+            <div
+              key={index}
+              className={`mb-2 p-2 rounded ${index === 0 ? 'bg-green-50 border border-green-200' : 'bg-gray-50'
+                }`}
             >
               <div className="font-medium">{player.name}</div>
               <div className="text-sm text-gray-600">
-                Form: {player.form.toFixed(1)}
-                <br />
-                Ownership: {player.ownership.toFixed(1)}%
+                Form: {player.form.toFixed(1)} | Ownership: {player.ownership.toFixed(1)}%
               </div>
             </div>
           ))}
-          <p className="text-sm text-gray-500 mt-4">
-            Add these players to your team for a strategic advantage
-          </p>
         </div>
       </CardContent>
     </Card>

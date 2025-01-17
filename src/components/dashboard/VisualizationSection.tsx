@@ -10,14 +10,18 @@ export function VisualizationSection() {
     <div className="max-w-[94%] lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-4">
-        <FormValueAnalysis />
-        <DifferentialPicks />
         <div className="grid gap-4 lg:grid-cols-2">
+          <div className="col-span-2">
+            <DifferentialPicks />
+          </div>
           <div className="col-span-2 lg:col-span-1">
-            <CaptaincyPieChart/>
+            <CaptaincyPieChart />
           </div>
           <div className="col-span-2 lg:col-span-1">
             <TempRadarChart />
+          </div>
+          <div className="col-span-2">
+            <FormValueAnalysis />
           </div>
           <div className="col-span-2 lg:col-span-1">
             <AverageTeamValueAreaChart />

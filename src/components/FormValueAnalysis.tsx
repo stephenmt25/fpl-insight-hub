@@ -1,6 +1,6 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts';
-import { useState, useEffect } from 'react';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, ZAxis, Dot } from 'recharts';
+import { useState, useEffect, FC } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
 interface PlayerData {
@@ -21,7 +21,7 @@ export function FormValueAnalysis() {
         const { data, error } = await supabase
           .from('plplayerdata')
           .select('web_name, now_cost, form, selected_by_percent, team')
-          .not('form', 'is', null);
+          .not('form', 'is', null)
 
         if (error) throw error;
         setPlayerData(data || []);
@@ -35,7 +35,10 @@ export function FormValueAnalysis() {
     fetchData();
   }, []);
 
-  const processedData = playerData.map(player => ({
+  const processedData = playerData
+  .filter(player => parseFloat(player.form || '0') >= 1) // Exclude players with form < 1
+  .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
+  .map(player => ({
     name: player.web_name,
     price: player.now_cost / 10,
     form: parseFloat(player.form || '0'),
@@ -56,6 +59,17 @@ export function FormValueAnalysis() {
     .slice(0, 5);
 
   if (loading) return <div>Loading...</div>;
+
+  // interface DotProps {
+  //   cx: number;
+  //   cy: number;
+  // }
+
+  // const RenderDot: FC<DotProps> = ({ cx, cy }) => {
+  //   return (
+  //     <Dot cx={cx} cy={cy} r={5} />
+  //   )
+  // }
 
   return (
     <Card className="w-full">
@@ -82,7 +96,9 @@ export function FormValueAnalysis() {
                 dataKey="form" 
                 name="Form" 
                 domain={['dataMin', 'dataMax']}
+                hide
               />
+              <ZAxis range={[40, 41]} />
               <Tooltip 
                 cursor={{ strokeDasharray: '3 3' }}
                 content={({ active, payload }) => {
@@ -106,12 +122,13 @@ export function FormValueAnalysis() {
                 data={processedData}
                 fill="#8884d8"
                 fillOpacity={0.6}
+                // shape={<RenderDot/>}
               />
             </ScatterChart>
           </ResponsiveContainer>
         </div>
-        <div className="w-full lg:w-2/5 space-y-4">
-          <div>
+        <div className="w-full lg:w-2/5 gap-2 grid grid-cols-2">
+          <div className="col-span-1">
             <h4 className="font-semibold mb-2">Top 5 Good Value Players</h4>
             {goodValuePlayers.map((player, index) => (
               <div key={index} className="mb-2 p-2 bg-green-50 rounded">
