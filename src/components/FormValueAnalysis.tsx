@@ -98,7 +98,12 @@ export function FormValueAnalysis() {
                 domain={['dataMin', 'dataMax']}
                 hide
               />
-              <ZAxis range={[40, 41]} />
+              <ZAxis 
+                type="number" 
+                dataKey="ownership" 
+                name="Ownership" 
+                range={[50, 500]}
+              />
               <Tooltip 
                 cursor={{ strokeDasharray: '3 3' }}
                 content={({ active, payload }) => {
