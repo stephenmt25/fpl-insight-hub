@@ -72,7 +72,6 @@ const Index = () => {
     const fetchHighScorePlayerAndTeam = async () => {
       try {
         if (selectedGameweekData?.top_element) {
-          // Fetch the high score player
           const { data: playerData, error: playerError } = await supabase
             .from('plplayerdata')
             .select()
@@ -86,7 +85,6 @@ const Index = () => {
           setHighScorePlayer(playerData);
   
           if (playerData && playerData[0]?.team) {
-            // Fetch the team for the high score player
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
               .select()
@@ -99,8 +97,8 @@ const Index = () => {
             setHighScorePlayerTeam(teamData);
           }
   
-          // Fetch player summary to find the opponent team's short name
-          const playerSummary = await playerService.getPlayerSummary(Number(selectedGameweekData.top_element));
+          // Convert number to string when calling getPlayerSummary
+          const playerSummary = await playerService.getPlayerSummary(String(selectedGameweekData.top_element));
   
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
@@ -108,7 +106,6 @@ const Index = () => {
             );
   
             if (currentGameweekData?.opponent_team) {
-              // Fetch the opponent team's short name
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
                 .select('short_name')
@@ -136,7 +133,6 @@ const Index = () => {
     const fetchMostCaptPlayerAndTeam = async () => {
       try {
         if (selectedGameweekData?.most_captained) {
-          // Fetch the most-captained player
           const { data: playerData, error: playerError } = await supabase
             .from('plplayerdata')
             .select()
@@ -150,7 +146,6 @@ const Index = () => {
           setMostCaptPlayer(playerData);
   
           if (playerData && playerData[0]?.team) {
-            // Fetch the team for the most-captained player
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
               .select()
@@ -164,8 +159,8 @@ const Index = () => {
             setMostCaptPlayerTeam(teamData);
           }
   
-          // Fetch player summary to find the opponent team's short name
-          const playerSummary = await playerService.getPlayerSummary(Number(selectedGameweekData.most_captained));
+          // Convert number to string when calling getPlayerSummary
+          const playerSummary = await playerService.getPlayerSummary(String(selectedGameweekData.most_captained));
   
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
@@ -173,7 +168,6 @@ const Index = () => {
             );
   
             if (currentGameweekData?.opponent_team) {
-              // Fetch the opponent team's short name
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
                 .select('short_name')
