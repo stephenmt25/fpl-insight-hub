@@ -81,12 +81,18 @@ export interface OverallInfo {
 export interface PlayerFixture {
   id: number;
   kickoff_time: string;
-  gameweek: number;
   is_home: boolean;
   difficulty: number;
   team_h: number;
   team_a: number;
   finished: boolean;
+  code: number,
+  team_h_score: null,
+  team_a_score: null,
+  event: number,
+  minutes: number,
+  provisional_start_time: boolean,
+  event_name: string,
 }
 
 export interface PlayerStats {
@@ -109,11 +115,61 @@ export interface PlayerStats {
   ict_index: string;
   expected_goals: string;
   expected_assists: string;
+  element: number,
+  fixture: number,
+  opponent_team: number,
+  total_points: number,
+  was_home: false,
+  kickoff_time: string,
+  team_h_score: number,
+  team_a_score: number,
+  round: number,
+  modified: false,
+  starts: number,
+  expected_goal_involvements: string,
+  expected_goals_conceded: string,
+  value: number,
+  transfers_balance: number,
+  selected: number,
+  transfers_in: number,
+  transfers_out: number
 }
+
+export interface SeasonStats {
+  season_name: string,
+  element_code: number,
+  start_cost: number,
+  end_cost: number,
+  total_points: number,
+  minutes: number,
+  goals_scored: number,
+  assists: number,
+  clean_sheets: number,
+  goals_conceded: number,
+  own_goals: number,
+  penalties_saved: number,
+  penalties_missed: number,
+  yellow_cards: number,
+  red_cards: number,
+  saves: number,
+  bonus: number,
+  bps: number,
+  influence: string,
+  creativity: string,
+  threat: string,
+  ict_index: string,
+  starts: number,
+  expected_goals: string,
+  expected_assists: string,
+  expected_goal_involvements: string,
+  expected_goals_conceded: string
+}
+
 
 export interface PlayerSummary {
   fixtures: PlayerFixture[];
   history: PlayerStats[];
+  history_past: SeasonStats[];
 }
 
 export interface GameweekPlayerStats {

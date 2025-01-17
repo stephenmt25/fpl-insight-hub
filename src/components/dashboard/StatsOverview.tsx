@@ -4,9 +4,15 @@ interface StatsOverviewProps {
   currentGW: any;
   mostCaptPlayer: any;
   highScorePlayer: any;
+  highScorePlayerTeam: any;
+  mostCaptPlayerTeam: any;
+  highScorePlayerOpp: any;
+  mostCaptPlayerOpp: any
 }
 
-export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: StatsOverviewProps) {
+export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer, highScorePlayerTeam, mostCaptPlayerTeam, highScorePlayerOpp, mostCaptPlayerOpp }: StatsOverviewProps) {
+  const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
+  const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {currentGW ? (
@@ -39,7 +45,7 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: St
         <StatsCard
           title="Most Captained"
           value={mostCaptPlayer[0]?.web_name || "N/A"}
-          description={`GW ${currentGW?.id || "..."}`}
+          description={mostCaptPlayerFixture}
         />
       ) : (
         <StatsCard
@@ -52,7 +58,7 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer }: St
         <StatsCard
           title="Highest Scoring Player"
           value={highScorePlayer[0]?.web_name || "N/A"}
-          description={`GW ${currentGW?.id || "..."}`}
+          description={highScorePlayerFixture}
         />
       ) : (
         <StatsCard
