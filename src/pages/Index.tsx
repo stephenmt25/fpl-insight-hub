@@ -76,7 +76,7 @@ const Index = () => {
           const { data: playerData, error: playerError } = await supabase
             .from('plplayerdata')
             .select()
-            .eq('id', selectedGameweekData.top_element);
+            .eq('id', Number(selectedGameweekData.top_element));
   
           if (playerError) {
             console.error('Error fetching player data:', playerError);
@@ -90,7 +90,7 @@ const Index = () => {
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
               .select()
-              .eq('id', BigInt(playerData[0].team));
+              .eq('id', Number(playerData[0].team));
             if (teamError) {
               console.error('Error fetching team data:', teamError);
               return;
@@ -100,11 +100,11 @@ const Index = () => {
           }
   
           // Fetch player summary to find the opponent team's short name
-          const playerSummary = await playerService.getPlayerSummary(selectedGameweekData.top_element);
+          const playerSummary = await playerService.getPlayerSummary(Number(selectedGameweekData.top_element));
   
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
-              (item) => item.round === currentGameweek // Assuming `gameweek` is the current gameweek number
+              (item) => item.round === currentGameweek
             );
   
             if (currentGameweekData?.opponent_team) {
@@ -112,7 +112,7 @@ const Index = () => {
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
                 .select('short_name')
-                .eq('id', BigInt(currentGameweekData.opponent_team));
+                .eq('id', Number(currentGameweekData.opponent_team));
   
               if (opponentTeamError) {
                 console.error('Error fetching opponent team data:', opponentTeamError);
@@ -140,7 +140,7 @@ const Index = () => {
           const { data: playerData, error: playerError } = await supabase
             .from('plplayerdata')
             .select()
-            .eq('id', selectedGameweekData.most_captained);
+            .eq('id', Number(selectedGameweekData.most_captained));
   
           if (playerError) {
             console.error('Error fetching most-captained player data:', playerError);
@@ -154,7 +154,7 @@ const Index = () => {
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
               .select()
-              .eq('id', BigInt(playerData[0].team));
+              .eq('id', Number(playerData[0].team));
   
             if (teamError) {
               console.error('Error fetching most-captained player team data:', teamError);
@@ -165,11 +165,11 @@ const Index = () => {
           }
   
           // Fetch player summary to find the opponent team's short name
-          const playerSummary = await playerService.getPlayerSummary(selectedGameweekData.most_captained);
+          const playerSummary = await playerService.getPlayerSummary(Number(selectedGameweekData.most_captained));
   
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
-              (item) => item.round === currentGameweek // Assuming `currentGameweek` is defined
+              (item) => item.round === currentGameweek
             );
   
             if (currentGameweekData?.opponent_team) {
@@ -177,14 +177,14 @@ const Index = () => {
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
                 .select('short_name')
-                .eq('id', BigInt(currentGameweekData.opponent_team));
+                .eq('id', Number(currentGameweekData.opponent_team));
   
               if (opponentTeamError) {
                 console.error('Error fetching opponent team data:', opponentTeamError);
                 return;
               }
   
-              setMostCaptPlayerOpp(opponentTeamData); // Assuming this state exists
+              setMostCaptPlayerOpp(opponentTeamData);
             }
           }
         }
