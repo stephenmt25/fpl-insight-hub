@@ -41,9 +41,9 @@ export function TempRadarChart() {
   return (
     <Card>
       <CardHeader className="items-center pb-4">
-        {/* <CardTitle>Radar Chart - Lines Only</CardTitle> */}
+        <CardTitle>Radar Chart - Lines Only</CardTitle>
         <CardDescription>
-          Showing total visitors for the last 6 months
+          
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0">

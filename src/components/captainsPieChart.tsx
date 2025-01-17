@@ -9,6 +9,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card"
 import {
   ChartConfig,
@@ -84,9 +85,9 @@ export function CaptaincyPieChart() {
   return (
     <Card>
       <CardHeader className="items-center pb-4">
-        {/* <CardTitle>Radar Chart - Lines Only</CardTitle> */}
+        <CardTitle>Top 5 Captains Distribution</CardTitle>
         <CardDescription>
-          Top 5 Captains Distribution
+          
         </CardDescription>
       </CardHeader>
       <CardContent className="pb-0">

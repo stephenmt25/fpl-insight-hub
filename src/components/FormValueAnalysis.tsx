@@ -11,20 +11,54 @@ interface PlayerData {
   team: number;
 }
 
+interface ProcessedPlayerData {
+  name: string;
+  form: number;
+  price: number;
+  ownership: number;
+  teamName: string | null;
+}
+
 export function FormValueAnalysis() {
   const [playerData, setPlayerData] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processedData, setProcessedData] = useState<ProcessedPlayerData[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: playerData, error: playerError } = await supabase
           .from('plplayerdata')
           .select('web_name, now_cost, form, selected_by_percent, team')
           .not('form', 'is', null)
 
-        if (error) throw error;
-        setPlayerData(data || []);
+        if (playerError) throw playerError;
+
+        const filteredPlayers = playerData
+          .filter(player => parseFloat(player.form || '0') >= 1) // Exclude players with form < 1
+          .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
+
+        const teamIds = [...new Set(filteredPlayers.map(player => player.team))];
+        const { data: teamData, error: teamError } = await supabase
+          .from('plteams')
+          .select('id, short_name')
+          .in('id', teamIds);
+
+        if (teamError) throw teamError;
+
+        const teamMap = (teamData || []).reduce(
+          (map, team) => ({ ...map, [team.id]: team.short_name }),
+          {} as Record<number, string>
+        );
+
+        const processed = filteredPlayers.map(player => ({
+          name: player.web_name,
+          price: player.now_cost / 10,
+          form: parseFloat(player.form || '0'),
+          ownership: parseFloat(player.selected_by_percent || '0'),
+          teamName: teamMap[player.team] || null,
+        }));
+        setProcessedData(processed);
       } catch (error) {
         console.error('Error fetching player data:', error);
       } finally {
@@ -35,15 +69,7 @@ export function FormValueAnalysis() {
     fetchData();
   }, []);
 
-  const processedData = playerData
-  .filter(player => parseFloat(player.form || '0') >= 1) // Exclude players with form < 1
-  .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
-  .map(player => ({
-    name: player.web_name,
-    price: player.now_cost / 10,
-    form: parseFloat(player.form || '0'),
-    ownership: parseFloat(player.selected_by_percent || '0'),
-  }));
+
 
   const averageForm = processedData.reduce((acc, curr) => acc + curr.form, 0) / processedData.length;
   const averagePrice = processedData.reduce((acc, curr) => acc + curr.price, 0) / processedData.length;
@@ -60,103 +86,119 @@ export function FormValueAnalysis() {
 
   if (loading) return <div>Loading...</div>;
 
-  // interface DotProps {
-  //   cx: number;
-  //   cy: number;
-  // }
-
-  // const RenderDot: FC<DotProps> = ({ cx, cy }) => {
-  //   return (
-  //     <Dot cx={cx} cy={cy} r={5} />
-  //   )
-  // }
-
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle>Form vs Value Analysis</CardTitle>
-        <CardDescription>
-          Visualizing players based on their form, price, and ownership
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col lg:flex-row gap-4">
-        <div className="w-full lg:w-3/5 h-[400px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis 
-                type="number" 
-                dataKey="price" 
-                name="Price" 
-                unit="m" 
-                domain={['dataMin', 'dataMax']}
-              />
-              <YAxis 
-                type="number" 
-                dataKey="form" 
-                name="Form" 
-                domain={['dataMin', 'dataMax']}
-                hide
-              />
-              <ZAxis 
-                type="number" 
-                dataKey="ownership" 
-                name="Ownership" 
-                range={[50, 500]}
-              />
-              <Tooltip 
-                cursor={{ strokeDasharray: '3 3' }}
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const data = payload[0].payload;
-                    return (
-                      <div className="bg-white p-2 border rounded shadow">
-                        <p className="font-bold">{data.name}</p>
-                        <p>Price: £{data.price}m</p>
-                        <p>Form: {data.form}</p>
-                        <p>Ownership: {data.ownership}%</p>
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-              <ReferenceLine x={averagePrice} stroke="#666" strokeDasharray="3 3" />
-              <ReferenceLine y={averageForm} stroke="#666" strokeDasharray="3 3" />
-              <Scatter
-                data={processedData}
-                fill="#8884d8"
-                fillOpacity={0.6}
+    <div className="w-full lg:gap-20 gap-4 grid grid-cols-5">
+      <Card className="col-span-5 lg:col-span-2">
+        <CardHeader>
+          {/* <CardTitle>Top 5 Differential Picks</CardTitle> */}
+        </CardHeader>
+        <CardContent className="flex flex-col lg:flex-row gap-4 ">
+        <div className="w-full gap-2 grid grid-cols-2">
+            <div className="col-span-1">
+              <h4 className="font-semibold mb-2">Good Value</h4>
+              {goodValuePlayers.map((player, index) => (
+                <div key={index} className="mb-2 p-2 flex justify-between  bg-green-50 rounded">
+                  <div className="font-medium">
+                    {player.name}
+                    <br />
+                    <div className="text-sm  text-gray-400">
+                      {player.teamName && `${player.teamName}`}
+                    </div>
+                  </div>
+                  <div className="text-sm text-right text-gray-600">
+                    Price: £{player.price}m
+                    <br />
+                    Form: {player.form}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div>
+              <h4 className="font-semibold mb-2">Bad Value</h4>
+              {badValuePlayers.map((player, index) => (
+                <div key={index} className="mb-2 p-2 bg-red-50 flex justify-between  rounded">
+                  <div className="font-medium">
+                    {player.name}
+                    <br />
+                    <div className="text-sm text-gray-400">
+                      {player.teamName && `${player.teamName}`}
+                    </div>
+                  </div>
+                  <div className=" text-sm text-right text-gray-600">
+                    Price: £{player.price}m
+                    <br />
+                    Form: {player.form}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="col-span-5 lg:col-span-3">
+        <CardHeader>
+          <CardTitle>Bargains</CardTitle>
+          <CardDescription>
+            Visualizing players based on their form, price, and ownership
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col lg:flex-row gap-4">
+          <div className="w-full h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  type="number"
+                  dataKey="price"
+                  name="Price"
+                  unit="m"
+                  domain={['dataMin', 'dataMax']}
+                />
+                <YAxis
+                  type="number"
+                  dataKey="form"
+                  name="Form"
+                  domain={['dataMin', 'dataMax']}
+                  hide
+                />
+                <ZAxis
+                  type="number"
+                  dataKey="ownership"
+                  name="Ownership"
+                  range={[50, 500]}
+                />
+                <Tooltip
+                  cursor={{ strokeDasharray: '3 3' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="bg-white p-2 border rounded shadow">
+                          <p className="font-bold">{data.name}</p>
+                          <p>Price: £{data.price}m</p>
+                          <p>Form: {data.form}</p>
+                          <p>Ownership: {data.ownership}%</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <ReferenceLine x={averagePrice} stroke="#666" strokeDasharray="3 3" />
+                <ReferenceLine y={averageForm} stroke="#666" strokeDasharray="3 3" />
+                <Scatter
+                  data={processedData}
+                  fill="#8884d8"
+                  fillOpacity={0.6}
                 // shape={<RenderDot/>}
-              />
-            </ScatterChart>
-          </ResponsiveContainer>
-        </div>
-        <div className="w-full lg:w-2/5 gap-2 grid grid-cols-2">
-          <div className="col-span-1">
-            <h4 className="font-semibold mb-2">Top 5 Good Value Players</h4>
-            {goodValuePlayers.map((player, index) => (
-              <div key={index} className="mb-2 p-2 bg-green-50 rounded">
-                <div className="font-medium">{player.name}</div>
-                <div className="text-sm text-gray-600">
-                  Price: £{player.price}m | Form: {player.form}
-                </div>
-              </div>
-            ))}
+                />
+              </ScatterChart>
+            </ResponsiveContainer>
           </div>
-          <div>
-            <h4 className="font-semibold mb-2">Bottom 5 Bad Value Players</h4>
-            {badValuePlayers.map((player, index) => (
-              <div key={index} className="mb-2 p-2 bg-red-50 rounded">
-                <div className="font-medium">{player.name}</div>
-                <div className="text-sm text-gray-600">
-                  Price: £{player.price}m | Form: {player.form}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+          
+        </CardContent>
+      </Card>
+    </div>
   );
 }

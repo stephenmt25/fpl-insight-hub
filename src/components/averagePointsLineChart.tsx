@@ -6,6 +6,7 @@ import {
   CardContent,
   CardDescription,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -38,9 +39,10 @@ const chartConfig = {
 
 export function AveragePtsLineChart() {
   return (
-    <Card>
+    <Card className="h-full">
       <CardHeader>
-        <CardDescription>Average Points</CardDescription>
+        <CardTitle>Average Points</CardTitle>
+        <CardDescription></CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
