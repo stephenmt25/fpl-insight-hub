@@ -29,7 +29,7 @@ export function VisualizationSection() {
               <CardContent className="flex flex-col lg:flex-row gap-4">
                 <div className="w-full">
                   <div
-                    className='flex justify-between rounded bg-gray-50'
+                    className='flex justify-between rounded'
                   >
                     <div className="text-4xl">
                       M.Salah
@@ -57,7 +57,7 @@ export function VisualizationSection() {
               </CardHeader>
               <CardContent className="flex flex-col lg:flex-row gap-4">
                   <div className='flex-row w-full'>
-                    <div className="flex justify-between rounded bg-gray-50">
+                    <div className="flex justify-between rounded">
                       <div className="">
                         Total Transferred Made
                       </div>
@@ -66,7 +66,7 @@ export function VisualizationSection() {
                       </div>
                     </div>
                     
-                    <div className="flex justify-between rounded bg-gray-50">
+                    <div className="flex justify-between rounded">
                       <div className="">
                         Most Transferred In
                       </div>
