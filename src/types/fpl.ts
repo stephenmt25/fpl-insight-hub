@@ -77,3 +77,86 @@ export interface Event {
 export interface OverallInfo {
   events: Event[];
 }
+
+export interface PlayerFixture {
+  id: number;
+  kickoff_time: string;
+  gameweek: number;
+  is_home: boolean;
+  difficulty: number;
+  team_h: number;
+  team_a: number;
+  finished: boolean;
+}
+
+export interface PlayerStats {
+  minutes: number;
+  goals_scored: number;
+  assists: number;
+  clean_sheets: number;
+  goals_conceded: number;
+  own_goals: number;
+  penalties_saved: number;
+  penalties_missed: number;
+  yellow_cards: number;
+  red_cards: number;
+  saves: number;
+  bonus: number;
+  bps: number;
+  influence: string;
+  creativity: string;
+  threat: string;
+  ict_index: string;
+  expected_goals: string;
+  expected_assists: string;
+}
+
+export interface PlayerSummary {
+  fixtures: PlayerFixture[];
+  history: PlayerStats[];
+}
+
+export interface GameweekPlayerStats {
+  elements: {
+    id: number;
+    stats: PlayerStats;
+    explain: any[];
+  }[];
+}
+
+export interface ManagerTransfers {
+  element_in: number;
+  element_in_cost: number;
+  element_out: number;
+  element_out_cost: number;
+  entry: number;
+  event: number;
+  time: string;
+}
+
+export interface Pick {
+  element: number;
+  position: number;
+  multiplier: number;
+  is_captain: boolean;
+  is_vice_captain: boolean;
+}
+
+export interface GameweekPicks {
+  active_chip: string | null;
+  automatic_subs: any[];
+  entry_history: {
+    event: number;
+    points: number;
+    total_points: number;
+    rank: number;
+    rank_sort: number;
+    overall_rank: number;
+    bank: number;
+    value: number;
+    event_transfers: number;
+    event_transfers_cost: number;
+    points_on_bench: number;
+  };
+  picks: Pick[];
+}

@@ -1,7 +1,7 @@
 import { apiClient } from '../api-client';
 import { ENDPOINTS } from './endpoints';
 import { handleApiResponse } from './response-handler';
-import { Manager, ManagerHistory, ManagerLeagues, OverallInfo } from '../../types/fpl';
+import { Manager, ManagerHistory, ManagerLeagues, ManagerTransfers, GameweekPicks, OverallInfo } from '../../types/fpl';
 
 export const managerService = {
   getInfo: (managerId: string) => 
@@ -17,6 +17,16 @@ export const managerService = {
   getLeagues: (managerId: string) =>
     handleApiResponse<ManagerLeagues>(
       apiClient.get(ENDPOINTS.manager.leagues(managerId))
+    ),
+
+  getTransfers: (managerId: string) =>
+    handleApiResponse<ManagerTransfers>(
+      apiClient.get(ENDPOINTS.manager.transfers(managerId))
+    ),
+
+  getGameweekTeamPicks: (managerId: string, gameweek: string) =>
+    handleApiResponse<GameweekPicks>(
+      apiClient.get(ENDPOINTS.manager.picks(managerId, gameweek))
     ),
 
   getOverallInfo: () => 
