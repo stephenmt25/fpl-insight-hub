@@ -76,14 +76,14 @@ const Index = () => {
             .from('plplayerdata')
             .select()
             .eq('id', Number(selectedGameweekData.top_element));
-  
+
           if (playerError) {
             console.error('Error fetching player data:', playerError);
             return;
           }
-  
+
           setHighScorePlayer(playerData);
-  
+
           if (playerData && playerData[0]?.team) {
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
@@ -93,24 +93,24 @@ const Index = () => {
               console.error('Error fetching team data:', teamError);
               return;
             }
-  
+
             setHighScorePlayerTeam(teamData);
           }
-  
+
           // Convert number to string when calling getPlayerSummary
           const playerSummary = await playerService.getPlayerSummary(String(selectedGameweekData.top_element));
-  
+
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
               (item) => item.round === currentGameweek
             );
-  
+
             if (currentGameweekData?.opponent_team) {
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
                 .select('short_name')
                 .eq('id', Number(currentGameweekData.opponent_team));
-  
+
               if (opponentTeamError) {
                 console.error('Error fetching opponent team data:', opponentTeamError);
                 return;
@@ -124,10 +124,10 @@ const Index = () => {
         console.error('Unexpected error:', error);
       }
     };
-  
+
     fetchHighScorePlayerAndTeam();
   }, [selectedGameweekData]);
-  
+
 
   useEffect(() => {
     const fetchMostCaptPlayerAndTeam = async () => {
@@ -137,47 +137,47 @@ const Index = () => {
             .from('plplayerdata')
             .select()
             .eq('id', Number(selectedGameweekData.most_captained));
-  
+
           if (playerError) {
             console.error('Error fetching most-captained player data:', playerError);
             return;
           }
-  
+
           setMostCaptPlayer(playerData);
-  
+
           if (playerData && playerData[0]?.team) {
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
               .select()
               .eq('id', Number(playerData[0].team));
-  
+
             if (teamError) {
               console.error('Error fetching most-captained player team data:', teamError);
               return;
             }
-  
+
             setMostCaptPlayerTeam(teamData);
           }
-  
+
           // Convert number to string when calling getPlayerSummary
           const playerSummary = await playerService.getPlayerSummary(String(selectedGameweekData.most_captained));
-  
+
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
               (item) => item.round === currentGameweek
             );
-  
+
             if (currentGameweekData?.opponent_team) {
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
                 .select('short_name')
                 .eq('id', Number(currentGameweekData.opponent_team));
-  
+
               if (opponentTeamError) {
                 console.error('Error fetching opponent team data:', opponentTeamError);
                 return;
               }
-  
+
               setMostCaptPlayerOpp(opponentTeamData);
             }
           }
@@ -186,7 +186,7 @@ const Index = () => {
         console.error('Unexpected error:', error);
       }
     };
-  
+
     fetchMostCaptPlayerAndTeam();
   }, [selectedGameweekData]);
 
@@ -202,15 +202,17 @@ const Index = () => {
 
   return (
     <div className="space-y-1">
-      <WelcomeBanner />
-
-      <GameweekPaginator
-        currentGameweek={currentGameweek}
-        setCurrentGameweek={setCurrentGameweek}
-        totalGameweeks={totalGameweeks}
-        liveGameweek={liveGameweek}
-      />
-
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">
+            Here's the FPL 2025 season at a glance.
+          </h2>
+          <p className="mt-2 text-muted-foreground">
+            Overall FPL data and statistics.
+          </p>
+        </div>
+      </div>
+      <br />
       <Tabs defaultValue="charts" className="space-y-4">
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
@@ -219,6 +221,13 @@ const Index = () => {
           </TabsList>
         </div>
         <TabsContent value="charts" className="space-y-4">
+          <GameweekPaginator
+            currentGameweek={currentGameweek}
+            setCurrentGameweek={setCurrentGameweek}
+            totalGameweeks={totalGameweeks}
+            liveGameweek={liveGameweek}
+          />
+
           <StatsOverview
             currentGW={selectedGameweekData}
             mostCaptPlayer={mostCaptPlayer}

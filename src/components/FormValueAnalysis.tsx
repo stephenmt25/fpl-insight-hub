@@ -35,7 +35,7 @@ export function FormValueAnalysis() {
         if (playerError) throw playerError;
 
         const filteredPlayers = playerData
-          .filter(player => parseFloat(player.form || '0') >= 1) // Exclude players with form < 1
+          .filter(player => parseFloat(player.form || '0') >= 2) // Exclude players with form < 1
           .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
 
         const teamIds = [...new Set(filteredPlayers.map(player => player.team))];
@@ -75,7 +75,7 @@ export function FormValueAnalysis() {
   const averagePrice = processedData.reduce((acc, curr) => acc + curr.price, 0) / processedData.length;
 
   const goodValuePlayers = processedData
-    .filter(player => player.form > averageForm && player.price < averagePrice)
+    .filter(player => player.form > 6.5 && player.price < averagePrice)
     .sort((a, b) => (b.form / b.price) - (a.form / a.price))
     .slice(0, 5);
 

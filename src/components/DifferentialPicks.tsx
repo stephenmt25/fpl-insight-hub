@@ -32,7 +32,7 @@ export function DifferentialPicks() {
         if (playerError) throw playerError;
 
         const filteredPlayers = playerData
-          .filter(player => parseFloat(player.form || '0') >= 4) // Exclude players with form < 4
+          .filter(player => parseFloat(player.form || '0') >= 2) // Exclude players with form < 4
           .filter(player => parseFloat(player.selected_by_percent || '0') > 0); // Exclude players with 0% ownership
 
         const teamIds = [...new Set(filteredPlayers.map(player => player.team))];
@@ -66,11 +66,11 @@ export function DifferentialPicks() {
     fetchPlayersAndTeams();
   }, []);
 
-  const OWNERSHIP_THRESHOLD = 15;
+  const OWNERSHIP_THRESHOLD = 25;
   const averageForm = processedData.reduce((acc, curr) => acc + curr.form, 0) / processedData.length;
 
   const differentialPicks = processedData
-    .filter(player => player.form > averageForm && player.ownership < OWNERSHIP_THRESHOLD)
+    .filter(player => player.form > 6.5 && player.ownership < OWNERSHIP_THRESHOLD)
     .sort((a, b) => (b.form / b.ownership) - (a.form / a.ownership))
     .slice(0, 5);
 

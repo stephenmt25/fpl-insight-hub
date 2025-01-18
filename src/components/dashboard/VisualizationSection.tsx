@@ -12,9 +12,6 @@ export function VisualizationSection() {
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-4">
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="col-span-3 ">
-            <DifferentialPicks />
-          </div>
           <div className="col-span-3 lg:col-span-1">
             <CaptaincyPieChart />
           </div>
@@ -56,35 +53,37 @@ export function VisualizationSection() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-col lg:flex-row gap-4">
-                  <div className='flex-row w-full'>
-                    <div className="flex justify-between rounded">
-                      <div className="">
-                        Total Transferred Made
-                      </div>
-                      <div className="text-xl text-right text-gray-600">
-                        11,543,203
+                <div className='flex-row w-full'>
+                  <div className="flex justify-between rounded">
+                    <div className="">
+                      Total Transferred Made
+                    </div>
+                    <div className="text-xl text-right text-gray-600">
+                      11,543,203
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between rounded">
+                    <div className="">
+                      Most Transferred In
+                    </div>
+                    <div className="text-xl text-right text-gray-600">
+                      Gordon
+                      <br />
+                      <div className="text-sm text-gray-400">
+                        Team
                       </div>
                     </div>
-                    
-                    <div className="flex justify-between rounded">
-                      <div className="">
-                        Most Transferred In
-                      </div>
-                      <div className="text-xl text-right text-gray-600">
-                        Gordon
-                        <br />
-                        <div className="text-sm text-gray-400">
-                          Team
-                        </div>
-                      </div>
-                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
           </div>
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />
-
+          </div>
+          <div className="col-span-3 ">
+            <DifferentialPicks />
           </div>
           <div className="col-span-3">
             <FormValueAnalysis />

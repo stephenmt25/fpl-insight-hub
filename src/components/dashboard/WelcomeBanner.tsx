@@ -38,10 +38,10 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
       <div>
         <h2 className="text-3xl font-bold tracking-tight">
-          Here's the FPL 2025 season at a glance.
+          Sign in with your FPL ID to see your performance analytics.
         </h2>
         <p className="mt-2 text-muted-foreground">
-          Overall FPL data and statistics.
+          Track your progress and make informed decisions for your team.
         </p>
       </div>
     </div>
