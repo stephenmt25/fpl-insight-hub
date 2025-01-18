@@ -1,4 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowUp, ArrowDown, Star, AlertCircle, Minus } from "lucide-react";
 import {
   Tooltip,
@@ -51,12 +51,12 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
 
   return (
     <div className="space-y-4">
-      <div className="text-center space-y-2">
+      <div className="text-start space-y-2">
         <h2 className="text-2xl font-bold">Team Name</h2>
         <p className="text-muted-foreground">Gameweek {gameweek} Performance</p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         {/* Points Card */}
         <Card>
           <CardHeader className="space-y-0 pb-2">
@@ -67,21 +67,21 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
             <p className="text-xs text-muted-foreground">
               League Average: {mockData.averagePoints}
             </p>
-            <div className="mt-2 h-2 w-full bg-gray-200 rounded-full">
+            {/* <div className="mt-2 h-2 w-full bg-gray-200 rounded-full">
               <div
                 className="h-2 bg-green-500 rounded-full"
                 style={{
                   width: `${(mockData.points / 100) * 100}%`,
                 }}
               />
-            </div>
+            </div> */}
           </CardContent>
         </Card>
 
         {/* Rank Card */}
         <Card>
           <CardHeader className="space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gameweek Rank</CardTitle>
+            <CardTitle className="text-sm font-medium">Overall Rank</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex items-center gap-2">
@@ -91,27 +91,30 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
               {getRankIcon(mockData.rank, mockData.previousRank)}
             </div>
             <p className="text-xs text-muted-foreground">
-              Previous: {mockData.previousRank.toLocaleString()}
+              Gameweek Rank: {mockData.previousRank.toLocaleString()}
             </p>
           </CardContent>
         </Card>
 
-        {/* Bench Points Card */}
+        {/* Captain Performance Card */}
         <Card>
           <CardHeader className="space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger>Bench Points</TooltipTrigger>
-                  <TooltipContent>
-                    <p>Points scored by players on your bench</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockData.benchPoints}</div>
+            <div className="space-y-2">
+              <div className="text-2xl font-bold">{mockData.captain.name}</div>
+              <div className="text-sm">{mockData.captain.points} points</div>
+              <div className="text-xs text-muted-foreground">
+                {mockData.captain.streak} week streak
+              </div>
+              <div className="h-1 w-full bg-gray-200 rounded-full">
+                <div
+                  className="h-1 bg-green-500 rounded-full"
+                  style={{ width: `${(mockData.captain.streak / 5) * 100}%` }}
+                />
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -155,25 +158,25 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
           </CardContent>
         </Card>
 
-        {/* Captain Performance Card */}
-        <Card>
+                {/* Bench Points Card */}
+                <Card>
           <CardHeader className="space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger>Bench Points</TooltipTrigger>
+                  <TooltipContent>
+                    <p>Points scored by players on your bench</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <div className="text-2xl font-bold">{mockData.captain.name}</div>
-              <div className="text-sm">{mockData.captain.points} points</div>
-              <div className="text-xs text-muted-foreground">
-                {mockData.captain.streak} week streak
-              </div>
-              <div className="h-1 w-full bg-gray-200 rounded-full">
-                <div
-                  className="h-1 bg-green-500 rounded-full"
-                  style={{ width: `${(mockData.captain.streak / 5) * 100}%` }}
-                />
-              </div>
-            </div>
+            <div className="text-2xl font-bold">{mockData.benchPoints}</div>
+            <p className="text-xs text-muted-foreground">
+              Auto Subs: None
+            </p>
           </CardContent>
         </Card>
       </div>

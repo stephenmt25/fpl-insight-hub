@@ -39,8 +39,8 @@ export function PlayerPerformanceTable({ players }: PlayerPerformanceTableProps)
           <TableRow>
             <TableHead>Player</TableHead>
             <TableHead>Position</TableHead>
-            <TableHead className="text-right">Points</TableHead>
-            <TableHead className="text-right">Performance</TableHead>
+            <TableHead className="text-center">Points</TableHead>
+            <TableHead className="text-center">Performance</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -55,8 +55,8 @@ export function PlayerPerformanceTable({ players }: PlayerPerformanceTableProps)
                 </div>
               </TableCell>
               <TableCell>{player.position}</TableCell>
-              <TableCell className="text-right">{player.points}</TableCell>
-              <TableCell className="text-right">
+              <TableCell className="text-center">{player.points}</TableCell>
+              <TableCell className="flex justify-center">
                 {getPerformanceIcon(player.performance)}
               </TableCell>
             </TableRow>
