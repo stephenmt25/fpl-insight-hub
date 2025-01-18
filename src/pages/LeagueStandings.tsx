@@ -85,25 +85,6 @@ export default function LeagueStandings() {
               /> :
               <>
                 <LeagueTable leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
-                <div className="mt-4 flex justify-between">
-                  <span>Page: {pageNumber}</span>
-                  <div className="gap-2 flex">
-                    <Button
-                      variant="outline"
-                      disabled={parseInt(pageNumber) === 1}
-                      onClick={() => setPageNumber((prev) => (parseInt(prev) - 1).toString())}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      disabled={!leagueData?.standings?.has_next}
-                      onClick={() => setPageNumber((prev) => (parseInt(prev) + 1).toString())}
-                    >
-                      Next
-                    </Button>
-                  </div>
-                </div>
               </>
           }
 

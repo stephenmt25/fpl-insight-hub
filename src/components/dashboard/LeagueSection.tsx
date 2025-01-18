@@ -68,25 +68,6 @@ export function LeagueSection({
       ) : (
         <>
           <LeagueTable leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
-          <div className="mt-4 flex justify-between">
-            <span>Page: {pageNumber}</span>
-            <div className="gap-2 flex">
-              <Button
-                variant="outline"
-                disabled={parseInt(pageNumber) === 1}
-                onClick={handlePreviousPage}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                disabled={!leagueData?.standings?.has_next}
-                onClick={handleNextPage}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
         </>
       )}
     </div>
