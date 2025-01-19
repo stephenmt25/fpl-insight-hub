@@ -8,6 +8,7 @@ import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
+import { DreamTeamTable } from "@/components/DreamTeamTable";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 const Index = () => {
@@ -218,6 +219,7 @@ console.log(currentGW, currentGameweek)
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="charts">FPL Data Visualized</TabsTrigger>
             <TabsTrigger value="table">FPL Standings</TabsTrigger>
+            <TabsTrigger value="dream-team">Dream Team</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="charts" className="space-y-4">
@@ -248,6 +250,10 @@ console.log(currentGW, currentGameweek)
             leagueData={leagueData}
             setLeagueId={setLeagueId}
           />
+        </TabsContent>
+
+        <TabsContent value="dream-team">
+          <DreamTeamTable />
         </TabsContent>
       </Tabs>
     </div>
