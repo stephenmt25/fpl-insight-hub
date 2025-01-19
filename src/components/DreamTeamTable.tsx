@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -32,6 +32,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
+import { supabase } from "@/integrations/supabase/client";
+import { playerService } from "@/services/fpl-api";
+import { useQuery } from "@tanstack/react-query";
 
 interface DreamTeamPlayer {
   id: number;
@@ -55,6 +58,67 @@ export function DreamTeamTable() {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentGameweek, setCurrentGameweek] = useState("1");
   const [rowsPerPage, setRowsPerPage] = useState("20");
+  const [players, setPlayers] = useState<DreamTeamPlayer[]>([]);
+
+  const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery({
+    queryKey: ['dreamTeam', currentGameweek],
+    queryFn: () => playerService.getGameweekDreamTeam(currentGameweek),
+  });
+
+  const { data: liveData, isLoading: isLiveDataLoading } = useQuery({
+    queryKey: ['liveGameweek', currentGameweek],
+    queryFn: () => playerService.getGameweekPlayerStats(currentGameweek),
+    enabled: !!dreamTeamData,
+  });
+
+  useEffect(() => {
+    const fetchPlayerDetails = async () => {
+      if (!dreamTeamData?.team || !liveData?.elements) return;
+
+      const playerIds = dreamTeamData.team.map(player => player.element);
+      
+      const { data: playerData, error } = await supabase
+        .from('plplayerdata')
+        .select('*')
+        .in('id', playerIds);
+
+      if (error) {
+        console.error('Error fetching player data:', error);
+        return;
+      }
+
+      const dreamTeamPlayers = dreamTeamData.team.map(dreamTeamMember => {
+        const playerDetails = playerData?.find(p => p.id === dreamTeamMember.element);
+        const liveStats = liveData.elements.find(e => e.id === dreamTeamMember.element)?.stats;
+
+        if (!playerDetails || !liveStats) return null;
+
+        return {
+          id: playerDetails.id,
+          name: `${playerDetails.first_name} ${playerDetails.second_name}`,
+          position: playerDetails.element_type === 1 ? 'GK' : 
+                   playerDetails.element_type === 2 ? 'DEF' :
+                   playerDetails.element_type === 3 ? 'MID' : 'FWD',
+          club: playerDetails.team_code?.toString() || '',
+          points: dreamTeamMember.points,
+          selectedBy: playerDetails.selected_by_percent,
+          minutes: parseInt(liveStats.minutes),
+          goals: parseInt(liveStats.goals_scored),
+          assists: parseInt(liveStats.assists),
+          cleanSheet: liveStats.clean_sheets === 1,
+          ictIndex: liveStats.ict_index,
+          xG: liveStats.expected_goals,
+          xA: liveStats.expected_assists,
+          bonusPoints: parseInt(liveStats.bonus),
+          dreamTeamPosition: `${playerDetails.element_type}${dreamTeamMember.position}`,
+        };
+      }).filter((player): player is DreamTeamPlayer => player !== null);
+
+      setPlayers(dreamTeamPlayers);
+    };
+
+    fetchPlayerDetails();
+  }, [dreamTeamData, liveData]);
 
   const getPositionIcon = (position: string) => {
     switch (position) {
@@ -80,29 +144,7 @@ export function DreamTeamTable() {
     return "";
   };
 
-  // Mock data - replace with actual API data
-  const mockPlayers: DreamTeamPlayer[] = [
-    {
-      id: 1,
-      name: "Erling Haaland",
-      position: "FWD",
-      club: "MCI",
-      points: 13,
-      selectedBy: "85.2%",
-      minutes: 90,
-      goals: 2,
-      assists: 1,
-      cleanSheet: true,
-      ictIndex: "15.2",
-      xG: "1.52",
-      xA: "0.35",
-      bonusPoints: 3,
-      dreamTeamPosition: "FWD1",
-    },
-    // Add more mock players as needed
-  ];
-
-  const filteredPlayers = mockPlayers.filter(
+  const filteredPlayers = players.filter(
     (player) =>
       player.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       player.club.toLowerCase().includes(searchTerm.toLowerCase())
@@ -112,6 +154,10 @@ export function DreamTeamTable() {
     // Implement CSV export functionality
     console.log("Exporting data...");
   };
+
+  if (isDreamTeamLoading || isLiveDataLoading) {
+    return <div>Loading dream team data...</div>;
+  }
 
   return (
     <div className="space-y-4">
@@ -253,7 +299,7 @@ export function DreamTeamTable() {
 
       <div className="flex justify-between items-center">
         <div>
-          Displaying {filteredPlayers.length} of {mockPlayers.length} players
+          Displaying {filteredPlayers.length} of {players.length} players
         </div>
         <Select
           value={rowsPerPage}

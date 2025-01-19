@@ -12,5 +12,10 @@ export const playerService = {
   getGameweekPlayerStats: (gameweek: string) =>
     handleApiResponse<GameweekPlayerStats>(
       apiClient.get(ENDPOINTS.player.gameweekStats(gameweek))
+    ),
+    
+  getGameweekDreamTeam: (gameweek: string) =>
+    handleApiResponse(
+      apiClient.get(ENDPOINTS.player.dreamTeam(gameweek))
     )
 };

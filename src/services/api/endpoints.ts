@@ -1,19 +1,35 @@
 export const ENDPOINTS = {
-  manager: {
-    info: (managerId: string) => `/entry/${managerId}/`,
-    history: (managerId: string) => `/entry/${managerId}/history/`,
-    leagues: (managerId: string) => `/entry/${managerId}/leagues/`,
-    transfers: (managerId: string) => `/entry/${managerId}/transfers/`,
-    picks: (managerId: string, gameweek: string) => `/entry/${managerId}/event/${gameweek}/picks/`
-  },
-  league: {
-    standings: (leagueId: string, pageNumber: string) => `/leagues-classic/${leagueId}/standings/?page_standings=${pageNumber}`
-  },
   player: {
     summary: (playerId: string) => `/element-summary/${playerId}/`,
-    gameweekStats: (gameweek: string) => `/event/${gameweek}/live/`
+    gameweekStats: (gameweek: string) => `/event/${gameweek}/live/`,
+    dreamTeam: (gameweek: string) => `/dream-team/${gameweek}/`
   },
-  overall: {
-    info: () => '/bootstrap-static/'
+  manager: {
+    overview: (managerId: string) => `/entry/${managerId}/`,
+    history: (managerId: string) => `/entry/${managerId}/history/`,
+    transfers: (managerId: string) => `/entry/${managerId}/transfers/`,
+    myTeam: (managerId: string) => `/my-team/${managerId}/`,
+    eventPicks: (managerId: string, eventId: string) => `/entry/${managerId}/event/${eventId}/picks/`
+  },
+  league: {
+    classicStandings: (leagueId: string) => `/leagues-classic/${leagueId}/standings/`,
+    h2hStandings: (leagueId: string) => `/leagues-h2h/${leagueId}/standings/`,
+    h2hMatches: (leagueId: string) => `/leagues-h2h-matches/league/${leagueId}/`
+  },
+  stats: {
+    dreamTeam: () => `/dream-team/`,
+    mostValuableTeams: () => `/stats/most-valuable-teams/`,
+    bestClassicPrivateLeagues: () => `/stats/best-classic-private-leagues/`
+  },
+  event: {
+    status: () => `/event-status/`
+  },
+  fixtures: {
+    all: () => `/fixtures/`,
+    byEvent: (eventId: string) => `/fixtures/?event=${eventId}`
+  },
+  playerData: {
+    all: () => `/element-summary/`,
+    byId: (playerId: string) => `/element-summary/${playerId}/`
   }
 };
