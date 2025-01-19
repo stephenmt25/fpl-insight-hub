@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Shield,
-  Ball,
+  Football,
   Star,
   Flame,
   Check,
@@ -61,7 +61,7 @@ export function DreamTeamTable() {
       case "DEF":
         return <Shield className="h-4 w-4" />;
       case "FWD":
-        return <Ball className="h-4 w-4" />;
+        return <Football className="h-4 w-4" />;
       default:
         return null;
     }
