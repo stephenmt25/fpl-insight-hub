@@ -1,6 +1,6 @@
 // Create a Context
 // context.js
-import { createContext, useState, useEffect } from 'react';
+import { createContext, useState } from 'react';
 
 interface TabContextType {
   activeTab: string;

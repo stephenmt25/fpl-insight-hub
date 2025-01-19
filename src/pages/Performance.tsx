@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useContext, useState } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
@@ -11,6 +11,7 @@ import { LeagueComparison } from "@/components/LeagueComparison";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { StatsCard } from "@/components/StatsCard";
+import { LiveGWContext } from "@/context/livegw-context";
 
 // Mock data for the player performance table
 const mockPlayers = [
@@ -95,10 +96,10 @@ const mockPlayers = [
 
 
 export default function Performance() {
-  const [currentGameweek, setCurrentGameweek] = useState(20);
-  const [liveGameweek, setLiveGameweek] = useState(20);
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn } = useAuth();
+  const { liveGameweekData } = useContext(LiveGWContext)
+  const [currentGameweek, setCurrentGameweek] = useState<number | null>(liveGameweekData.id);
 
   if (!isSignedIn) {
     return (
@@ -135,7 +136,7 @@ export default function Performance() {
           currentGameweek={currentGameweek}
           setCurrentGameweek={setCurrentGameweek}
           totalGameweeks={38}
-          liveGameweek={liveGameweek}
+          liveGameweek={liveGameweekData}
         />
         <TabsContent value="overview">
           {/* Performance Metrics */}

@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import {
   Pagination,
@@ -13,7 +12,7 @@ interface GameweekPaginatorProps {
   currentGameweek: number;
   setCurrentGameweek: (gameweek: number) => void;
   totalGameweeks: number;
-  liveGameweek: number;
+  liveGameweek: { id: number };
 }
 
 export function GameweekPaginator({
@@ -75,7 +74,7 @@ export function GameweekPaginator({
             })}
           </PaginationItem>
           <PaginationItem>
-            {currentGameweek !== liveGameweek && (
+            {currentGameweek !== liveGameweek.id && (
               <>
               <PaginationNext className="hidden lg:flex" onClick={handleNext} />
               <ChevronRight className=" lg:hidden" onClick={handleNext} />

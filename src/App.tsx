@@ -10,28 +10,31 @@ import Insights from "./pages/Insights";
 import LeagueStandings from "./pages/LeagueStandings";
 import { TabProvider } from './context/standings-tabs-context.tsx';
 import { AuthProvider } from "./context/auth-context";
+import { LiveGWProvider } from "./context/livegw-context.tsx";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <TabProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Routes>
-              <Route element={<Layout />}>
-                <Route path="/" element={<Index />} />
-                <Route path="/performance" element={<Performance />} />
-                <Route path="/insights" element={<Insights />} />
-                <Route path="/standings" element={<LeagueStandings />} />
-              </Route>
-            </Routes>
-          </BrowserRouter>
-        </TooltipProvider>
-      </TabProvider>
+      <LiveGWProvider>
+        <TabProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Routes>
+                <Route element={<Layout />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/performance" element={<Performance />} />
+                  <Route path="/insights" element={<Insights />} />
+                  <Route path="/standings" element={<LeagueStandings />} />
+                </Route>
+              </Routes>
+            </BrowserRouter>
+          </TooltipProvider>
+        </TabProvider>
+      </LiveGWProvider>
     </AuthProvider>
   </QueryClientProvider>
 );

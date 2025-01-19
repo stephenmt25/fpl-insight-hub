@@ -12,6 +12,9 @@ export function VisualizationSection() {
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-4">
         <div className="grid gap-4 lg:grid-cols-3">
+          <div className="col-span-3 ">
+            <DifferentialPicks />
+          </div>
           <div className="col-span-3 lg:col-span-1">
             <CaptaincyPieChart />
           </div>
@@ -81,9 +84,6 @@ export function VisualizationSection() {
           </div>
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />
-          </div>
-          <div className="col-span-3 ">
-            <DifferentialPicks />
           </div>
           <div className="col-span-3">
             <FormValueAnalysis />

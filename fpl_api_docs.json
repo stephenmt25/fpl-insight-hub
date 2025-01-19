@@ -747,7 +747,7 @@ League Standings
 }
 
 Stats
-/dream-team/: The highest-scoring team for the current gameweek.
+/dream-team/: The highest-scoring team for the season.
 {
   "top_player": {
     "id": 328,            // Integer (ID of the top player in the team)

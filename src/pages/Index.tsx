@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { useAuth } from "@/context/auth-context";
 import { leagueService, playerService } from "@/services/fpl-api";
@@ -9,6 +9,7 @@ import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { LiveGWContext } from "@/context/livegw-context";
 
 const Index = () => {
   const [gameweekData, setGameweekData] = useState<any[] | null>(null);
@@ -21,7 +22,7 @@ const Index = () => {
   const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
   const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
   const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
-
+  const { updateLiveGWData } = useContext(LiveGWContext)
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
 
@@ -40,7 +41,7 @@ const Index = () => {
       setGameweekData(data);
 
       // Find the current gameweek and set it
-      const currentGW = data?.find(gw => gw.is_previous === "true");
+      const currentGW = data?.find(gw => gw.is_current === "true");
       if (currentGW) {
         setCurrentGameweek(currentGW.id);
       }
@@ -48,11 +49,12 @@ const Index = () => {
     getData();
   }, []);
 
-  const currentGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweek = currentGW?.id || 1;
+  // const currentGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
+  const liveGameweek = gameweekData?.filter((gw) => gw.is_current === "true")[0] || 1;
+  updateLiveGWData(liveGameweek)
   const totalGameweeks = 38;
 
-  const [selectedGameweekData, setSelectedGameweekData] = useState(currentGW);
+  const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweek);
 
   useEffect(() => {
     const getGameweekData = async () => {
@@ -197,7 +199,7 @@ const Index = () => {
       signIn(storedFplId, storedManagerData);
     }
   }, []);
-console.log(currentGW, currentGameweek)
+
   // if (!currentGameweek) return null;
 
   return (
