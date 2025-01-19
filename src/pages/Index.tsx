@@ -199,7 +199,6 @@ const Index = () => {
     }
   }, []);
 console.log(currentGW, currentGameweek)
-  // if (!currentGameweek) return null;
 
   return (
     <div className="space-y-1">
@@ -239,7 +238,7 @@ console.log(currentGW, currentGameweek)
             mostCaptPlayerTeam={mostCaptPlayerTeam}
             mostCaptPlayerOpp={mostCaptPlayerOpp}
           />
-          <VisualizationSection />
+          <VisualizationSection liveGameweek={liveGameweek} />
         </TabsContent>
 
         <TabsContent value="table">
@@ -253,7 +252,7 @@ console.log(currentGW, currentGameweek)
         </TabsContent>
 
         <TabsContent value="dream-team">
-          <DreamTeamTable />
+          <DreamTeamTable liveGameweek={liveGameweek} />
         </TabsContent>
       </Tabs>
     </div>
