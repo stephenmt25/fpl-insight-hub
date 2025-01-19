@@ -4,9 +4,10 @@ import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
 import { CaptaincyPieChart } from "../captainsPieChart";
 import { FormValueAnalysis } from "../FormValueAnalysis";
 import { DifferentialPicks } from "../DifferentialPicks";
+import { DreamTeamTable } from "../DreamTeamTable";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
 
-export function VisualizationSection() {
+export function VisualizationSection({ liveGameweek }: { liveGameweek: number }) {
   return (
     <div className="w-full lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
@@ -16,7 +17,6 @@ export function VisualizationSection() {
             <CaptaincyPieChart />
           </div>
           <div className="col-span-3 lg:col-span-1">
-            {/* <TempRadarChart /> */}
             <Card className="lg:h-[48%] lg:w-4/5">
               <CardHeader>
                 <CardDescription>
@@ -25,9 +25,7 @@ export function VisualizationSection() {
               </CardHeader>
               <CardContent className="flex flex-col lg:flex-row gap-4">
                 <div className="w-full">
-                  <div
-                    className='flex justify-between rounded'
-                  >
+                  <div className='flex justify-between rounded'>
                     <div className="text-4xl">
                       M.Salah
                       <br />
@@ -82,16 +80,22 @@ export function VisualizationSection() {
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />
           </div>
-          <div className="col-span-3 ">
+          <div className="col-span-3">
+            <Card>
+              <CardHeader>
+                <CardDescription>Dream Team Performance</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <DreamTeamTable liveGameweek={liveGameweek} />
+              </CardContent>
+            </Card>
+          </div>
+          <div className="col-span-3">
             <DifferentialPicks />
           </div>
           <div className="col-span-3">
             <FormValueAnalysis />
           </div>
-          {/* <div className="col-span-3 lg:col-span-1">
-            <AverageTeamValueAreaChart />
-          </div> */}
-
         </div>
       </div>
     </div>
