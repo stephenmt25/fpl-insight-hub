@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import {
   Table,
   TableBody,
@@ -31,6 +31,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { playerService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
+import { LiveGWContext } from "@/context/livegw-context";
 
 interface DreamTeamPlayer {
   id: number;
@@ -48,20 +49,34 @@ interface DreamTeamPlayer {
   bonusPoints: number;
 }
 
-export function DreamTeamTable({ liveGameweek }: { liveGameweek: number }) {
-  const [currentGameweek, setCurrentGameweek] = useState(liveGameweek.toString());
+export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek: number, currentGameweek: any }) {
+  const displayedWeek = currentGameweek.toString()
+  console.log(displayedWeek)
   const [players, setPlayers] = useState<DreamTeamPlayer[]>([]);
 
-  const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery({
-    queryKey: ['dreamTeam', currentGameweek],
-    queryFn: () => playerService.getGameweekDreamTeam(currentGameweek),
-  });
+  // const [dreamTeamData, setDreamTeamData] = useState<any>({})
+  // const [isDreamTeamLoading, setIsDreamTeamLoading] = useState<any>(false)
+  // const [liveData, setLiveData] = useState<any>({})
+  // const [isLiveDataLoading, setIsLiveDataLoading] = useState<any>(false)
 
-  const { data: liveData, isLoading: isLiveDataLoading } = useQuery({
-    queryKey: ['liveGameweek', currentGameweek],
-    queryFn: () => playerService.getGameweekPlayerStats(currentGameweek),
-    enabled: !!dreamTeamData,
-  });
+  // useEffect(() => {
+    const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery({
+      queryKey: ['dreamTeam', displayedWeek],
+      queryFn: () => playerService.getGameweekDreamTeam(displayedWeek),
+    });
+
+    // setDreamTeamData(dreamTeamData)
+    // setIsDreamTeamLoading(isDreamTeamLoading)
+  
+    const { data: liveData, isLoading: isLiveDataLoading } = useQuery({
+      queryKey: ['liveGameweek', displayedWeek],
+      queryFn: () => playerService.getGameweekPlayerStats(displayedWeek),
+      enabled: !!dreamTeamData,
+    });
+
+  //   setLiveData(liveData)
+  //   setIsLiveDataLoading(isLiveDataLoading)
+  // }, [displayedWeek])
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
@@ -110,29 +125,6 @@ export function DreamTeamTable({ liveGameweek }: { liveGameweek: number }) {
     fetchPlayerDetails();
   }, [dreamTeamData, liveData]);
 
-  const getPositionIcon = (position: string) => {
-    switch (position) {
-      case "DEF":
-        return <Shield className="h-4 w-4" />;
-      case "FWD":
-        return <Shirt className="h-4 w-4" />;
-      default:
-        return null;
-    }
-  };
-
-  const getPerformanceIcon = (points: number, ictIndex: string) => {
-    if (points > 10) return <Star className="h-4 w-4 text-yellow-500" />;
-    if (parseFloat(ictIndex) > 10)
-      return <Flame className="h-4 w-4 text-orange-500" />;
-    return null;
-  };
-
-  const getRowStyle = (points: number) => {
-    if (points > 10) return "bg-green-50";
-    if (points < 5) return "bg-red-50";
-    return "";
-  };
 
   if (isDreamTeamLoading || isLiveDataLoading) {
     return <div>Loading dream team data...</div>;
@@ -142,30 +134,12 @@ export function DreamTeamTable({ liveGameweek }: { liveGameweek: number }) {
     <div className="space-y-4">
       <div className="text-center">
         <h2 className="text-2xl font-bold">
-          Dream Team Performance – Gameweek {currentGameweek}
+          Dream Team Performance – Gameweek {displayedWeek}
         </h2>
         <p className="text-muted-foreground">
           An overview of the top performers in Fantasy Premier League for this
           gameweek.
         </p>
-      </div>
-
-      <div className="flex justify-center mb-4">
-        <Select
-          value={currentGameweek}
-          onValueChange={(value) => setCurrentGameweek(value)}
-        >
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Select Gameweek" />
-          </SelectTrigger>
-          <SelectContent>
-            {Array.from({ length: 38 }, (_, i) => (
-              <SelectItem key={i + 1} value={(i + 1).toString()}>
-                Gameweek {i + 1}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
       </div>
 
       <div className="rounded-md border">
@@ -189,18 +163,15 @@ export function DreamTeamTable({ liveGameweek }: { liveGameweek: number }) {
             {players.map((player) => (
               <TableRow
                 key={player.id}
-                className={getRowStyle(player.points)}
               >
                 <TableCell className="font-medium">
                   <div className="flex items-center gap-2">
                     {player.name}
-                    {getPerformanceIcon(player.points, player.ictIndex)}
                   </div>
                 </TableCell>
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {player.position}
-                    {getPositionIcon(player.position)}
                   </div>
                 </TableCell>
                 <TableCell>{player.club}</TableCell>

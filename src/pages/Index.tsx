@@ -4,11 +4,9 @@ import { useAuth } from "@/context/auth-context";
 import { leagueService, playerService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
-import { DreamTeamTable } from "@/components/DreamTeamTable";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
 
@@ -51,9 +49,15 @@ const Index = () => {
   }, []);
 
   // const currentGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweek = gameweekData?.filter((gw) => gw.is_current === "true")[0] || 1;
-  updateLiveGWData(liveGameweek)
+  const liveGameweek = gameweekData?.filter((gw) => gw.is_current === "true")[0] || null;
+  
   const totalGameweeks = 38;
+
+  useEffect(() => {
+    if (liveGameweek !== null) {
+      updateLiveGWData(liveGameweek)
+    }
+  }, [liveGameweek])
 
   const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweek);
 
@@ -221,7 +225,6 @@ const Index = () => {
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="charts">FPL Data Visualized</TabsTrigger>
             <TabsTrigger value="table">FPL Standings</TabsTrigger>
-            <TabsTrigger value="dream-team">Dream Team</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="charts" className="space-y-4">
@@ -241,7 +244,7 @@ const Index = () => {
             mostCaptPlayerTeam={mostCaptPlayerTeam}
             mostCaptPlayerOpp={mostCaptPlayerOpp}
           />
-          <VisualizationSection liveGameweek={liveGameweek} />
+          <VisualizationSection currentGameweek={currentGameweek}/>
         </TabsContent>
 
         <TabsContent value="table">
@@ -252,10 +255,6 @@ const Index = () => {
             leagueData={leagueData}
             setLeagueId={setLeagueId}
           />
-        </TabsContent>
-
-        <TabsContent value="dream-team">
-          <DreamTeamTable liveGameweek={liveGameweek} />
         </TabsContent>
       </Tabs>
     </div>

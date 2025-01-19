@@ -6,8 +6,11 @@ import { FormValueAnalysis } from "../FormValueAnalysis";
 import { DifferentialPicks } from "../DifferentialPicks";
 import { DreamTeamTable } from "../DreamTeamTable";
 import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
+import { useContext } from "react";
+import { LiveGWContext } from "@/context/livegw-context";
 
-export function VisualizationSection({ liveGameweek }: { liveGameweek: number }) {
+export function VisualizationSection({currentGameweek }: { currentGameweek: any }) {
+  const { liveGameweekData } = useContext(LiveGWContext)
   return (
     <div className="w-full lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
@@ -83,16 +86,17 @@ export function VisualizationSection({ liveGameweek }: { liveGameweek: number })
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />
           </div>
-          <div className="col-span-3">
-            <Card>
-              <CardHeader>
-                <CardDescription>Dream Team Performance</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <DreamTeamTable liveGameweek={liveGameweek} />
-              </CardContent>
-            </Card>
-          </div>
+          {liveGameweekData &&
+            <div className="col-span-3">
+              <Card>
+                <CardHeader>
+                  <CardDescription>Dream Team Performance</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <DreamTeamTable liveGameweek={liveGameweekData.id} currentGameweek={currentGameweek} />
+                </CardContent>
+              </Card>
+            </div>}
           <div className="col-span-3">
             <DifferentialPicks />
           </div>

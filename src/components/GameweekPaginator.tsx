@@ -74,7 +74,7 @@ export function GameweekPaginator({
             })}
           </PaginationItem>
           <PaginationItem>
-            {currentGameweek !== liveGameweek.id && (
+            {currentGameweek !== liveGameweek?.id && (
               <>
               <PaginationNext className="hidden lg:flex" onClick={handleNext} />
               <ChevronRight className=" lg:hidden" onClick={handleNext} />
