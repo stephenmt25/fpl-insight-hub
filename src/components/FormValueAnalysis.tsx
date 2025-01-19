@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, ZAxis, Dot } from 'recharts';
+import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, ZAxis, Dot, Legend } from 'recharts';
 import { useState, useEffect, FC } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
@@ -75,13 +75,13 @@ export function FormValueAnalysis() {
   const averagePrice = processedData.reduce((acc, curr) => acc + curr.price, 0) / processedData.length;
 
   const goodValuePlayers = processedData
-    .filter(player => player.form > 6.5 && player.price < averagePrice)
-    .sort((a, b) => (b.form / b.price) - (a.form / a.price))
+    .filter(player => player.form > averageForm && player.price < averagePrice)
+    .sort((a, b) => (b.form) - (a.form))
     .slice(0, 5);
 
   const badValuePlayers = processedData
     .filter(player => player.form < averageForm && player.price > averagePrice)
-    .sort((a, b) => (a.form / a.price) - (b.form / b.price))
+    .sort((a, b) => (a.form) - (b.form))
     .slice(0, 5);
 
   if (loading) return <div>Loading...</div>;
@@ -147,20 +147,22 @@ export function FormValueAnalysis() {
           <div className="w-full h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" />
+                {/* <CartesianGrid strokeDasharray="3 3" /> */}
                 <XAxis
                   type="number"
                   dataKey="price"
                   name="Price"
                   unit="m"
                   domain={['dataMin', 'dataMax']}
+                  label={{ value: 'Price', angle: 0, position: 'insideBottomRight', offset: -10}}
                 />
                 <YAxis
                   type="number"
                   dataKey="form"
                   name="Form"
                   domain={['dataMin', 'dataMax']}
-                  hide
+                  width={15}
+                  label={{ value: 'Form', angle: 0, position: 'insideTopLeft', offset: -20}}
                 />
                 <ZAxis
                   type="number"
@@ -185,8 +187,8 @@ export function FormValueAnalysis() {
                     return null;
                   }}
                 />
-                <ReferenceLine x={averagePrice} stroke="#666" strokeDasharray="3 3" />
-                <ReferenceLine y={averageForm} stroke="#666" strokeDasharray="3 3" />
+                <ReferenceLine x={averagePrice} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Price: £${averagePrice.toFixed(1)}m`, angle: 90, position: "left", offset: -12}} />
+                <ReferenceLine y={averageForm} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Form: ${averageForm.toFixed(1)}`, position: "insideTop"}}/>
                 <Scatter
                   data={processedData}
                   fill="#8884d8"

@@ -40,7 +40,7 @@ const Index = () => {
       setGameweekData(data);
 
       // Find the current gameweek and set it
-      const currentGW = data?.find(gw => gw.is_current === "true");
+      const currentGW = data?.find(gw => gw.is_previous === "true");
       if (currentGW) {
         setCurrentGameweek(currentGW.id);
       }
@@ -48,7 +48,7 @@ const Index = () => {
     getData();
   }, []);
 
-  const currentGW = gameweekData?.filter((gw) => gw.is_current === "true")[0];
+  const currentGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
   const liveGameweek = currentGW?.id || 1;
   const totalGameweeks = 38;
 
@@ -197,8 +197,8 @@ const Index = () => {
       signIn(storedFplId, storedManagerData);
     }
   }, []);
-
-  if (!currentGameweek) return null;
+console.log(currentGW, currentGameweek)
+  // if (!currentGameweek) return null;
 
   return (
     <div className="space-y-1">

@@ -66,12 +66,12 @@ export function DifferentialPicks() {
     fetchPlayersAndTeams();
   }, []);
 
-  const OWNERSHIP_THRESHOLD = 25;
+  const OWNERSHIP_THRESHOLD = 35;
   const averageForm = processedData.reduce((acc, curr) => acc + curr.form, 0) / processedData.length;
 
   const differentialPicks = processedData
-    .filter(player => player.form > 6.5 && player.ownership < OWNERSHIP_THRESHOLD)
-    .sort((a, b) => (b.form / b.ownership) - (a.form / a.ownership))
+    .filter(player => player.form > 5.0 &&  player.ownership < OWNERSHIP_THRESHOLD && player.ownership > 10)
+    .sort((a, b) => (b.form) - (a.form))
     .slice(0, 5);
 
   if (loading) return <div>Loading...</div>;
@@ -96,13 +96,15 @@ export function DifferentialPicks() {
                   name="Ownership"
                   unit="%"
                   domain={[0, 100]}
+                  label={{ value: 'Ownership', angle: 0, position: 'insideBottomRight', offset: -10}}
                 />
                 <YAxis
                   type="number"
                   dataKey="form"
                   name="Form"
                   domain={['dataMin', 'dataMax']}
-                  hide
+                  width={15}
+                  label={{ value: 'Form', angle: 0, position: 'insideTopLeft', offset: -20}}
                 />
                 <Tooltip
                   cursor={{ strokeDasharray: '3 3' }}
@@ -120,8 +122,8 @@ export function DifferentialPicks() {
                     return null;
                   }}
                 />
-                <ReferenceLine x={OWNERSHIP_THRESHOLD} stroke="#666" strokeDasharray="3 3" />
-                <ReferenceLine y={averageForm} stroke="#666" strokeDasharray="3 3" />
+                <ReferenceLine x={OWNERSHIP_THRESHOLD} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: '35% Ownership', angle: 90, position: "left", offset: 10}}/>
+                <ReferenceLine y={averageForm} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Form: ${averageForm.toFixed(1)}`, position: "insideTop"}}/>
                 <Scatter
                   data={processedData}
                   fill="#8884d8"

@@ -1,0 +1,820 @@
+base_url: 
+"https://fantasy.premierleague.com/api/"
+General Information
+/bootstrap-static/: Comprehensive data about players, teams, events, and game settings.
+{
+  "chips": [
+    {
+      "id": 1,              // Integer (unique chip ID)
+      "name": "wildcard",   // String (name of the chip)
+      "number": 1,          // Integer (number of times this chip can be used)
+      "start_event": 1,     // Integer (first gameweek when the chip is available)
+      "stop_event": 38,    // Integer (last gameweek when the chip is available)
+      "chip_type": "transfer", // String (type of chip - "transfer" or "team")
+      "overrides": {        // Object containing overrides for this chip (if any)
+        "rules": {},         // Rules overrides
+        "scoring": {},       // Scoring overrides
+        "element_types": [], // Element type overrides
+        "pick_multiplier": null // Pick multiplier override
+      }
+    },
+    // ... more chips
+  ],
+  "events": [
+    {
+      "id": 1,                                  // Integer (unique event ID)
+      "name": "Gameweek 1",                    // String (name of the gameweek)
+      "deadline_time": "2024-08-16T18:00:00Z",  // String (deadline time for the gameweek)
+      "release_time": null,                     // String (or null, release time for the gameweek data)
+      "average_entry_score": 65,               // Integer (average score for the gameweek)
+      "finished": true,                         // Boolean (whether the gameweek is finished)
+      "data_checked": true,                     // Boolean (whether the gameweek data has been checked)
+      "highest_scoring_entry": 1234567,         // Integer (ID of the highest scoring entry)
+      "deadline_time_epoch": 1234567890,        // Integer (deadline time in epoch seconds)
+      "deadline_time_game_offset": 0,           // Integer (offset from game time to deadline time)
+      "highest_score": 150,                     // Integer (highest score in the gameweek)
+      "is_previous": false,                    // Boolean (whether this is the previous gameweek)
+      "is_current": false,                     // Boolean (whether this is the current gameweek)
+      "is_next": false,                        // Boolean (whether this is the next gameweek)
+      "cup_leagues_created": true,              // Boolean (whether cup leagues have been created)
+      "h2h_ko_matches_created": true,           // Boolean (whether head-to-head knockout matches have been created)
+      "can_enter": false,                      // Boolean (whether the user can enter this gameweek)
+      "can_manage": false,                     // Boolean (whether the user can manage their team for this gameweek)
+      "released": true,                        // Boolean (whether the gameweek data has been released)
+      "ranked_count": 1000000,                 // Integer (number of ranked entries)
+      "overrides": {                           // Object containing overrides for this event (if any)
+        "rules": {},                            // Rules overrides
+        "scoring": {},                          // Scoring overrides
+        "element_types": [],                    // Element type overrides
+        "pick_multiplier": null                  // Pick multiplier override
+      },
+      "chip_plays": [                          // Array of chip plays in this gameweek
+        {
+          "chip_name": "bboost",               // String (name of the chip)
+          "num_played": 10000                   // Integer (number of times this chip was played)
+        },
+        // ... more chip plays
+      ],
+      "most_selected": 123,                    // Integer (ID of the most selected player)
+      "most_transferred_in": 456,              // Integer (ID of the most transferred in player)
+      "top_element": 789,                      // Integer (ID of the top element)
+      "top_element_info": {                    // Information about the top element
+        "id": 789,                             // Integer (ID of the top element)
+        "points": 20                           // Integer (points scored by the top element)
+      },
+      "transfers_made": 500000,                // Integer (total number of transfers made)
+      "most_captained": 987,                   // Integer (ID of the most captained player)
+      "most_vice_captained": 654                 // Integer (ID of the most vice-captained player)
+    },
+    // ... more events
+  ],
+  "game_settings": {                      // Object containing game settings
+    "league_join_private_max": 30,        // Integer (maximum number of private leagues a user can join)
+    "league_join_public_max": 5,         // Integer (maximum number of public leagues a user can join)
+    "league_max_size_public_classic": 20, // Integer (maximum size of a public classic league)
+    // ... more game settings
+  },
+  "game_config": {                       // Object containing game configuration
+    "settings": {                         // Settings
+      "entry_per_event": false,           // Boolean (whether to allow entry per event)
+      "timezone": "UTC"                   // String (timezone for the game)
+    },
+    "rules": {                            // Rules
+      "league_join_private_max": 30,     // Integer (maximum number of private leagues a user can join)
+      // ... more rules
+    },
+    "scoring": {                         // Scoring system
+      "long_play": 2,                    // Integer (points for playing 60+ minutes)
+      // ... more scoring rules
+    }
+  },
+  "phases": [                            // Array of game phases
+    {
+      "id": 1,                           // Integer (unique phase ID)
+      "name": "Overall",                 // String (name of the phase)
+      "start_event": 1,                  // Integer (starting event for the phase)
+      "stop_event": 38,                 // Integer (ending event for the phase)
+      "highest_score": 1000              // Integer (highest score in the phase)
+    },
+    // ... more phases
+  ],
+  "teams": [                             // Array of teams
+    {
+      "code": 3,                         // Integer (team code)
+      "draw": 0,                         // Integer (number of draws)
+      "form": null,                      // String (or null, team form)
+      "id": 1,                           // Integer (unique team ID)
+      "loss": 0,                         // Integer (number of losses)
+      "name": "Arsenal",                 // String (team name)
+      "played": 0,                       // Integer (number of games played)
+      "points": 0,                       // Integer (number of points)
+      "position": 0,                     // Integer (team position in the league)
+      "short_name": "ARS",               // String (short team name)
+      "strength": 4,                     // Integer (team strength)
+      "team_division": 1,                // Integer (team division)
+      "unavailable": false,              // Boolean (whether the team is unavailable)
+      "win": 0,                          // Integer (number of wins)
+      "strength_overall_home": 1270,     // Integer (overall strength at home)
+      // ... more team stats
+    },
+    // ... more teams
+  ],
+  "total_players": 11189878,            // Integer (total number of players in the game)
+  "element_stats": [                    // Array of element stats
+    {
+      "label": "Minutes played",         // String (label for the stat)
+      "name": "minutes"                  // String (name of the stat)
+    },
+    // ... more element stats
+  ],
+  "element_types": [                   // Array of element types
+    {
+      "id": 1,                           // Integer (unique element type ID)
+      "plural_name": "Goalkeepers",      // String (plural name of the element type)
+      // ... more element type information
+    },
+    // ... more element types
+  ],
+  "elements": [                          // Array of elements (players)
+    {
+      "can_transact": true,              // Boolean (whether the element can be transferred)
+      // ... more element information
+    },
+    // ... more elements
+  ]
+}
+
+Fixtures
+/fixtures/: List of all fixtures in the current season.
+[
+  {
+    "code": 2444710,  // number (unique match code)
+    "event": 24,       // number (gameweek number)
+    "finished": true,  // boolean (whether the match has ended)
+    "finished_provisional": true, // boolean (whether the match data is provisional)
+    "id": 600,         // number (unique match ID)
+    "kickoff_time": "2025-02-01T15:00:00Z", // string (date and time in UTC)
+    "minutes": 90,     // number (minutes played)
+    "provisional_start_time": false, // boolean (whether the start time was provisional)
+    "started": true,  // boolean (whether the match has started)
+    "team_a": 5,       // number (away team ID)
+    "team_a_score": 0,   // number (or null if not finished)
+    "team_h": 11,      // number (home team ID)
+    "team_h_score": 3,   // number (or null if not finished)
+    "stats": [ 
+      {
+        "identifier": "goals_scored", // string (type of stat)
+        "a": [ 
+          // This array would contain objects for each player on the away team who scored goals
+          // Since the away team didnt score, this array is empty
+        ],
+        "h": [
+          { 
+            "value": 2,                // number (number of times stat occurred)
+            "element": 285             // number (player ID)
+          },
+          {
+            "value": 1,
+            "element": 299
+          }
+        ]
+      },
+      {
+        "identifier": "assists",
+        "a": [],                      // No assists for the away team
+        "h": [
+          {
+            "value": 1,
+            "element": 306
+          },
+          {
+            "value": 1,
+            "element": 117
+          }
+        ]
+      }
+      // ... more objects for other stats in the match (yellow_cards, etc.)
+    ],
+    "team_h_difficulty": 2, // number (difficulty rating)
+    "team_a_difficulty": 3, // number (difficulty rating)
+    "pulse_id": 116100   // number (internal ID)
+  },
+  // ... more objects for other matches in the array
+]
+/fixtures/?event={event_id}: Fixtures for a specific gameweek.
+[
+  {
+    "code": 2444701,  // Integer (unique match code)
+    "event": 23,       // Integer (gameweek number)
+    "finished": false,  // Boolean (whether the match has ended)
+    "finished_provisional": false, // Boolean (whether the match data is provisional)
+    "id": 512,         // Integer (unique match ID)
+    "kickoff_time": "2025-01-25T15:00:00Z", // String (date and time in UTC)
+    "minutes": 0,     // Integer (minutes played, 0 if not started)
+    "provisional_start_time": false, // Boolean (whether the start time was provisional)
+    "started": false,  // Boolean (whether the match has started)
+    "team_a": 8,       // Integer (away team ID)
+    "team_a_score": null,   // Integer (or null if not finished)
+    "team_h": 16,      // Integer (home team ID)
+    "team_h_score": null,   // Integer (or null if not finished)
+    "stats": [ 
+      // This array will be empty if the match hasnt started
+      // Otherwise, it will contain objects with the following structure:
+      {
+        "identifier": "String (type of stat)", // e.g., "goals_scored", "assists", "yellow_cards" 
+        "a": [ 
+          { 
+            "value": "Integer (number of times stat occurred)", 
+            "element": "Integer (player ID)" 
+          }
+          // ... more objects for other players on the away team with this stat
+        ],
+        "h": [
+          { 
+            "value": "Integer (number of times stat occurred)", 
+            "element": "Integer (player ID)" 
+          }
+          // ... more objects for other players on the home team with this stat
+        ]
+      }
+    ],
+    "team_h_difficulty": 3, // Integer (difficulty rating)
+    "team_a_difficulty": 4, // Integer (difficulty rating)
+    "pulse_id": 116052   // Integer (internal ID)
+  },
+  // ... more objects for other matches in the array
+]
+/fixture/{fixture_id}/stats: Detailed information about stats for a specific fixture.
+{
+  "a": [ 
+    {
+      "minutes": 90,                // Integer (minutes played in the match)
+      "goals_scored": 1,            // Integer (number of goals scored)
+      "assists": 2,               // Integer (number of assists)
+      "clean_sheets": 1,           // Integer (1 if the players team kept a clean sheet, 0 otherwise) 
+      "goals_conceded": 0,          // Integer (number of goals conceded by the players team)
+      "own_goals": 0,              // Integer (number of own goals scored)
+      "penalties_saved": 0,         // Integer (number of penalties saved)
+      "penalties_missed": 1,        // Integer (number of penalties missed)
+      "yellow_cards": 1,           // Integer (number of yellow cards received)
+      "red_cards": 0,              // Integer (number of red cards received)
+      "saves": 3,                 // Integer (number of saves made by a goalkeeper)
+      "bonus": 2,                 // Integer (bonus points awarded in fantasy football)
+      "bps": 35,                  // Integer (bonus points system score)
+      "influence": "62.4",         // String (influence score, often a decimal number represented as a string)
+      "creativity": "15.8",        // String (creativity score)
+      "threat": "43.0",           // String (threat score)
+      "ict_index": "12.1",         // String (ICT index score)
+      "starts": 1,                // Integer (1 if the player started the match, 0 otherwise)
+      "expected_goals": "0.74",     // String (expected goals)
+      "expected_assists": "0.22",   // String (expected assists)
+      "expected_goal_involvements": "0.96", // String (expected goal involvements)
+      "expected_goals_conceded": "1.25", // String (expected goals conceded)
+      "total_points": 12,          // Integer (total points earned in fantasy football)
+      "element": 71,              // Integer (ID of the player)
+      "fixture": 218              // Integer (ID of the fixture)
+    },
+    // ... stats for more elements on the away team 
+  ],
+  "h": [
+    {
+      "minutes": 90,                // Integer (minutes played in the match)
+      "goals_scored": 0,            // Integer (number of goals scored)
+      "assists": 0,               // Integer (number of assists)
+      "clean_sheets": 0,           // Integer (1 if the players team kept a clean sheet, 0 otherwise) 
+      "goals_conceded": 4,          // Integer (number of goals conceded by the players team)
+      "own_goals": 0,              // Integer (number of own goals scored)
+      "penalties_saved": 0,         // Integer (number of penalties saved)
+      "penalties_missed": 0,        // Integer (number of penalties missed)
+      "yellow_cards": 0,           // Integer (number of yellow cards received)
+      "red_cards": 0,              // Integer (number of red cards received)
+      "saves": 6,                 // Integer (number of saves made by a goalkeeper)
+      "bonus": 0,                 // Integer (bonus points awarded in fantasy football)
+      "bps": 15,                  // Integer (bonus points system score)
+      "influence": "25.2",         // String (influence score)
+      "creativity": "0.3",         // String (creativity score)
+      "threat": "0.0",            // String (threat score)
+      "ict_index": "2.6",          // String (ICT index score)
+      "starts": 1,                // Integer (1 if the player started the match, 0 otherwise)
+      "expected_goals": "0.00",     // String (expected goals)
+      "expected_assists": "0.00",   // String (expected assists)
+      "expected_goal_involvements": "0.00", // String (expected goal involvements)
+      "expected_goals_conceded": "2.14", // String (expected goals conceded)
+      "total_points": 2,           // Integer (total points earned in fantasy football)
+      "element": 396,              // Integer (ID of the player)
+      "fixture": 218              // Integer (ID of the fixture)
+    },
+    // ... stats for more elements on the home team
+  ]
+}
+
+Player Data
+/element-summary/{player_id}/: Detailed information about a specific player.
+{
+  "fixtures": [
+    {
+      "id": 226,                // Integer (unique fixture ID)
+      "code": 2444695,          // Integer (unique fixture code)
+      "team_h": 12,             // Integer (home team ID)
+      "team_h_score": null,     // Integer (or null if not finished)
+      "team_a": 10,             // Integer (away team ID)
+      "team_a_score": null,     // Integer (or null if not finished)
+      "event": 23,              // Integer (gameweek number)
+      "finished": false,        // Boolean (whether the match has ended)
+      "minutes": 0,            // Integer (minutes played)
+      "provisional_start_time": false, // Boolean (whether the start time was provisional)
+      "kickoff_time": "2025-01-25T15:00:00Z", // String (date and time in UTC)
+      "event_name": "Gameweek 23", // String (name of the gameweek)
+      "is_home": true,         // Boolean (whether the players team is the home team)
+      "difficulty": 2           // Integer (difficulty rating of the fixture)
+    },
+    // ... more fixtures
+  ],
+  "history": [
+    {
+      "element": 328,            // Integer (ID of the player)
+      "fixture": 4,              // Integer (ID of the fixture)
+      "opponent_team": 10,       // Integer (ID of the opponent team)
+      "total_points": 14,        // Integer (total points earned in fantasy football)
+      "was_home": false,         // Boolean (whether the players team was the home team)
+      "kickoff_time": "2024-08-17T11:30:00Z", // String (date and time in UTC)
+      "team_h_score": 0,         // Integer (home team score)
+      "team_a_score": 2,         // Integer (away team score)
+      "round": 1,               // Integer (gameweek number)
+      "modified": false,        // Boolean (whether the data has been modified)
+      "minutes": 90,            // Integer (minutes played in the match)
+      "goals_scored": 1,        // Integer (number of goals scored)
+      "assists": 1,             // Integer (number of assists)
+      "clean_sheets": 1,         // Integer (1 if the players team kept a clean sheet, 0 otherwise)
+      "goals_conceded": 0,        // Integer (number of goals conceded by the players team)
+      "own_goals": 0,            // Integer (number of own goals scored)
+      "penalties_saved": 0,       // Integer (number of penalties saved)
+      "penalties_missed": 0,      // Integer (number of penalties missed)
+      "yellow_cards": 0,         // Integer (number of yellow cards received)
+      "red_cards": 0,            // Integer (number of red cards received)
+      "saves": 0,               // Integer (number of saves made by a goalkeeper)
+      "bonus": 3,               // Integer (bonus points awarded in fantasy football)
+      "bps": 38,                // Integer (bonus points system score)
+      "influence": "58.0",       // String (influence score)
+      "creativity": "24.4",      // String (creativity score)
+      "threat": "70.0",         // String (threat score)
+      "ict_index": "15.2",       // String (ICT index score)
+      "starts": 1,              // Integer (1 if the player started the match, 0 otherwise)
+      "expected_goals": "0.70",   // String (expected goals)
+      "expected_assists": "0.15", // String (expected assists)
+      "expected_goal_involvements": "0.85", // String (expected goal involvements)
+      "expected_goals_conceded": "0.45", // String (expected goals conceded)
+      "value": 125,             // Integer (players value in fantasy football)
+      "transfers_balance": 0,    // Integer (net transfers in/out for the player)
+      "selected": 2894604,      // Integer (number of fantasy managers who have selected the player)
+      "transfers_in": 0,        // Integer (number of transfers in for the player)
+      "transfers_out": 0         // Integer (number of transfers out for the player)
+    },
+    // ... more history entries
+  ],
+  "history_past": [
+    {
+      "season_name": "2013/14",    // String (name of the season)
+      "element_code": 118748,     // Integer (players code)
+      "start_cost": 65,          // Integer (players starting cost in fantasy football)
+      "end_cost": 55,            // Integer (players ending cost in fantasy football)
+      "total_points": 31,        // Integer (total points earned in the season)
+      "minutes": 501,            // Integer (total minutes played in the season)
+      "goals_scored": 2,          // Integer (number of goals scored in the season)
+      "assists": 1,             // Integer (number of assists in the season)
+      "clean_sheets": 2,         // Integer (number of clean sheets in the season)
+      "goals_conceded": 2,        // Integer (number of goals conceded in the season)
+      "own_goals": 0,            // Integer (number of own goals scored in the season)
+      "penalties_saved": 0,       // Integer (number of penalties saved in the season)
+      "penalties_missed": 0,      // Integer (number of penalties missed in the season)
+      "yellow_cards": 1,         // Integer (number of yellow cards received in the season)
+      "red_cards": 0,            // Integer (number of red cards received in the season)
+      "saves": 0,               // Integer (number of saves made in the season)
+      "bonus": 3,               // Integer (bonus points earned in the season)
+      "bps": 25,                // Integer (total bonus points system score in the season)
+      "influence": "0.0",       // String (influence score)
+      "creativity": "0.0",      // String (creativity score)
+      "threat": "0.0",         // String (threat score)
+      "ict_index": "0.0",       // String (ICT index score)
+      "starts": 0,              // Integer (number of starts in the season)
+      "expected_goals": "0.00",   // String (expected goals)
+      "expected_assists": "0.00", // String (expected assists)
+      "expected_goal_involvements": "0.00", // String (expected goal involvements)
+      "expected_goals_conceded": "0.00"  // String (expected goals conceded)
+    },
+    // ... more history_past entries
+  ]
+}
+
+Gameweek Data
+/event/{event_id}/live/: Live data for a player for a live gameweek.
+{
+  "elements": [
+    {
+      "id": 328,              // Integer (ID of the player)
+      "stats": {
+        "minutes": 90,        // Integer (minutes played in the match)
+        "goals_scored": 0,    // Integer (number of goals scored)
+        "assists": 0,         // Integer (number of assists)
+        "clean_sheets": 1,     // Integer (1 if the players team kept a clean sheet, 0 otherwise)
+        "goals_conceded": 0,    // Integer (number of goals conceded by the players team)
+        "own_goals": 0,      // Integer (number of own goals scored)
+        "penalties_saved": 0,   // Integer (number of penalties saved)
+        "penalties_missed": 0,  // Integer (number of penalties missed)
+        "yellow_cards": 0,     // Integer (number of yellow cards received)
+        "red_cards": 0,        // Integer (number of red cards received)
+        "saves": 0,           // Integer (number of saves made by a goalkeeper)
+        "bonus": 0,           // Integer (bonus points awarded in fantasy football)
+        "bps": 16,            // Integer (bonus points system score)
+        "influence": "18.6",   // String (influence score)
+        "creativity": "74.4",  // String (creativity score)
+        "threat": "57.0",     // String (threat score)
+        "ict_index": "15.0",   // String (ICT index score)
+        "starts": 1,          // Integer (1 if the player started the match, 0 otherwise)
+        "expected_goals": "0.18", // String (expected goals)
+        "expected_assists": "0.43", // String (expected assists)
+        "expected_goal_involvements": "0.61", // String (expected goal involvements)
+        "expected_goals_conceded": "0.72", // String (expected goals conceded)
+        "total_points": 3,    // Integer (total points earned in fantasy football)
+        "in_dreamteam": false   // Boolean (whether the player is in the dream team)
+      },
+      "explain": [
+        {
+          "fixture": 212,      // Integer (ID of the fixture)
+          "stats": [
+            {
+              "identifier": "minutes",       // String (identifier of the stat)
+              "points": 2,              // Integer (points earned for this stat)
+              "value": 90,              // Integer (value of the stat)
+              "points_modification": 0   // Integer (any modification to the points)
+            },
+            {
+              "identifier": "clean_sheets",  // String (identifier of the stat)
+              "points": 1,              // Integer (points earned for this stat)
+              "value": 1,               // Integer (value of the stat)
+              "points_modification": 0   // Integer (any modification to the points)
+            }
+            // ... more stats for this fixture
+          ]
+        }
+        // ... explanations for other fixtures
+      ],
+      "modified": false      // Boolean (whether the data has been modified)
+    },
+    // ... more elements
+  ]
+}
+
+Manager Data
+/entry/{manager_id}/: Overview of a managers team.
+{
+  "id": 7788626,                        // Integer (unique user ID)
+  "joined_time": "2024-08-16T11:37:01.699833Z", // String (date and time when the user joined)
+  "started_event": 1,                  // Integer (the first event the user participated in)
+  "favourite_team": 14,                // Integer (ID of the users favorite team)
+  "player_first_name": "Stephen",       // String (users first name)
+  "player_last_name": "Thomas",        // String (users last name)
+  "player_region_id": 100,             // Integer (ID of the users region)
+  "player_region_name": "India",        // String (name of the users region)
+  "player_region_iso_code_short": "IN",  // String (short ISO code of the users region)
+  "player_region_iso_code_long": "IND", // String (long ISO code of the users region)
+  "years_active": 12,                  // Integer (number of years the user has been active)
+  "summary_overall_points": 1239,      // Integer (total points accumulated overall)
+  "summary_overall_rank": 2848255,     // Integer (overall rank of the user)
+  "summary_event_points": 19,          // Integer (points earned in the current event)
+  "summary_event_rank": 6764683,       // Integer (rank in the current event)
+  "current_event": 22,                 // Integer (the current event number)
+  "leagues": {
+    "classic": [
+      {
+        "id": 14,                        // Integer (unique league ID)
+        "name": "Man Utd",               // String (name of the league)
+        "short_name": "team-14",         // String (short name of the league)
+        "created": "2024-07-17T11:51:46.346144Z", // String (date and time when the league was created)
+        "closed": false,                 // Boolean (whether the league is closed)
+        "rank": null,                    // Integer (or null, rank in the league)
+        "max_entries": null,             // Integer (or null, maximum number of entries allowed)
+        "league_type": "s",              // String (type of league, e.g., s for standard)
+        "scoring": "c",                  // String (scoring system, e.g., c for classic)
+        "admin_entry": null,             // Integer (or null, ID of the admins entry)
+        "start_event": 1,                // Integer (event number when the league started)
+        "entry_can_leave": false,        // Boolean (whether the user can leave the league)
+        "entry_can_admin": false,        // Boolean (whether the user can admin the league)
+        "entry_can_invite": false,       // Boolean (whether the user can invite others)
+        "has_cup": true,                 // Boolean (whether the league has a cup competition)
+        "cup_league": 2441678,           // Integer (ID of the cup league, if applicable)
+        "cup_qualified": true,           // Boolean (whether the user has qualified for the cup)
+        "rank_count": 2304453,           // Integer (number of entries ranked in the league)
+        "entry_percentile_rank": 25,     // Integer (percentile rank of the user in the league)
+        "active_phases": [
+          {
+            "phase": 1,                  // Integer (phase number)
+            "rank": 522968,              // Integer (rank in the phase)
+            "last_rank": 508013,          // Integer (previous rank in the phase)
+            "rank_sort": 523151,          // Integer (rank used for sorting)
+            "total": 1239,               // Integer (total points in the phase)
+            "league_id": 14,             // Integer (ID of the league)
+            "rank_count": 2304453,       // Integer (number of entries ranked in the phase)
+            "entry_percentile_rank": 25   // Integer (percentile rank of the user in the phase)
+          },
+          // ... more active phases
+        ],
+        "entry_rank": 522968,            // Integer (overall rank in the league)
+        "entry_last_rank": 508013         // Integer (previous overall rank in the league)
+      },
+      // ... more classic leagues
+    ],
+    "h2h": [],                           // Array for head-to-head leagues (empty in this case)
+    "cup": {
+      "matches": [],                     // Array for cup matches (empty in this case)
+      "status": {
+        "qualification_event": null,    // Integer (or null, event for qualification)
+        "qualification_numbers": null,   // Integer (or null, number of qualifiers)
+        "qualification_rank": null,     // Integer (or null, qualification rank)
+        "qualification_state": null     // String (or null, qualification state)
+      },
+      "cup_league": null                 // Integer (or null, ID of the cup league)
+    },
+    "cup_matches": [
+      {
+        "id": 65821223,                  // Integer (unique cup match ID)
+        "entry_1_entry": 5706898,        // Integer (entry ID of the first player)
+        "entry_1_name": "Lachlans Soldiers", // String (entry name of the first player)
+        "entry_1_player_name": "Lachlan Perry", // String (player name of the first player)
+        "entry_1_points": 69,            // Integer (points scored by the first player)
+        "entry_1_win": 0,                // Integer (number of wins by the first player)
+        "entry_1_draw": 0,               // Integer (number of draws by the first player)
+        "entry_1_loss": 0,               // Integer (number of losses by the first player)
+        "entry_1_total": 0,              // Integer (total points for the first player)
+        "entry_2_entry": 7788626,        // Integer (entry ID of the second player)
+        "entry_2_name": "KungFuKobbie",   // String (entry name of the second player)
+        "entry_2_player_name": "Stephen Thomas", // String (player name of the second player)
+        "entry_2_points": 58,            // Integer (points scored by the second player)
+        "entry_2_win": 0,                // Integer (number of wins by the second player)
+        "entry_2_draw": 0,               // Integer (number of draws by the second player)
+        "entry_2_loss": 0,               // Integer (number of losses by the second player)
+        "entry_2_total": 0,              // Integer (total points for the second player)
+        "is_knockout": true,             // Boolean (whether the match is a knockout match)
+        "league": 2421396,               // Integer (ID of the league)
+        "winner": 5706898,              // Integer (entry ID of the winner)
+        "seed_value": null,              // Integer (or null, seed value)
+        "event": 17,                    // Integer (event number)
+        "tiebreak": null,                // Integer (or null, tiebreak value)
+        "is_bye": false,                 // Boolean (whether the match is a bye)
+        "knockout_name": "Round of 4194304" // String (name of the knockout round)
+      },
+      // ... more cup matches
+    ]
+  },
+  "name": "KungFuKobbie",                 // String (users team name)
+  "name_change_blocked": false,          // Boolean (whether the user is blocked from changing their team name)
+  "entered_events": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22], // Array of entered events
+  "kit": null,                          // String (or null, users kit)
+  "last_deadline_bank": 0,              // Integer (amount of money in the bank at the last deadline)
+  "last_deadline_value": 1021,          // Integer (total value of the team at the last deadline)
+  "last_deadline_total_transfers": 25   // Integer (total number of transfers made at the last deadline)
+}
+/entry/{manager_id}/history/: Historical data for a manager.
+{
+  "current": [
+    {
+      "event": 1,              // Integer (gameweek number)
+      "points": 50,            // Integer (points earned in this gameweek)
+      "total_points": 50,      // Integer (total points accumulated up to this gameweek)
+      "rank": 6085624,         // Integer (gameweek rank)
+      "rank_sort": 6283609,     // Integer (rank used for sorting, may include tiebreakers)
+      "overall_rank": 6085623, // Integer (overall rank)
+      "percentile_rank": 75,   // Integer (percentile rank)
+      "bank": 0,               // Integer (amount of money in the bank)
+      "value": 1000,           // Integer (total value of the team)
+      "event_transfers": 0,    // Integer (number of transfers made in this gameweek)
+      "event_transfers_cost": 0, // Integer (cost of transfers made in this gameweek)
+      "points_on_bench": 5     // Integer (points scored by players on the bench)
+    },
+    // ... more entries for other gameweeks in the current season
+  ],
+  "past": [
+    {
+      "season_name": "2013/14", // String (name of the past season)
+      "total_points": 1279,    // Integer (total points earned in the season)
+      "rank": 2962924         // Integer (overall rank in the season)
+    },
+    // ... more entries for other past seasons
+  ],
+  "chips": [
+    {
+      "name": "wildcard",      // String (name of the chip used)
+      "time": "2024-09-14T06:36:26.122488Z", // String (date and time when the chip was used)
+      "event": 4              // Integer (gameweek when the chip was used)
+    },
+    // ... more entries for other chips used
+  ]
+}
+/entry/{manager_id}/transfers/: A list of a managers transfers.
+[
+  {
+    "element_in": 422,        // Integer (ID of the player transferred in)
+    "element_in_cost": 52,    // Integer (cost of the player transferred in)
+    "element_out": 6,         // Integer (ID of the player transferred out)
+    "element_out_cost": 57,   // Integer (cost of the player transferred out)
+    "entry": 7788626,         // Integer (ID of the entry that made the transfer)
+    "event": 21,             // Integer (gameweek when the transfer was made)
+    "time": "2025-01-14T16:40:28.016211Z"  // String (date and time when the transfer was made)
+  },
+  // ... more transfer entries
+]
+/my-team/{manager_id}/: Detailed information about a managers current team.
+{
+  "picks": [
+    {
+      "element": 201,           // Integer (ID of the player)
+      "position": 1,            // Integer (position of the player in the team (1-15))
+      "multiplier": 1,          // Integer (multiplier for points (1 for regular players, 2 for captain, 0 for benched))
+      "is_captain": false,      // Boolean (whether the player is the captain)
+      "is_vice_captain": false,  // Boolean (whether the player is the vice-captain)
+      "element_type": 1,        // Integer (players position type (1=GK, 2=DEF, 3=MID, 4=FWD))
+      "selling_price": 45,      // Integer (current selling price of the player)
+      "purchase_price": 45       // Integer (purchase price of the player)
+    },
+    // ... more picks for other players in the team
+  ],
+  "picks_last_updated": "2025-01-18T10:51:07.541284Z", // String (date and time when the picks were last updated)
+  "chips": [
+    {
+      "id": 2,                  // Integer (unique chip ID)
+      "status_for_entry": "available", // String (status of the chip for this entry)
+      "played_by_entry":,    // Array of gameweeks when the chip was played (empty if not used)
+      "name": "wildcard",       // String (name of the chip)
+      "number": 1,              // Integer (number of times this chip can be used)
+      "start_event": 20,        // Integer (first gameweek when the chip is available)
+      "stop_event": 38,         // Integer (last gameweek when the chip is available)
+      "chip_type": "transfer",  // String (type of chip - "transfer" or "team")
+      "is_pending": false       // Boolean (whether the chip is pending)
+    },
+    // ... more chips
+  ],
+  "transfers": {
+    "cost": 4,                // Integer (cost of transfers made)
+    "status": "cost",         // String (status of transfers - "cost", "free", or "unlimited")
+    "limit": 2,               // Integer (number of free transfers available)
+    "made": 0,                // Integer (number of transfers made)
+    "bank": 0,                // Integer (amount of money in the bank)
+    "value": 1021             // Integer (total value of the team)
+  }
+}
+/entry/{manager_id}/event/{event_id}/picks/: Managers team selection for a specific gameweek.
+{
+  "active_chip": null,             // String (or null, indicates the active chip, if any)
+  "automatic_subs": [
+    {
+      "entry": 7788626,            // Integer (ID of the entry)
+      "element_in": 422,           // Integer (ID of the player subbed in)
+      "element_out": 333,          // Integer (ID of the player subbed out)
+      "event": 21                  // Integer (gameweek when the automatic sub occurred)
+    },
+    // ... more automatic substitutions
+  ],
+  "entry_history": {
+    "event": 21,                 // Integer (gameweek number)
+    "points": 65,               // Integer (points earned in this gameweek)
+    "total_points": 1220,       // Integer (total points accumulated up to this gameweek)
+    "rank": 3386687,            // Integer (gameweek rank)
+    "rank_sort": 3408649,        // Integer (rank used for sorting, may include tiebreakers)
+    "overall_rank": 2741573,    // Integer (overall rank)
+    "percentile_rank": 35,      // Integer (percentile rank)
+    "bank": 0,                  // Integer (amount of money in the bank)
+    "value": 1016,              // Integer (total value of the team)
+    "event_transfers": 2,       // Integer (number of transfers made in this gameweek)
+    "event_transfers_cost": 4,  // Integer (cost of transfers made in this gameweek)
+    "points_on_bench": 23        // Integer (points scored by players on the bench)
+  },
+  "picks": [
+    {
+      "element": 201,           // Integer (ID of the player)
+      "position": 1,            // Integer (position of the player in the team (1-15))
+      "multiplier": 1,          // Integer (multiplier for points (1 for regular players, 2 for captain, 0 for benched))
+      "is_captain": false,      // Boolean (whether the player is the captain)
+      "is_vice_captain": false,  // Boolean (whether the player is the vice-captain)
+      "element_type": 1         // Integer (players position type (1=GK, 2=DEF, 3=MID, 4=FWD))
+    },
+    // ... more picks for other players in the team
+  ]
+}
+
+League Standings
+/leagues-classic/{league_id}/standings/: Classic league standings.
+{
+  "new_entries": {
+    "has_next": false,    // Boolean (whether there are more new entries)
+    "page": 1,           // Integer (current page number)
+    "results": []        // Array of new entries (empty in this case)
+  },
+  "last_updated_data": "2025-01-18T21:42:09Z", // String (date and time when the data was last updated)
+  "league": {
+    "id": 314,           // Integer (unique league ID)
+    "name": "Overall",    // String (name of the league)
+    "created": "2024-07-17T11:51:48.594925Z", // String (date and time when the league was created)
+    "closed": false,      // Boolean (whether the league is closed)
+    "max_entries": null,  // Integer (or null, maximum number of entries allowed)
+    "league_type": "s",   // String (type of league, e.g., s for standard)
+    "scoring": "c",       // String (scoring system, e.g., c for classic)
+    "admin_entry": null,  // Integer (or null, ID of the admins entry)
+    "start_event": 1,     // Integer (event number when the league started)
+    "code_privacy": "p",  // String (privacy setting for the league code)
+    "has_cup": true,      // Boolean (whether the league has a cup competition)
+    "cup_league": 2421396, // Integer (ID of the cup league, if applicable)
+    "rank": null          // Integer (or null, rank in the league)
+  },
+  "standings": {
+    "has_next": true,     // Boolean (whether there are more standings pages)
+    "page": 2,            // Integer (current page number)
+    "results": [
+      {
+        "id": 261429,       // Integer (unique standing ID)
+        "event_total": 35,  // Integer (total points for the event)
+        "player_name": "Abinav C", // String (name of the player)
+        "rank": 51,         // Integer (rank in the league)
+        "last_rank": 86,     // Integer (previous rank in the league)
+        "rank_sort": 51,     // Integer (rank used for sorting)
+        "total": 1545,      // Integer (total points)
+        "entry": 44114,      // Integer (entry ID)
+        "entry_name": "Taken Quickly Origi", // String (entry name)
+        "has_played": true   // Boolean (whether the entry has played in the gameweek)
+      },
+      // ... more standings entries
+    ]
+  }
+}
+
+Stats
+/dream-team/: The highest-scoring team for the current gameweek.
+{
+  "top_player": {
+    "id": 328,            // Integer (ID of the top player in the team)
+    "points": 214         // Integer (points scored by the top player)
+  },
+  "team": [
+    {
+      "element": 443,      // Integer (ID of the player)
+      "points": 97,        // Integer (points scored by the player)
+      "position": 1         // Integer (position of the player in the team (1-11))
+    },
+    // ... more players in the team
+  ]
+}
+/dream-team/{event_id}/: Dream team for a specific gameweek.
+{
+  "top_player": {
+    "id": 364,            // Integer (ID of the top player in the team)
+    "points": 20         // Integer (points scored by the top player)
+  },
+  "team": [
+    {
+      "element": 396,      // Integer (ID of the player)
+      "points": 10,        // Integer (points scored by the player)
+      "position": 1         // Integer (position of the player in the team (1-11))
+    },
+    // ... more players in the team
+  ]
+}
+/event-status/: Status of the current gameweek.
+{
+  "status": [
+    {
+      "bonus_added": true,      // Boolean (indicates whether bonus points have been added)
+      "date": "2025-01-18",    // String (date)
+      "event": 22,             // Integer (gameweek number)
+      "points": "r"            // String (indicates the status of points, "r" likely means provisional)
+    },
+    // ... more status entries 
+  ],
+  "leagues": "Updated"          // String (indicates the status of leagues)
+}
+/stats/most-valuable-teams/: Statistics about the most valuable teams.
+[
+  {
+    "entry": 8688868,           // Integer (ID of the entry)
+    "name": "SERBIA IS THE BEST", // String (name of the entry)
+    "player_name": "Bogdan Djulic", // String (name of the player)
+    "value_with_bank": 1119,   // Integer (total value of the team including the bank)
+    "total_transfers": 120     // Integer (total number of transfers made)
+  },
+  // ... more entries
+]
+/stats/best-classic-private-leagues/: Statistics about the best-performing classic private leagues.
+[
+  {
+    "league": 1194,                // Integer (unique league ID)
+    "entries": 126295,             // Integer (number of entries in the league)
+    "average_score": "1569.4",     // String (average score of the league)
+    "name": "youtube.com/letstalkfpl 📽️" // String (name of the league)
+  },
+  // ... more league entries
+]
+
+
+endpoints not checked:
+/leagues-h2h/{league_id}/standings/: Head-to-head league standings.
+/leagues-h2h-matches/league/{league_id}/: Details about matches in a head-to-head league.
+/me/: Authenticated users manager information.
+/entry/{manager_id}/cup/: Details about a managers cup progress.
