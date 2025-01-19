@@ -1,36 +1,42 @@
 import { apiClient } from '../api-client';
 import { ENDPOINTS } from './endpoints';
 import { handleApiResponse } from './response-handler';
-import { Manager, ManagerHistory, ManagerLeagues, ManagerTransfers, GameweekPicks, OverallInfo } from '../../types/fpl';
+import type { Manager, ManagerHistory, ManagerLeagues, GameweekPicks, ManagerTransfers } from '@/types/fpl';
 
 export const managerService = {
-  getInfo: (managerId: string) => 
-    handleApiResponse<Manager>(
-      apiClient.get(ENDPOINTS.manager.info(managerId))
-    ),
+  getInfo: async (managerId: string): Promise<Manager> => {
+    return handleApiResponse(
+      apiClient.get(ENDPOINTS.manager.overview(managerId))
+    );
+  },
 
-  getHistory: (managerId: string) =>
-    handleApiResponse<ManagerHistory>(
+  getHistory: async (managerId: string): Promise<ManagerHistory> => {
+    return handleApiResponse(
       apiClient.get(ENDPOINTS.manager.history(managerId))
-    ),
+    );
+  },
 
-  getLeagues: (managerId: string) =>
-    handleApiResponse<ManagerLeagues>(
-      apiClient.get(ENDPOINTS.manager.leagues(managerId))
-    ),
+  getLeagues: async (managerId: string): Promise<ManagerLeagues> => {
+    return handleApiResponse(
+      apiClient.get(ENDPOINTS.manager.overview(managerId))
+    );
+  },
 
-  getTransfers: (managerId: string) =>
-    handleApiResponse<ManagerTransfers>(
+  getTransfers: async (managerId: string): Promise<ManagerTransfers[]> => {
+    return handleApiResponse(
       apiClient.get(ENDPOINTS.manager.transfers(managerId))
-    ),
+    );
+  },
 
-  getGameweekTeamPicks: (managerId: string, gameweek: string) =>
-    handleApiResponse<GameweekPicks>(
-      apiClient.get(ENDPOINTS.manager.picks(managerId, gameweek))
-    ),
+  getPicks: async (managerId: string): Promise<GameweekPicks> => {
+    return handleApiResponse(
+      apiClient.get(ENDPOINTS.manager.myTeam(managerId))
+    );
+  },
 
-  getOverallInfo: () => 
-    handleApiResponse<OverallInfo>(
-      apiClient.get(ENDPOINTS.overall.info())
-    )
+  getGameweekTeamPicks: async (managerId: string, gameweek: string): Promise<GameweekPicks> => {
+    return handleApiResponse(
+      apiClient.get(ENDPOINTS.manager.eventPicks(managerId, gameweek))
+    );
+  }
 };

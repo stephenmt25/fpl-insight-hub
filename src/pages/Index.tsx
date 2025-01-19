@@ -8,6 +8,7 @@ import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
 import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
+import { DreamTeamTable } from "@/components/DreamTeamTable";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
 
@@ -31,8 +32,8 @@ const Index = () => {
     error: overallLeagueDataError,
     isLoading: isLoadingoverallLeagueData,
   } = useQuery({
-    queryKey: ['leagueData', leagueId, pageNumber],
-    queryFn: () => leagueService.getStandings(leagueId, pageNumber),
+    queryKey: ['leagueData', leagueId],
+    queryFn: () => leagueService.getStandings(leagueId),
   });
 
   useEffect(() => {
@@ -220,6 +221,7 @@ const Index = () => {
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="charts">FPL Data Visualized</TabsTrigger>
             <TabsTrigger value="table">FPL Standings</TabsTrigger>
+            <TabsTrigger value="dream-team">Dream Team</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="charts" className="space-y-4">
@@ -239,7 +241,7 @@ const Index = () => {
             mostCaptPlayerTeam={mostCaptPlayerTeam}
             mostCaptPlayerOpp={mostCaptPlayerOpp}
           />
-          <VisualizationSection />
+          <VisualizationSection liveGameweek={liveGameweek} />
         </TabsContent>
 
         <TabsContent value="table">
@@ -250,6 +252,10 @@ const Index = () => {
             leagueData={leagueData}
             setLeagueId={setLeagueId}
           />
+        </TabsContent>
+
+        <TabsContent value="dream-team">
+          <DreamTeamTable liveGameweek={liveGameweek} />
         </TabsContent>
       </Tabs>
     </div>

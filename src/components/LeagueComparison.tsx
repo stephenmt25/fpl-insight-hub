@@ -15,7 +15,6 @@ export function LeagueComparison() {
   const { updateActiveTab } = useContext(TabContext);
 
   const overallLeagueId = "314"
-
   const [leagueId, setLeagueId] = useState(overallLeagueId)
   const [pageNumber, setPageNumber] = useState("1")
 
@@ -24,8 +23,8 @@ export function LeagueComparison() {
     error: overallLeagueDataError,
     isLoading: isLoadingoverallLeagueData,
   } = useQuery({
-    queryKey: ['leagueData', leagueId, pageNumber],
-    queryFn: () => leagueService.getStandings(leagueId, pageNumber),
+    queryKey: ['leagueData', leagueId],
+    queryFn: () => leagueService.getStandings(leagueId),
   });
 
   const handleClick = (tab: string) => {

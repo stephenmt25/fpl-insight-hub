@@ -24,8 +24,8 @@ export default function LeagueStandings() {
     error: overallLeagueDataError,
     isLoading: isLoadingoverallLeagueData,
   } = useQuery({
-    queryKey: ['leagueData', leagueId, pageNumber],
-    queryFn: () => leagueService.getStandings(leagueId, pageNumber),
+    queryKey: ['leagueData', leagueId],
+    queryFn: () => leagueService.getStandings(leagueId),
   });
 
   const updateSelectedLeague = (leagueId: string) => {

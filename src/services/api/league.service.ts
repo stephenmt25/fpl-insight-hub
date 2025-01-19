@@ -4,8 +4,8 @@ import { handleApiResponse } from './response-handler';
 import { LeagueDetails } from '../../types/fpl';
 
 export const leagueService = {
-  getStandings: (leagueId: string, pageNumber: string) =>
+  getStandings: (leagueId: string) =>
     handleApiResponse<LeagueDetails>(
-      apiClient.get(ENDPOINTS.league.standings(leagueId, pageNumber))
+      apiClient.get(ENDPOINTS.league.classicStandings(leagueId))
     )
 };

@@ -1,19 +1,26 @@
 export const ENDPOINTS = {
-  manager: {
-    info: (managerId: string) => `/entry/${managerId}/`,
-    history: (managerId: string) => `/entry/${managerId}/history/`,
-    leagues: (managerId: string) => `/entry/${managerId}/leagues/`,
-    transfers: (managerId: string) => `/entry/${managerId}/transfers/`,
-    picks: (managerId: string, gameweek: string) => `/entry/${managerId}/event/${gameweek}/picks/`
-  },
-  league: {
-    standings: (leagueId: string, pageNumber: string) => `/leagues-classic/${leagueId}/standings/?page_standings=${pageNumber}`
-  },
   player: {
     summary: (playerId: string) => `/element-summary/${playerId}/`,
-    gameweekStats: (gameweek: string) => `/event/${gameweek}/live/`
+    gameweekStats: (gameweek: string) => `/event/${gameweek}/live/`,
+    dreamTeam: (gameweek: string) => `/dream-team/${gameweek}/`
+  },
+  manager: {
+    overview: (managerId: string) => `/entry/${managerId}/`,
+    history: (managerId: string) => `/entry/${managerId}/history/`,
+    transfers: (managerId: string) => `/entry/${managerId}/transfers/`,
+    myTeam: (managerId: string) => `/my-team/${managerId}/`,
+    eventPicks: (managerId: string, eventId: string) => `/entry/${managerId}/event/${eventId}/picks/`,
+    info: (managerId: string) => `/entry/${managerId}/`,
+    leagues: (managerId: string) => `/entry/${managerId}/`,
+    picks: (managerId: string) => `/entry/${managerId}/picks/`
+  },
+  league: {
+    classicStandings: (leagueId: string) => `/leagues-classic/${leagueId}/standings/`,
+    h2hStandings: (leagueId: string) => `/leagues-h2h/${leagueId}/standings/`,
+    h2hMatches: (leagueId: string) => `/leagues-h2h-matches/league/${leagueId}/`,
+    standings: (leagueId: string) => `/leagues-classic/${leagueId}/standings/`
   },
   overall: {
-    info: () => '/bootstrap-static/'
+    info: () => `/bootstrap-static/`
   }
 };
