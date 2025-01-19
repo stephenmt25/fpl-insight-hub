@@ -9,27 +9,18 @@ export const ENDPOINTS = {
     history: (managerId: string) => `/entry/${managerId}/history/`,
     transfers: (managerId: string) => `/entry/${managerId}/transfers/`,
     myTeam: (managerId: string) => `/my-team/${managerId}/`,
-    eventPicks: (managerId: string, eventId: string) => `/entry/${managerId}/event/${eventId}/picks/`
+    eventPicks: (managerId: string, eventId: string) => `/entry/${managerId}/event/${eventId}/picks/`,
+    info: (managerId: string) => `/entry/${managerId}/`,
+    leagues: (managerId: string) => `/entry/${managerId}/`,
+    picks: (managerId: string) => `/entry/${managerId}/picks/`
   },
   league: {
     classicStandings: (leagueId: string) => `/leagues-classic/${leagueId}/standings/`,
     h2hStandings: (leagueId: string) => `/leagues-h2h/${leagueId}/standings/`,
-    h2hMatches: (leagueId: string) => `/leagues-h2h-matches/league/${leagueId}/`
+    h2hMatches: (leagueId: string) => `/leagues-h2h-matches/league/${leagueId}/`,
+    standings: (leagueId: string) => `/leagues-classic/${leagueId}/standings/`
   },
-  stats: {
-    dreamTeam: () => `/dream-team/`,
-    mostValuableTeams: () => `/stats/most-valuable-teams/`,
-    bestClassicPrivateLeagues: () => `/stats/best-classic-private-leagues/`
-  },
-  event: {
-    status: () => `/event-status/`
-  },
-  fixtures: {
-    all: () => `/fixtures/`,
-    byEvent: (eventId: string) => `/fixtures/?event=${eventId}`
-  },
-  playerData: {
-    all: () => `/element-summary/`,
-    byId: (playerId: string) => `/element-summary/${playerId}/`
+  overall: {
+    info: () => `/bootstrap-static/`
   }
 };

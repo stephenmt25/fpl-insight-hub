@@ -102,14 +102,14 @@ export function DreamTeamTable() {
           club: playerDetails.team_code?.toString() || '',
           points: dreamTeamMember.points,
           selectedBy: playerDetails.selected_by_percent,
-          minutes: parseInt(liveStats.minutes),
-          goals: parseInt(liveStats.goals_scored),
-          assists: parseInt(liveStats.assists),
+          minutes: liveStats.minutes.toString(),
+          goals: liveStats.goals_scored.toString(),
+          assists: liveStats.assists.toString(),
           cleanSheet: liveStats.clean_sheets === 1,
           ictIndex: liveStats.ict_index,
           xG: liveStats.expected_goals,
           xA: liveStats.expected_assists,
-          bonusPoints: parseInt(liveStats.bonus),
+          bonusPoints: liveStats.bonus.toString(),
           dreamTeamPosition: `${playerDetails.element_type}${dreamTeamMember.position}`,
         };
       }).filter((player): player is DreamTeamPlayer => player !== null);

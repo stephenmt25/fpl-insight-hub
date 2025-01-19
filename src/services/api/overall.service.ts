@@ -1,11 +1,11 @@
 import { apiClient } from '../api-client';
 import { ENDPOINTS } from './endpoints';
-import { handleApiResponse } from './response-handler';
-import { OverallInfo } from '../../types/fpl';
+import { handleResponse } from './response-handler';
+import type { OverallInfo } from '@/types/fpl';
 
 export const overallService = {
-  getInfo: () => 
-    handleApiResponse<OverallInfo>(
-      apiClient.get(ENDPOINTS.overall.info())
-    )
+  getInfo: async (): Promise<OverallInfo> => {
+    const response = await apiClient.get(ENDPOINTS.overall.info());
+    return handleResponse<OverallInfo>(response);
+  }
 };
