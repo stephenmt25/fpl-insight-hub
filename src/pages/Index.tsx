@@ -12,7 +12,7 @@ import { LiveGWContext } from "@/context/livegw-context";
 
 const Index = () => {
   const [gameweekData, setGameweekData] = useState<any[] | null>(null);
-  const [currentGameweek, setCurrentGameweek] = useState<number | null>(null);
+  const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
   const { isSignedIn, signIn } = useAuth();
   const [pageNumber, setPageNumber] = useState("1");
   const { updateLiveGWData, eventStatus } = useContext(LiveGWContext)
@@ -22,7 +22,7 @@ const Index = () => {
   const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null);
   const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
   const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
-  const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null);
+  const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>([{ status: "loading" }]);
   const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
   const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
 
@@ -43,52 +43,57 @@ const Index = () => {
       // Find the current gameweek and set it
       const currentGW = data?.find(gw => gw.is_current === "true");
       if (currentGW) {
-        setCurrentGameweek(currentGW.id);
+        setCurrentGameweekNumber(currentGW.id);
       }
     };
     getData();
   }, []);
-  const previousGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweek = gameweekData?.filter((gw) => gw.is_current === "true")[0] || null;
+  const previousGWData = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
+  const liveGameweekData = gameweekData?.filter((gw) => gw.is_current === "true")[0] || null;
   const totalGameweeks = 38;
 
   const isLive = eventStatus.status.some(item => {
-    const currentDate = new Date();
-    const itemDate = new Date(item.date);
-  
     return item.points === 'l';
   });
 
-  console.log(eventStatus, isLive)
-
   useEffect(() => {
-    if (liveGameweek !== null) {
-      updateLiveGWData(liveGameweek)
+    if (liveGameweekData !== null) {
+      updateLiveGWData(liveGameweekData)
       const getLiveGWStats = async () => {
-        const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweek.id.toString())
+        const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweekData.id.toString())
         if (liveGWStats) {
           setLiveGWStats(liveGWStats.elements)
         }
       };
       getLiveGWStats();
     }
-  }, [liveGameweek])
+    if (previousGWData !== undefined) {
+      updateLiveGWData(previousGWData)
+      const getPrevGWStats = async () => {
+        const prevGWStats = await playerService.getGameweekPlayerStats(previousGWData.id.toString())
+        if (prevGWStats) {
+          setLiveGWStats(prevGWStats.elements)
+        }
+      };
+      getPrevGWStats();
+    }
+  }, [liveGameweekData])
 
-  const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweek);
+  const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweekData);
 
   useEffect(() => {
     const getGameweekData = async () => {
-      if (currentGameweek) {
+      if (currentGameweekNumber) {
         const { data } = await supabase
           .from('fploveralldata')
           .select()
-          .eq('id', currentGameweek)
+          .eq('id', currentGameweekNumber)
           .single();
         setSelectedGameweekData(data);
       }
     };
     getGameweekData();
-  }, [currentGameweek]);
+  }, [currentGameweekNumber]);
 
   useEffect(() => {
     const fetchHighScorePlayerAndTeam = async () => {
@@ -124,7 +129,7 @@ const Index = () => {
 
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
-              (item) => item.round === currentGameweek
+              (item) => item.round === currentGameweekNumber
             );
 
             if (currentGameweekData?.opponent_team) {
@@ -164,9 +169,6 @@ const Index = () => {
             console.error('Error fetching most-captained player data:', playerError);
             return;
           }
-
-          setMostCaptPlayer(playerData);
-
           if (playerData && playerData[0]?.team) {
             const { data: teamData, error: teamError } = await supabase
               .from('plteams')
@@ -186,9 +188,8 @@ const Index = () => {
 
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
-              (item) => item.round === currentGameweek
+              (item) => item.round === currentGameweekNumber
             );
-
             if (currentGameweekData?.opponent_team) {
               const { data: opponentTeamData, error: opponentTeamError } = await supabase
                 .from('plteams')
@@ -201,9 +202,10 @@ const Index = () => {
               }
 
               setMostCaptPlayerOpp(opponentTeamData);
+              setMostCaptPlayer([...playerData, currentGameweekData.total_points])
             }
           }
-          // setMostCaptPlayer([...mostCaptPlayer, liveGWStats[mostCaptPlayer[0].id - 1]])
+
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -221,7 +223,7 @@ const Index = () => {
     }
   }, []);
 
-  // if (!currentGameweek) return null;
+  // if (!currentGameweekNumber) return null;
 
   const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
   const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
@@ -249,10 +251,10 @@ const Index = () => {
         </div>
         <TabsContent value="charts" className="space-y-4">
           <GameweekPaginator
-            currentGameweek={currentGameweek}
-            setCurrentGameweek={setCurrentGameweek}
+            currentGameweekNumber={currentGameweekNumber}
+            setCurrentGameweekNumber={setCurrentGameweekNumber}
             totalGameweeks={totalGameweeks}
-            liveGameweek={liveGameweek}
+            liveGameweekData={liveGameweekData}
           />
 
           <StatsOverview
@@ -263,6 +265,7 @@ const Index = () => {
             mostCaptPlayerFixture={mostCaptPlayerFixture}
           />
           <VisualizationSection
+            selectedGameweekData={selectedGameweekData}
             mostCaptPlayer={mostCaptPlayer}
             mostCaptPlayerFixture={mostCaptPlayerFixture}
           />

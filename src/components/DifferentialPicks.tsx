@@ -70,7 +70,7 @@ export function DifferentialPicks() {
   const averageForm = processedData.reduce((acc, curr) => acc + curr.form, 0) / processedData.length;
 
   const differentialPicks = processedData
-    .filter(player => player.form > 5.0 &&  player.ownership < OWNERSHIP_THRESHOLD && player.ownership > 10)
+    .filter(player => player.form > 5.0 && player.ownership < OWNERSHIP_THRESHOLD)
     .sort((a, b) => (b.form) - (a.form))
     .slice(0, 5);
 
@@ -82,7 +82,6 @@ export function DifferentialPicks() {
         <CardHeader>
           <CardTitle>Differentials</CardTitle>
           <CardDescription>
-            high-performing players with low ownership percentages
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col lg:flex-row gap-4">
@@ -96,7 +95,7 @@ export function DifferentialPicks() {
                   name="Ownership"
                   unit="%"
                   domain={[0, 100]}
-                  label={{ value: 'Ownership', angle: 0, position: 'insideBottomRight', offset: -10}}
+                  label={{ value: 'Ownership', angle: 0, position: 'insideBottomRight', offset: -10 }}
                 />
                 <YAxis
                   type="number"
@@ -104,7 +103,7 @@ export function DifferentialPicks() {
                   name="Form"
                   domain={['dataMin', 'dataMax']}
                   width={15}
-                  label={{ value: 'Form', angle: 0, position: 'insideTopLeft', offset: -20}}
+                  label={{ value: 'Form', angle: 0, position: 'insideTopLeft', offset: -20 }}
                 />
                 <Tooltip
                   cursor={{ strokeDasharray: '3 3' }}
@@ -122,8 +121,8 @@ export function DifferentialPicks() {
                     return null;
                   }}
                 />
-                <ReferenceLine x={OWNERSHIP_THRESHOLD} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: '35% Ownership', angle: 90, position: "left", offset: 10}}/>
-                <ReferenceLine y={averageForm} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Form: ${averageForm.toFixed(1)}`, position: "insideTop"}}/>
+                <ReferenceLine x={OWNERSHIP_THRESHOLD} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: '35% Ownership', angle: 90, position: "left", offset: 10 }} />
+                <ReferenceLine y={averageForm} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Form: ${averageForm.toFixed(1)}`, position: "insideTop" }} />
                 <Scatter
                   data={processedData}
                   fill="#8884d8"
@@ -139,7 +138,12 @@ export function DifferentialPicks() {
       </div> */}
       <Card className="col-span-5 lg:col-span-2">
         <CardHeader>
-          <CardTitle>Top Differentials</CardTitle>
+          <CardTitle className="flex">
+            Top Differentials
+          </CardTitle>
+          <CardDescription>
+            high-performing players with low ownership percentages (less than 35%)
+          </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col lg:flex-row gap-4 ">
           <div className="w-full">

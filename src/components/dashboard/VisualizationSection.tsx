@@ -10,16 +10,18 @@ import { ThumbsDown, ThumbsUp } from "lucide-react";
 interface VisualizationSectionProps {
   mostCaptPlayer: any;
   mostCaptPlayerFixture: any;
+  selectedGameweekData: any;
 }
 
-export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture }: VisualizationSectionProps) {
+export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture, selectedGameweekData }: VisualizationSectionProps) {
   const { liveGameweekData } = useContext(LiveGWContext)
+  console.log(liveGameweekData)
   const getPerformanceIcon = () => {
     if (mostCaptPlayer) {
-      return mostCaptPlayer[1]?.stats.total_points < 4 ?
+      return mostCaptPlayer[1] < 4 ?
         <ThumbsDown />
         :
-        <ThumbsUp /> 
+        <ThumbsUp />
     }
   }
   return (
@@ -43,13 +45,11 @@ export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture }: 
                 </CardHeader>
                 <CardContent className="flex flex-col lg:flex-row gap-4">
                   <div className="w-full flex justify-between rounded">
-                    {/* <div className=''> */}
-                      <div className="text-4xl">
-                        {mostCaptPlayer[0]?.web_name}
-                      </div>
-                      <div className="text-4xl text-right text-gray-600">
-                        {mostCaptPlayer[1]?.stats.total_points * 2}({mostCaptPlayer[1]?.stats.total_points}x2)
-                      {/* </div> */}
+                    <div className="text-4xl">
+                      {mostCaptPlayer[0]?.web_name}
+                    </div>
+                    <div className="text-4xl text-right text-gray-600">
+                      {mostCaptPlayer[1] * 2}({mostCaptPlayer[1]}x2)
                     </div>
                   </div>
                 </CardContent>

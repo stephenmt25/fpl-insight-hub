@@ -9,39 +9,39 @@ import {
 } from "@/components/ui/pagination";
 
 interface GameweekPaginatorProps {
-  currentGameweek: number;
-  setCurrentGameweek: (gameweek: number) => void;
+  currentGameweekNumber: number;
+  setCurrentGameweekNumber: (gameweek: number) => void;
   totalGameweeks: number;
-  liveGameweek: { id: number };
+  liveGameweekData: { id: number };
 }
 
 export function GameweekPaginator({
-  currentGameweek,
-  setCurrentGameweek,
+  currentGameweekNumber,
+  setCurrentGameweekNumber,
   totalGameweeks,
-  liveGameweek
+  liveGameweekData
 }: GameweekPaginatorProps) {
   const handlePrevious = () => {
-    if (currentGameweek > 1) {
-      setCurrentGameweek(currentGameweek - 1);
+    if (currentGameweekNumber > 1) {
+      setCurrentGameweekNumber(currentGameweekNumber - 1);
     }
   };
 
   const handleNext = () => {
-    if (currentGameweek < totalGameweeks) {
-      setCurrentGameweek(currentGameweek + 1);
+    if (currentGameweekNumber < totalGameweeks) {
+      setCurrentGameweekNumber(currentGameweekNumber + 1);
     }
   };
 
   return (
     <div className="flex items-center justify-between px-2">
       <h2 className="text-xl font-semibold text-fpl-primary w-auto whitespace-nowrap">
-        Gameweek {currentGameweek}
+        Gameweek {currentGameweekNumber}
       </h2>
       <Pagination className="justify-end">
         <PaginationContent>
           <PaginationItem>
-            {currentGameweek > 1 && (
+            {currentGameweekNumber > 1 && (
               <>
               <PaginationPrevious className="hidden lg:flex" onClick={handlePrevious} />
               <ChevronLeft className=" lg:hidden" onClick={handlePrevious} />
@@ -50,20 +50,20 @@ export function GameweekPaginator({
           </PaginationItem>
           {/* Mobile: Show only current Gameweek */}
           <PaginationItem className="block lg:hidden">
-            <PaginationLink isActive>{`GW${currentGameweek}`}</PaginationLink>
+            <PaginationLink isActive>{`GW${currentGameweekNumber}`}</PaginationLink>
           </PaginationItem>
 
           {/* Desktop: Show a range of Gameweeks */}
           <PaginationItem className="hidden lg:flex">
             {[...Array(3)].map((_, i) => {
-              const gameweek = currentGameweek - 2 + i;
+              const gameweek = currentGameweekNumber - 2 + i;
               if (gameweek > 0 && gameweek <= totalGameweeks) {
                 return (
                   <PaginationItem className="px-1" key={gameweek}>
                     <PaginationLink
                       className="px-"
-                      onClick={() => setCurrentGameweek(gameweek)}
-                      isActive={gameweek === currentGameweek}
+                      onClick={() => setCurrentGameweekNumber(gameweek)}
+                      isActive={gameweek === currentGameweekNumber}
                     >
                       GW{gameweek}
                     </PaginationLink>
@@ -74,7 +74,7 @@ export function GameweekPaginator({
             })}
           </PaginationItem>
           <PaginationItem>
-            {currentGameweek !== liveGameweek?.id && (
+            {currentGameweekNumber !== liveGameweekData?.id && (
               <>
               <PaginationNext className="hidden lg:flex" onClick={handleNext} />
               <ChevronRight className=" lg:hidden" onClick={handleNext} />
