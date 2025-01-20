@@ -8,22 +8,26 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
 
 interface VisualizationSectionProps {
-  mostCaptPlayer: any;
+  mostCaptPlayerData: any;
   mostCaptPlayerFixture: any;
   selectedGameweekData: any;
+  mostTransferredPlayerData: any;
+  mostTransferredPlayerTeam: any;
 }
 
-export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture, selectedGameweekData }: VisualizationSectionProps) {
+export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture, selectedGameweekData, mostTransferredPlayerData, mostTransferredPlayerTeam }: VisualizationSectionProps) {
   const { liveGameweekData } = useContext(LiveGWContext)
-  console.log(liveGameweekData)
+  console.log(mostTransferredPlayerTeam, mostTransferredPlayerData)
   const getPerformanceIcon = () => {
-    if (mostCaptPlayer) {
-      return mostCaptPlayer[1] < 4 ?
+    if (mostCaptPlayerData) {
+      return mostCaptPlayerData[1] < 4 ?
         <ThumbsDown />
         :
         <ThumbsUp />
     }
   }
+
+  let formattedTransfers = new Intl.NumberFormat('en-US').format(Number(selectedGameweekData?.transfers_made));
   return (
     <div className="w-full lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
@@ -36,7 +40,7 @@ export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture, se
             <CaptaincyPieChart />
           </div>
           <div className="col-span-3 lg:col-span-1">
-            {mostCaptPlayer && mostCaptPlayer[1] ?
+            {mostCaptPlayerData && mostCaptPlayerData[1] ?
               <Card className="lg:h-[48%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
@@ -46,10 +50,10 @@ export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture, se
                 <CardContent className="flex flex-col lg:flex-row gap-4">
                   <div className="w-full flex justify-between rounded">
                     <div className="text-4xl">
-                      {mostCaptPlayer[0]?.web_name}
+                      {mostCaptPlayerData[0]?.web_name}
                     </div>
                     <div className="text-4xl text-right text-gray-600">
-                      {mostCaptPlayer[1] * 2}({mostCaptPlayer[1]}x2)
+                      {mostCaptPlayerData[1] * 2}({mostCaptPlayerData[1]}x2)
                     </div>
                   </div>
                 </CardContent>
@@ -58,7 +62,7 @@ export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture, se
                     <div className="text-sm text-gray-400">
                       {mostCaptPlayerFixture}
                       <br />
-                      Ownership: {mostCaptPlayer[0]?.selected_by_percent}%
+                      Ownership: {mostCaptPlayerData[0]?.selected_by_percent}%
                     </div>
                     <div>
                       {getPerformanceIcon()}
@@ -91,38 +95,63 @@ export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture, se
             }
             <div className="h-3 lg:h-[4%] lg:w-5/5">
             </div>
-            <Card className="lg:h-[48%] lg:w-4/5 lg:float-right">
-              <CardHeader>
-                <CardDescription>
-                  Transfers
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col lg:flex-row gap-4">
-                <div className='flex-row w-full'>
-                  <div className="flex justify-between rounded">
-                    <div className="">
-                      Total Transferred Made
+            {mostTransferredPlayerTeam && mostTransferredPlayerData ?
+              <Card className="lg:h-[48%] lg:w-4/5 lg:float-right">
+                <CardHeader>
+                  <CardDescription>
+                    Transfers
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col lg:flex-row gap-4">
+                  <div className='flex-row w-full'>
+                    <div className="flex justify-between rounded">
+                      <div className="">
+                        Total Transferred Made
+                      </div>
+                      <div className="text-xl text-right text-gray-600">
+                        {formattedTransfers}
+                      </div>
                     </div>
-                    <div className="text-xl text-right text-gray-600">
-                      11,543,203
-                    </div>
-                  </div>
 
-                  <div className="flex justify-between rounded">
-                    <div className="">
-                      Most Transferred In
-                    </div>
-                    <div className="text-xl text-right text-gray-600">
-                      Gordon
-                      <br />
-                      <div className="text-sm text-gray-400">
-                        Team
+                    <div className="flex justify-between rounded">
+                      <div className="">
+                        Most Transferred In
+                      </div>
+                      <div className="text-xl text-right text-gray-600">
+                        {mostTransferredPlayerData[0]?.web_name}
+                        <br />
+                        <div className="text-sm text-gray-400">
+                          {mostTransferredPlayerTeam[0]?.short_name}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+              :
+              <Card className="lg:h-[48%] lg:w-4/5">
+                <CardHeader>
+                  <CardDescription>
+                    Captaincy Performance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col lg:flex-row gap-4">
+                  <div className="w-full">
+                    <div className='flex justify-between rounded'>
+                      <div className="text-4xl">
+                        Loading ...
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <div className="text-sm text-gray-400">
+                    Loading ...
+                  </div>
+                </CardFooter>
+              </Card>
+
+            }
           </div>
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />

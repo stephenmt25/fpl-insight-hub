@@ -2,13 +2,13 @@ import { StatsCard } from "@/components/StatsCard";
 
 interface StatsOverviewProps {
   currentGW: any;
-  mostCaptPlayer: any;
-  highScorePlayer: any;
+  mostCaptPlayerData: any;
+  highScorePlayerData: any;
   highScorePlayerFixture: any;
   mostCaptPlayerFixture: any
 }
 
-export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer, highScorePlayerFixture, mostCaptPlayerFixture  }: StatsOverviewProps) {
+export function StatsOverview({ currentGW, mostCaptPlayerData, highScorePlayerData, highScorePlayerFixture, mostCaptPlayerFixture  }: StatsOverviewProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {currentGW ? (
@@ -37,10 +37,10 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer, high
           description="Loading..."
         />
       )}
-      {mostCaptPlayer ? (
+      {mostCaptPlayerData ? (
         <StatsCard
           title="Most Captained"
-          value={mostCaptPlayer[0]?.web_name || "N/A"}
+          value={mostCaptPlayerData[0]?.web_name || "N/A"}
           description={mostCaptPlayerFixture}
         />
       ) : (
@@ -50,10 +50,10 @@ export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer, high
           description="Loading..."
         />
       )}
-      {highScorePlayer ? (
+      {highScorePlayerData ? (
         <StatsCard
           title="Highest Scoring Player"
-          value={highScorePlayer[0]?.web_name || "N/A"}
+          value={highScorePlayerData[0]?.web_name || "N/A"}
           description={highScorePlayerFixture}
         />
       ) : (

@@ -30,6 +30,9 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
             Track your progress and make informed decisions for your team.
           </p>
         </div>
+        {/* <button onClick={triggerSync}>
+          trigger
+        </button> */}
       </div>
     );
   }

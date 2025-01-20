@@ -19,12 +19,14 @@ const Index = () => {
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
   const [liveGWStats, setLiveGWStats] = useState([]) // pass element id (-1) for gw stats
-  const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null);
+  const [highScorePlayerData, setHighScorePlayerData] = useState<any | null>(null);
   const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
   const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
-  const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>([{ status: "loading" }]);
+  const [mostCaptPlayerData, setMostCaptPlayerData] = useState<any | null>([{ status: "loading" }]);
   const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
   const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
+  const [mostTransferredPlayerData, setMostTransferredPlayerData] = useState<any | null>(null);
+  const [mostTransferredPlayerTeam, setMostTransferredPlayerTeam] = useState<any | null>(null);
 
   const {
     data: leagueData,
@@ -96,6 +98,42 @@ const Index = () => {
   }, [currentGameweekNumber]);
 
   useEffect(() => {
+    const fetchMostTransferredPlayerAndTeam = async () => {
+      try {
+        if (selectedGameweekData?.most_transferred_in) {
+          const { data: playerData, error: playerError } = await supabase
+            .from('plplayerdata')
+            .select()
+            .eq('id', Number(selectedGameweekData.most_transferred_in));
+
+          if (playerError) {
+            console.error('Error fetching player data:', playerError);
+            return;
+          }
+
+          setMostTransferredPlayerData(playerData);
+
+          if (playerData && playerData[0]?.team) {
+            const { data: teamData, error: teamError } = await supabase
+              .from('plteams')
+              .select()
+              .eq('id', Number(playerData[0].team));
+            if (teamError) {
+              console.error('Error fetching team data:', teamError);
+              return;
+            }
+
+            setMostTransferredPlayerTeam(teamData);
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      }
+    }
+    fetchMostTransferredPlayerAndTeam()
+  }, [selectedGameweekData]);
+
+  useEffect(() => {
     const fetchHighScorePlayerAndTeam = async () => {
       try {
         if (selectedGameweekData?.top_element) {
@@ -109,7 +147,7 @@ const Index = () => {
             return;
           }
 
-          setHighScorePlayer(playerData);
+          setHighScorePlayerData(playerData);
 
           if (playerData && playerData[0]?.team) {
             const { data: teamData, error: teamError } = await supabase
@@ -202,7 +240,7 @@ const Index = () => {
               }
 
               setMostCaptPlayerOpp(opponentTeamData);
-              setMostCaptPlayer([...playerData, currentGameweekData.total_points])
+              setMostCaptPlayerData([...playerData, currentGameweekData.total_points])
             }
           }
 
@@ -259,15 +297,17 @@ const Index = () => {
 
           <StatsOverview
             currentGW={selectedGameweekData}
-            mostCaptPlayer={mostCaptPlayer}
-            highScorePlayer={highScorePlayer}
+            mostCaptPlayerData={mostCaptPlayerData}
+            highScorePlayerData={highScorePlayerData}
             highScorePlayerFixture={highScorePlayerFixture}
             mostCaptPlayerFixture={mostCaptPlayerFixture}
           />
           <VisualizationSection
             selectedGameweekData={selectedGameweekData}
-            mostCaptPlayer={mostCaptPlayer}
+            mostCaptPlayerData={mostCaptPlayerData}
             mostCaptPlayerFixture={mostCaptPlayerFixture}
+            mostTransferredPlayerData={mostTransferredPlayerData}
+            mostTransferredPlayerTeam={mostTransferredPlayerTeam}
           />
         </TabsContent>
 
