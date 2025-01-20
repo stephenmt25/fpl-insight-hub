@@ -1,26 +1,50 @@
 // Create a Context
 // context.js
+import { overallService } from '@/services/fpl-api';
 import { createContext, useState } from 'react';
 
 interface LiveGWContextType {
-  liveGameweekData: {id: number};
+  liveGameweekData: { id: number };
   updateLiveGWData: (liveGameweekData: Object) => void;
+  eventStatus: {
+    status: StatusItem[]; // Array of status items
+    leagues: string;
+  };
+}
+
+interface StatusItem {
+  bonus_added: boolean; // Whether bonus points have been added
+  date: string; // Date in the format "YYYY-MM-DD"
+  event: number; // Gameweek or event number
+  points: string; // Points scored or status
 }
 
 const LiveGWContext = createContext<LiveGWContextType>({
-  liveGameweekData: null, 
-  updateLiveGWData: () => {}, 
+  liveGameweekData: null,
+  updateLiveGWData: () => { },
+  eventStatus: null
 });
 
 const LiveGWProvider = ({ children }) => {
   const [liveGameweekData, setLiveGameweekData] = useState(null);
+  const [eventStatus, setEventStatus] = useState<{ status: StatusItem[]; leagues: string }>({
+    status: [{
+      bonus_added: false,
+      date: (new Date()).toString(),
+      event: 1,
+      points: ""
+    }], 
+    leagues: ""
+  })
 
-  const updateLiveGWData = (liveGameweekData) => {
+  const updateLiveGWData = async (liveGameweekData) => {
+    const status = await overallService.getStatus();
+    setEventStatus(status)
     setLiveGameweekData(liveGameweekData);
   };
 
   return (
-    <LiveGWContext.Provider value={{ liveGameweekData, updateLiveGWData }}>
+    <LiveGWContext.Provider value={{ liveGameweekData, updateLiveGWData, eventStatus }}>
       {children}
     </LiveGWContext.Provider>
   );

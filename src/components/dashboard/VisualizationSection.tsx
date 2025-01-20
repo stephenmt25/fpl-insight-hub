@@ -1,16 +1,27 @@
-import { TempRadarChart } from "@/components/tempRadarChart";
-import { AverageTeamValueAreaChart } from "@/components/averageTeamValueAreaChart";
 import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
 import { CaptaincyPieChart } from "../captainsPieChart";
 import { FormValueAnalysis } from "../FormValueAnalysis";
 import { DifferentialPicks } from "../DifferentialPicks";
-import { DreamTeamTable } from "../DreamTeamTable";
-import { Card, CardContent, CardDescription, CardHeader } from "../ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "../ui/card";
 import { useContext } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
+import { ThumbsDown, ThumbsUp } from "lucide-react";
 
-export function VisualizationSection({currentGameweek }: { currentGameweek: any }) {
+interface VisualizationSectionProps {
+  mostCaptPlayer: any;
+  mostCaptPlayerFixture: any;
+}
+
+export function VisualizationSection({ mostCaptPlayer, mostCaptPlayerFixture }: VisualizationSectionProps) {
   const { liveGameweekData } = useContext(LiveGWContext)
+  const getPerformanceIcon = () => {
+    if (mostCaptPlayer) {
+      return mostCaptPlayer[1]?.stats.total_points < 4 ?
+        <ThumbsDown />
+        :
+        <ThumbsUp /> 
+    }
+  }
   return (
     <div className="w-full lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
@@ -23,31 +34,61 @@ export function VisualizationSection({currentGameweek }: { currentGameweek: any 
             <CaptaincyPieChart />
           </div>
           <div className="col-span-3 lg:col-span-1">
-            <Card className="lg:h-[48%] lg:w-4/5">
-              <CardHeader>
-                <CardDescription>
-                  Captaincy Performance
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="flex flex-col lg:flex-row gap-4">
-                <div className="w-full">
-                  <div className='flex justify-between rounded'>
-                    <div className="text-4xl">
-                      M.Salah
-                      <br />
-                      <div className="text-sm text-gray-400">
-                        Liverpool
-                        <br />
-                        Ownership: 76%
+            {mostCaptPlayer && mostCaptPlayer[1] ?
+              <Card className="lg:h-[48%] lg:w-4/5">
+                <CardHeader>
+                  <CardDescription>
+                    Popular Captain Performance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col lg:flex-row gap-4">
+                  <div className="w-full flex justify-between rounded">
+                    {/* <div className=''> */}
+                      <div className="text-4xl">
+                        {mostCaptPlayer[0]?.web_name}
                       </div>
-                    </div>
-                    <div className="text-4xl text-right text-gray-600">
-                      34(17x2)
+                      <div className="text-4xl text-right text-gray-600">
+                        {mostCaptPlayer[1]?.stats.total_points * 2}({mostCaptPlayer[1]?.stats.total_points}x2)
+                      {/* </div> */}
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+                <CardFooter>
+                  <div className="w-full flex justify-between rounded">
+                    <div className="text-sm text-gray-400">
+                      {mostCaptPlayerFixture}
+                      <br />
+                      Ownership: {mostCaptPlayer[0]?.selected_by_percent}%
+                    </div>
+                    <div>
+                      {getPerformanceIcon()}
+                    </div>
+                  </div>
+                </CardFooter>
+              </Card>
+              :
+              <Card className="lg:h-[48%] lg:w-4/5">
+                <CardHeader>
+                  <CardDescription>
+                    Captaincy Performance
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col lg:flex-row gap-4">
+                  <div className="w-full">
+                    <div className='flex justify-between rounded'>
+                      <div className="text-4xl">
+                        Loading ...
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter>
+                  <div className="text-sm text-gray-400">
+                    Loading ...
+                  </div>
+                </CardFooter>
+              </Card>
+            }
             <div className="h-3 lg:h-[4%] lg:w-5/5">
             </div>
             <Card className="lg:h-[48%] lg:w-4/5 lg:float-right">
@@ -86,7 +127,7 @@ export function VisualizationSection({currentGameweek }: { currentGameweek: any 
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />
           </div>
-          {liveGameweekData &&
+          {/* {liveGameweekData &&
             <div className="col-span-3">
               <Card>
                 <CardHeader>
@@ -96,7 +137,7 @@ export function VisualizationSection({currentGameweek }: { currentGameweek: any 
                   <DreamTeamTable liveGameweek={liveGameweekData.id} currentGameweek={currentGameweek} />
                 </CardContent>
               </Card>
-            </div>}
+            </div>} */}
           <div className="col-span-3">
             <DifferentialPicks />
           </div>

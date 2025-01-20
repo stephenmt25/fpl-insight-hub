@@ -13,17 +13,18 @@ import { LiveGWContext } from "@/context/livegw-context";
 const Index = () => {
   const [gameweekData, setGameweekData] = useState<any[] | null>(null);
   const [currentGameweek, setCurrentGameweek] = useState<number | null>(null);
-  const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null);
-  const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null);
   const { isSignedIn, signIn } = useAuth();
   const [pageNumber, setPageNumber] = useState("1");
-  const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
-  const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
-  const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
-  const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
-  const { updateLiveGWData } = useContext(LiveGWContext)
+  const { updateLiveGWData, eventStatus } = useContext(LiveGWContext)
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
+  const [liveGWStats, setLiveGWStats] = useState([]) // pass element id (-1) for gw stats
+  const [highScorePlayer, setHighScorePlayer] = useState<any | null>(null);
+  const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
+  const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
+  const [mostCaptPlayer, setMostCaptPlayer] = useState<any | null>(null);
+  const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
+  const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
 
   const {
     data: leagueData,
@@ -47,15 +48,29 @@ const Index = () => {
     };
     getData();
   }, []);
-
-  // const currentGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
+  const previousGW = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
   const liveGameweek = gameweekData?.filter((gw) => gw.is_current === "true")[0] || null;
-  
   const totalGameweeks = 38;
+
+  const isLive = eventStatus.status.some(item => {
+    const currentDate = new Date();
+    const itemDate = new Date(item.date);
+  
+    return item.points === 'l';
+  });
+
+  console.log(eventStatus, isLive)
 
   useEffect(() => {
     if (liveGameweek !== null) {
       updateLiveGWData(liveGameweek)
+      const getLiveGWStats = async () => {
+        const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweek.id.toString())
+        if (liveGWStats) {
+          setLiveGWStats(liveGWStats.elements)
+        }
+      };
+      getLiveGWStats();
     }
   }, [liveGameweek])
 
@@ -188,6 +203,7 @@ const Index = () => {
               setMostCaptPlayerOpp(opponentTeamData);
             }
           }
+          // setMostCaptPlayer([...mostCaptPlayer, liveGWStats[mostCaptPlayer[0].id - 1]])
         }
       } catch (error) {
         console.error('Unexpected error:', error);
@@ -206,6 +222,10 @@ const Index = () => {
   }, []);
 
   // if (!currentGameweek) return null;
+
+  const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
+  const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
+
 
   return (
     <div className="space-y-1">
@@ -239,12 +259,13 @@ const Index = () => {
             currentGW={selectedGameweekData}
             mostCaptPlayer={mostCaptPlayer}
             highScorePlayer={highScorePlayer}
-            highScorePlayerTeam={highScorePlayerTeam}
-            highScorePlayerOpp={highScorePlayerOpp}
-            mostCaptPlayerTeam={mostCaptPlayerTeam}
-            mostCaptPlayerOpp={mostCaptPlayerOpp}
+            highScorePlayerFixture={highScorePlayerFixture}
+            mostCaptPlayerFixture={mostCaptPlayerFixture}
           />
-          <VisualizationSection currentGameweek={currentGameweek}/>
+          <VisualizationSection
+            mostCaptPlayer={mostCaptPlayer}
+            mostCaptPlayerFixture={mostCaptPlayerFixture}
+          />
         </TabsContent>
 
         <TabsContent value="table">

@@ -4,15 +4,11 @@ interface StatsOverviewProps {
   currentGW: any;
   mostCaptPlayer: any;
   highScorePlayer: any;
-  highScorePlayerTeam: any;
-  mostCaptPlayerTeam: any;
-  highScorePlayerOpp: any;
-  mostCaptPlayerOpp: any
+  highScorePlayerFixture: any;
+  mostCaptPlayerFixture: any
 }
 
-export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer, highScorePlayerTeam, mostCaptPlayerTeam, highScorePlayerOpp, mostCaptPlayerOpp }: StatsOverviewProps) {
-  const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
-  const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
+export function StatsOverview({ currentGW, mostCaptPlayer, highScorePlayer, highScorePlayerFixture, mostCaptPlayerFixture  }: StatsOverviewProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       {currentGW ? (

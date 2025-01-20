@@ -22,5 +22,8 @@ export const ENDPOINTS = {
   },
   overall: {
     info: () => `/bootstrap-static/`
+  },
+  status: {
+    info: () => `/event-status/`
   }
 };

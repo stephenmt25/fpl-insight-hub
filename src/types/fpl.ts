@@ -74,6 +74,18 @@ export interface Event {
   finished: boolean;
 }
 
+export interface Status {
+  status: Day[];
+  leagues: string
+}
+
+export interface Day {
+  bonus_added: boolean;
+  date: string,
+  event: number
+  points: string
+}
+
 export interface OverallInfo {
   events: Event[];
 }
