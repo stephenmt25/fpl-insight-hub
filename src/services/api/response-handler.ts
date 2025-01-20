@@ -63,10 +63,21 @@ export class ApiError extends Error {
 export async function handleApiResponse<T>(promise: Promise<any>): Promise<T> {
   try {
     const response = await promise;
-    if (!response?.data) {
+    // Check if response exists and has data property
+    if (!response) {
+      console.error('No response received from API');
+      throw new ApiError('No response received from API', 500, 'NO_RESPONSE');
+    }
+    
+    // Handle both direct data responses and responses with a data property
+    const data = response.data !== undefined ? response.data : response;
+    
+    if (data === undefined || data === null) {
+      console.error('No data in API response');
       throw new ApiError('No data received from API', 500, 'NO_DATA');
     }
-    return response.data;
+    
+    return data;
   } catch (error) {
     console.error('API Error:', error);
     if (error instanceof AxiosError) {

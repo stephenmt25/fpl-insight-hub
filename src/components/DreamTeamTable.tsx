@@ -64,16 +64,27 @@ interface LiveStats {
   };
 }
 
+interface DreamTeamResponse {
+  team: Array<{
+    element: number;
+    points: number;
+  }>;
+}
+
+interface LiveDataResponse {
+  elements: Array<LiveStats & { id: number }>;
+}
+
 export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek: number, currentGameweek: any }) {
   const displayedWeek = currentGameweek.toString()
   const [players, setPlayers] = useState<DreamTeamPlayer[]>([]);
 
-  const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery({
+  const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery<DreamTeamResponse>({
     queryKey: ['dreamTeam', displayedWeek],
     queryFn: () => playerService.getGameweekDreamTeam(displayedWeek),
   });
 
-  const { data: liveData, isLoading: isLiveDataLoading } = useQuery({
+  const { data: liveData, isLoading: isLiveDataLoading } = useQuery<LiveDataResponse>({
     queryKey: ['liveGameweek', displayedWeek],
     queryFn: () => playerService.getGameweekPlayerStats(displayedWeek),
     enabled: !!dreamTeamData,
@@ -97,7 +108,7 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
 
       const dreamTeamPlayers = dreamTeamData.team.map(dreamTeamMember => {
         const playerDetails = playerData?.find(p => p.id === dreamTeamMember.element) as PlayerData | undefined;
-        const liveStats = liveData.elements.find(e => e.id === dreamTeamMember.element) as LiveStats | undefined;
+        const liveStats = liveData.elements.find(e => e.id === dreamTeamMember.element);
 
         if (!playerDetails || !liveStats) return null;
 
