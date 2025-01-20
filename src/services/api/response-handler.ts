@@ -19,8 +19,6 @@ export class ApiError extends Error {
       url: error?.config?.url || 'unknown endpoint'
     };
 
-    // console.error('API Error Details:', errorDetails);
-
     if (!error?.response) {
       return new ApiError(
         `Network error: ${errorDetails.message}`,
@@ -40,7 +38,7 @@ export class ApiError extends Error {
         );
       case 404:
         return new ApiError(
-          'Manager not found',
+          'Resource not found',
           status,
           'NOT_FOUND'
         );
@@ -54,7 +52,7 @@ export class ApiError extends Error {
         return new ApiError(
           status >= 500 
             ? 'FPL service is currently unavailable'
-            : 'Unable to fetch FPL data',
+            : `Unable to fetch FPL data: ${error.message}`,
           status,
           status >= 500 ? 'SERVER_ERROR' : 'UNKNOWN'
         );
@@ -62,7 +60,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function handleApiResponse<T>(promise: Promise<AxiosResponse<T>>): Promise<T> {
+export async function handleApiResponse<T>(promise: Promise<any>): Promise<T> {
   try {
     const response = await promise;
     if (!response?.data) {
@@ -70,6 +68,7 @@ export async function handleApiResponse<T>(promise: Promise<AxiosResponse<T>>): 
     }
     return response.data;
   } catch (error) {
+    console.error('API Error:', error);
     if (error instanceof AxiosError) {
       throw ApiError.fromAxiosError(error);
     }

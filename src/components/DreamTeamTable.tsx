@@ -8,13 +8,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Shield,
   Shirt,
   Star,
@@ -49,34 +42,42 @@ interface DreamTeamPlayer {
   bonusPoints: number;
 }
 
+interface PlayerData {
+  id: number;
+  first_name: string;
+  second_name: string;
+  element_type: number;
+  team: number;
+  team_code: number;
+  selected_by_percent: string;
+}
+
+interface LiveStats {
+  stats: {
+    goals_scored: number;
+    assists: number;
+    clean_sheets: number;
+    ict_index: string;
+    expected_goals: string;
+    expected_assists: string;
+    bonus: number;
+  };
+}
+
 export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek: number, currentGameweek: any }) {
   const displayedWeek = currentGameweek.toString()
-  console.log(displayedWeek)
   const [players, setPlayers] = useState<DreamTeamPlayer[]>([]);
 
-  // const [dreamTeamData, setDreamTeamData] = useState<any>({})
-  // const [isDreamTeamLoading, setIsDreamTeamLoading] = useState<any>(false)
-  // const [liveData, setLiveData] = useState<any>({})
-  // const [isLiveDataLoading, setIsLiveDataLoading] = useState<any>(false)
+  const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery({
+    queryKey: ['dreamTeam', displayedWeek],
+    queryFn: () => playerService.getGameweekDreamTeam(displayedWeek),
+  });
 
-  // useEffect(() => {
-    const { data: dreamTeamData, isLoading: isDreamTeamLoading } = useQuery({
-      queryKey: ['dreamTeam', displayedWeek],
-      queryFn: () => playerService.getGameweekDreamTeam(displayedWeek),
-    });
-
-    // setDreamTeamData(dreamTeamData)
-    // setIsDreamTeamLoading(isDreamTeamLoading)
-  
-    const { data: liveData, isLoading: isLiveDataLoading } = useQuery({
-      queryKey: ['liveGameweek', displayedWeek],
-      queryFn: () => playerService.getGameweekPlayerStats(displayedWeek),
-      enabled: !!dreamTeamData,
-    });
-
-  //   setLiveData(liveData)
-  //   setIsLiveDataLoading(isLiveDataLoading)
-  // }, [displayedWeek])
+  const { data: liveData, isLoading: isLiveDataLoading } = useQuery({
+    queryKey: ['liveGameweek', displayedWeek],
+    queryFn: () => playerService.getGameweekPlayerStats(displayedWeek),
+    enabled: !!dreamTeamData,
+  });
 
   useEffect(() => {
     const fetchPlayerDetails = async () => {
@@ -95,8 +96,8 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
       }
 
       const dreamTeamPlayers = dreamTeamData.team.map(dreamTeamMember => {
-        const playerDetails = playerData?.find(p => p.id === dreamTeamMember.element);
-        const liveStats = liveData.elements.find(e => e.id === dreamTeamMember.element)?.stats;
+        const playerDetails = playerData?.find(p => p.id === dreamTeamMember.element) as PlayerData | undefined;
+        const liveStats = liveData.elements.find(e => e.id === dreamTeamMember.element) as LiveStats | undefined;
 
         if (!playerDetails || !liveStats) return null;
 
@@ -109,13 +110,13 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
           club: playerDetails.team_code?.toString() || '',
           points: dreamTeamMember.points,
           selectedBy: playerDetails.selected_by_percent,
-          goals: liveStats.goals_scored,
-          assists: liveStats.assists,
-          cleanSheet: liveStats.clean_sheets === 1,
-          ictIndex: liveStats.ict_index,
-          xG: liveStats.expected_goals,
-          xA: liveStats.expected_assists,
-          bonusPoints: liveStats.bonus,
+          goals: liveStats.stats.goals_scored,
+          assists: liveStats.stats.assists,
+          cleanSheet: liveStats.stats.clean_sheets === 1,
+          ictIndex: liveStats.stats.ict_index,
+          xG: liveStats.stats.expected_goals,
+          xA: liveStats.stats.expected_assists,
+          bonusPoints: liveStats.stats.bonus,
         };
       }).filter((player): player is DreamTeamPlayer => player !== null);
 
@@ -124,7 +125,6 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
 
     fetchPlayerDetails();
   }, [dreamTeamData, liveData]);
-
 
   if (isDreamTeamLoading || isLiveDataLoading) {
     return <div>Loading dream team data...</div>;

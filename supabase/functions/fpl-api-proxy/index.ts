@@ -35,11 +35,7 @@ serve(async (req) => {
     const url = `${FPL_BASE_URL}${endpoint}`;
     console.log('Fetching data from:', url);
 
-    const response = await fetch(url, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    const response = await fetch(url);
 
     if (!response.ok) {
       console.error('FPL API error:', response.status, await response.text());
@@ -58,7 +54,11 @@ serve(async (req) => {
   } catch (error) {
     console.error('Error in fpl-api-proxy:', error);
     return new Response(
-      JSON.stringify({ error: 'Internal Server Error', details: error.message }),
+      JSON.stringify({ 
+        error: 'Internal Server Error', 
+        details: error.message,
+        timestamp: new Date().toISOString()
+      }),
       { 
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
