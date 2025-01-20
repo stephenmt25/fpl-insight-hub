@@ -1,4 +1,4 @@
-import { useState, useEffect, useContext } from "react";
+import { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -22,9 +22,8 @@ import {
 } from "@/components/ui/tooltip";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
-import { playerService } from "@/services/fpl-api";
+import { playerService, DreamTeamResponse } from "@/services/api/player.service";
 import { useQuery } from "@tanstack/react-query";
-import { LiveGWContext } from "@/context/livegw-context";
 
 interface DreamTeamPlayer {
   id: number;
@@ -62,13 +61,6 @@ interface LiveStats {
     expected_assists: string;
     bonus: number;
   };
-}
-
-interface DreamTeamResponse {
-  team: Array<{
-    element: number;
-    points: number;
-  }>;
 }
 
 interface LiveDataResponse {
@@ -240,4 +232,4 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
       </div>
     </div>
   );
-}
+};
