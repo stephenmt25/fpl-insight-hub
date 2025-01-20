@@ -17,7 +17,6 @@ interface VisualizationSectionProps {
 
 export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture, selectedGameweekData, mostTransferredPlayerData, mostTransferredPlayerTeam }: VisualizationSectionProps) {
   const { liveGameweekData } = useContext(LiveGWContext)
-  console.log(mostTransferredPlayerTeam, mostTransferredPlayerData)
   const getPerformanceIcon = () => {
     if (mostCaptPlayerData) {
       return mostCaptPlayerData[1] < 4 ?
@@ -33,13 +32,14 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-4">
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="col-span-3 ">
-            <DifferentialPicks />
-          </div>
           <div className="col-span-3 lg:col-span-1">
             <CaptaincyPieChart />
           </div>
           <div className="col-span-3 lg:col-span-1">
+            <AveragePtsLineChart />
+          </div>
+          <div className="col-span-3 lg:col-span-1">
+
             {mostCaptPlayerData && mostCaptPlayerData[1] ?
               <Card className="lg:h-[48%] lg:w-4/5">
                 <CardHeader>
@@ -150,12 +150,9 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   </div>
                 </CardFooter>
               </Card>
-
             }
           </div>
-          <div className="col-span-3 lg:col-span-1">
-            <AveragePtsLineChart />
-          </div>
+
           {/* {liveGameweekData &&
             <div className="col-span-3">
               <Card>

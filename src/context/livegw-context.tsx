@@ -10,6 +10,8 @@ interface LiveGWContextType {
     status: StatusItem[]; // Array of status items
     leagues: string;
   };
+  updateOverallData: (overallData: Object) => void;
+  overallData: Object;
 }
 
 interface StatusItem {
@@ -22,7 +24,9 @@ interface StatusItem {
 const LiveGWContext = createContext<LiveGWContextType>({
   liveGameweekData: null,
   updateLiveGWData: () => { },
-  eventStatus: null
+  eventStatus: null,
+  updateOverallData: () => { },
+  overallData: null
 });
 
 const LiveGWProvider = ({ children }) => {
@@ -36,6 +40,11 @@ const LiveGWProvider = ({ children }) => {
     }], 
     leagues: ""
   })
+  const [overallData, setOverallData] = useState(null)
+
+  const updateOverallData = async (overallData) => {
+    setOverallData(overallData)
+  }
 
   const updateLiveGWData = async (liveGameweekData) => {
     const status = await overallService.getStatus();
@@ -44,7 +53,7 @@ const LiveGWProvider = ({ children }) => {
   };
 
   return (
-    <LiveGWContext.Provider value={{ liveGameweekData, updateLiveGWData, eventStatus }}>
+    <LiveGWContext.Provider value={{ liveGameweekData, updateLiveGWData, eventStatus, updateOverallData, overallData }}>
       {children}
     </LiveGWContext.Provider>
   );

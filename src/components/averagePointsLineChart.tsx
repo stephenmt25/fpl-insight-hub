@@ -11,33 +11,33 @@ import {
 import {
   ChartConfig,
   ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-
-const chartData = [
-  { gameweek: "GW1", avgPoints: 56, top10kAvgPoints: 60 },
-  { gameweek: "GW2", avgPoints: 48, top10kAvgPoints: 58 },
-  { gameweek: "GW3", avgPoints: 62, top10kAvgPoints: 65 },
-  { gameweek: "GW4", avgPoints: 70, top10kAvgPoints: 72 },
-  { gameweek: "GW5", avgPoints: 66, top10kAvgPoints: 70 },
-  { gameweek: "GW6", avgPoints: 59, top10kAvgPoints: 62 },
-];
+import { useContext } from "react";
+import { LiveGWContext } from "@/context/livegw-context";
 
 const chartConfig = {
   avgPoints: {
-    label: "All Managers",
-    color: "hsl(var(--chart-1))",
-  },
-  top10kAvgPoints: {
-    label: "Top 10k",
+    label: "Average Points",
     color: "hsl(var(--chart-2))",
-  },
+  }
 } satisfies ChartConfig;
 
 export function AveragePtsLineChart() {
+  const { overallData } = useContext(LiveGWContext);
+  // Sort the overallData by id
+  const sortedData = Array.isArray(overallData)
+    ? overallData
+      .filter((item) => item.finished) // Optional: Filter only finished gameweeks
+      .map((item) => ({
+        id: item.id,
+        gameweek: `GW ${item.id}`,
+        avgPoints: item.average_entry_score,
+      }))
+      .sort((a, b) => a.id - b.id) // Sort by id
+    : [];
+
   return (
     <Card className="h-full">
       <CardHeader>
@@ -48,7 +48,7 @@ export function AveragePtsLineChart() {
         <ChartContainer config={chartConfig}>
           <LineChart
             accessibilityLayer
-            data={chartData}
+            data={sortedData}
             margin={{
               top: 20,
               left: 12,
@@ -64,36 +64,16 @@ export function AveragePtsLineChart() {
               tickFormatter={(value) => value}
             />
             <ChartTooltip
-              cursor={false}
+              cursor={true}
               content={<ChartTooltipContent indicator="line" />}
             />
             <Line
               dataKey="avgPoints"
-              type="linear"
+              type="natural"
               stroke="var(--color-avgPoints)"
               strokeWidth={2}
-              dot={{
-                fill: "var(--color-avgPoints)",
-              }}
-              activeDot={{
-                r: 6,
-              }}
-            >
-            </Line>
-            <Line
-              dataKey="top10kAvgPoints"
-              type="linear"
-              stroke="var(--color-top10kAvgPoints)"
-              strokeWidth={2}
-              dot={{
-                fill: "var(--color-top10kAvgPoints)",
-              }}
-              activeDot={{
-                r: 6,
-              }}
-            >
-            </Line>
-            <ChartLegend content={<ChartLegendContent />} />
+              dot={false}
+            />
           </LineChart>
         </ChartContainer>
       </CardContent>

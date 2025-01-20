@@ -99,7 +99,7 @@ export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn } = useAuth();
   const { liveGameweekData } = useContext(LiveGWContext)
-  const [currentGameweek, setCurrentGameweek] = useState<number | null>(liveGameweekData.id);
+  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData.id);
 
   if (!isSignedIn) {
     return (
@@ -133,10 +133,10 @@ export default function Performance() {
         </div>
         {/* Gameweek Paginator */}
         <GameweekPaginator
-          currentGameweek={currentGameweek}
-          setCurrentGameweek={setCurrentGameweek}
+          currentGameweekNumber={currentGameweek}
+          setCurrentGameweekNumber={setCurrentGameweek}
           totalGameweeks={38}
-          liveGameweek={liveGameweekData}
+          liveGameweekData={liveGameweekData}
         />
         <TabsContent value="overview">
           {/* Performance Metrics */}

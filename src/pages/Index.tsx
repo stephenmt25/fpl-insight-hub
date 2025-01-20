@@ -11,11 +11,11 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
 
 const Index = () => {
-  const [gameweekData, setGameweekData] = useState<any[] | null>(null);
+  const [overallFPLData, setOverallFPLData] = useState<any[] | null>(null);
   const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
   const { isSignedIn, signIn } = useAuth();
   const [pageNumber, setPageNumber] = useState("1");
-  const { updateLiveGWData, eventStatus } = useContext(LiveGWContext)
+  const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext)
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
   const [liveGWStats, setLiveGWStats] = useState([]) // pass element id (-1) for gw stats
@@ -40,8 +40,8 @@ const Index = () => {
   useEffect(() => {
     const getData = async () => {
       const { data } = await supabase.from('fploveralldata').select();
-      setGameweekData(data);
-
+      setOverallFPLData(data);
+      updateOverallData(data)
       // Find the current gameweek and set it
       const currentGW = data?.find(gw => gw.is_current === "true");
       if (currentGW) {
@@ -50,8 +50,8 @@ const Index = () => {
     };
     getData();
   }, []);
-  const previousGWData = gameweekData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweekData = gameweekData?.filter((gw) => gw.is_current === "true")[0] || null;
+  const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
+  const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
   const totalGameweeks = 38;
 
   const isLive = eventStatus.status.some(item => {
@@ -59,17 +59,16 @@ const Index = () => {
   });
 
   useEffect(() => {
-    if (liveGameweekData !== null) {
+    if (liveGameweekData !== undefined) {
       updateLiveGWData(liveGameweekData)
       const getLiveGWStats = async () => {
-        const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweekData.id.toString())
+        const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweekData?.id.toString())
         if (liveGWStats) {
           setLiveGWStats(liveGWStats.elements)
         }
       };
       getLiveGWStats();
-    }
-    if (previousGWData !== undefined) {
+    } else if (previousGWData !== undefined) {
       updateLiveGWData(previousGWData)
       const getPrevGWStats = async () => {
         const prevGWStats = await playerService.getGameweekPlayerStats(previousGWData.id.toString())
