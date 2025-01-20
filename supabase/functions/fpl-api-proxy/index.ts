@@ -8,20 +8,25 @@ const corsHeaders = {
 const FPL_BASE_URL = 'https://fantasy.premierleague.com/api';
 
 serve(async (req) => {
+  console.log('FPL API Proxy function called');
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
+    console.log('Handling CORS preflight request');
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
     // Parse the request body
-    const body = await req.json().catch(() => ({}));
+    const body = await req.json().catch(() => {
+      console.error('Failed to parse request body');
+      throw new Error('Invalid request body');
+    });
+    
     const { endpoint } = body;
 
-    console.log('Received request for FPL API endpoint:', endpoint);
-
     if (!endpoint) {
-      console.error('No endpoint provided');
+      console.error('No endpoint provided in request');
       return new Response(
         JSON.stringify({ error: 'Endpoint is required' }),
         { 
@@ -31,19 +36,25 @@ serve(async (req) => {
       );
     }
 
+    console.log(`Fetching data from FPL API endpoint: ${endpoint}`);
+
     // Construct the full URL
     const url = `${FPL_BASE_URL}${endpoint}`;
-    console.log('Fetching data from:', url);
-
-    const response = await fetch(url);
+    
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json'
+      }
+    });
 
     if (!response.ok) {
-      console.error('FPL API error:', response.status, await response.text());
+      console.error(`FPL API error: ${response.status}`, await response.text());
       throw new Error(`FPL API returned ${response.status}`);
     }
 
     const data = await response.json();
-    console.log('Successfully fetched data for endpoint:', endpoint);
+    console.log('Successfully fetched data from FPL API');
 
     return new Response(
       JSON.stringify(data),
@@ -51,8 +62,10 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       }
     );
+
   } catch (error) {
     console.error('Error in fpl-api-proxy:', error);
+    
     return new Response(
       JSON.stringify({ 
         error: 'Internal Server Error', 
