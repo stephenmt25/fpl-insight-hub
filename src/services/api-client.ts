@@ -1,11 +1,15 @@
 import axios from 'axios';
-import { API_CONFIG } from './api-config';
+import { supabase } from '@/integrations/supabase/client';
 
-export const apiClient = axios.create({
-  baseURL: API_CONFIG.BASE_URL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-  timeout: 120000,
-});
+const proxyRequest = async (endpoint: string) => {
+  const { data, error } = await supabase.functions.invoke('fpl-api-proxy', {
+    body: { endpoint },
+  });
+
+  if (error) throw error;
+  return data;
+};
+
+export const apiClient = {
+  get: (endpoint: string) => proxyRequest(endpoint),
+};
