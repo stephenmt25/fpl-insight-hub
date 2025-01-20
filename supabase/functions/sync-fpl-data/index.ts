@@ -26,6 +26,11 @@ interface FPLEvent {
   top_element: number
   most_captained: number
   most_vice_captained: number
+  transfers_made: number | null;
+  points: number | null;
+  can_enter: boolean | null;
+  can_manage: boolean | null;
+  released: boolean | null;
 }
 
 interface FPLPlayer {
@@ -131,6 +136,7 @@ async function updateSupabaseGameweekData(supabase: any, event: FPLEvent) {
   }
 
   const boolToString = (value: boolean) => value ? 'true' : 'false';
+  const numberToString = (value: number | null) => value?.toString() || null;
 
   const { error: upsertError } = await supabase
     .from('fploveralldata')
@@ -154,7 +160,12 @@ async function updateSupabaseGameweekData(supabase: any, event: FPLEvent) {
       most_transferred_in: event.most_transferred_in,
       top_element: event.top_element,
       most_captained: event.most_captained,
-      most_vice_captained: event.most_vice_captained
+      most_vice_captained: event.most_vice_captained,
+      transfers_made: numberToString(event.transfers_made),
+      points: event.points || null,
+      can_enter: boolToString(event.can_enter),
+      can_manage: boolToString(event.can_manage),
+      released: event.released
     });
 
   if (upsertError) {
