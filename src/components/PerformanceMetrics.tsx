@@ -1,18 +1,33 @@
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowUp, ArrowDown, Star, AlertCircle, Minus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ArrowUp, ArrowDown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useAuth } from "@/context/auth-context";
+import { useQuery } from "@tanstack/react-query";
+import { managerService } from "@/services/fpl-api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface PerformanceMetricsProps {
   gameweek: number;
 }
 
-export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
-  // Mock data - replace with actual data from your API
+export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
+  const { currentManager } = useAuth();
+  
+  const { data: gameweekPicks, isLoading } = useQuery({
+    queryKey: ['gameweekPicks', currentManager?.id, gameweek],
+    queryFn: () => 
+      currentManager?.id 
+        ? managerService.getGameweekTeamPicks(currentManager.id.toString(), gameweek.toString())
+        : null,
+    enabled: !!currentManager?.id,
+  });
+
+  // Mock data as fallback
   const mockData = {
     points: 68,
     averagePoints: 55,
@@ -49,10 +64,37 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
     return <ArrowDown className="h-4 w-4 text-red-500" />;
   };
 
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="text-start space-y-2">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="h-4 w-64" />
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i}>
+              <CardHeader className="space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-4 w-32 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const entryHistory = gameweekPicks?.entry_history;
+  const captain = gameweekPicks?.picks?.find(pick => pick.is_captain);
+
   return (
     <div className="space-y-4">
       <div className="text-start space-y-2">
-        <h2 className="text-2xl font-bold">Team Name</h2>
+        <h2 className="text-2xl font-bold">{currentManager?.name || 'Team Name'}</h2>
         <p className="text-muted-foreground">Gameweek {gameweek} Performance</p>
       </div>
 
@@ -63,18 +105,10 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
             <CardTitle className="text-sm font-medium">Gameweek Points</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockData.points}</div>
+            <div className="text-2xl font-bold">{entryHistory?.points || mockData.points}</div>
             <p className="text-xs text-muted-foreground">
               League Average: {mockData.averagePoints}
             </p>
-            {/* <div className="mt-2 h-2 w-full bg-gray-200 rounded-full">
-              <div
-                className="h-2 bg-green-500 rounded-full"
-                style={{
-                  width: `${(mockData.points / 100) * 100}%`,
-                }}
-              />
-            </div> */}
           </CardContent>
         </Card>
 
@@ -86,12 +120,15 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
           <CardContent>
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold">
-                {mockData.rank.toLocaleString()}
+                {entryHistory?.overall_rank?.toLocaleString() || mockData.rank.toLocaleString()}
               </span>
-              {getRankIcon(mockData.rank, mockData.previousRank)}
+              {getRankIcon(
+                entryHistory?.overall_rank || mockData.rank,
+                mockData.previousRank
+              )}
             </div>
             <p className="text-xs text-muted-foreground">
-              Gameweek Rank: {mockData.previousRank.toLocaleString()}
+              Gameweek Rank: {entryHistory?.rank?.toLocaleString() || mockData.previousRank.toLocaleString()}
             </p>
           </CardContent>
         </Card>
@@ -103,7 +140,9 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              <div className="text-2xl font-bold">{mockData.captain.name}</div>
+              <div className="text-2xl font-bold">
+                {captain ? `Player ${captain.element}` : mockData.captain.name}
+              </div>
               <div className="text-sm">{mockData.captain.points} points</div>
               <div className="text-xs text-muted-foreground">
                 {mockData.captain.streak} week streak
@@ -127,11 +166,11 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
             <div className="space-y-2">
               <div className="flex justify-between">
                 <span>Made:</span>
-                <span>{mockData.transfers.count}</span>
+                <span>{entryHistory?.event_transfers || mockData.transfers.count}</span>
               </div>
               <div className="flex justify-between">
                 <span>Cost:</span>
-                <span>-{mockData.transfers.cost}</span>
+                <span>-{entryHistory?.event_transfers_cost || mockData.transfers.cost}</span>
               </div>
               <div className="text-xs space-y-1">
                 <div className="text-green-500">
@@ -151,15 +190,17 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
             <CardTitle className="text-sm font-medium">Team Value</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">£{mockData.teamValue.current}m</div>
+            <div className="text-2xl font-bold">
+              £{((entryHistory?.value || 0) / 10).toFixed(1)}m
+            </div>
             <p className={`text-xs ${mockData.teamValue.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
               {mockData.teamValue.change >= 0 ? '+' : ''}{mockData.teamValue.change}m
             </p>
           </CardContent>
         </Card>
 
-                {/* Bench Points Card */}
-                <Card>
+        {/* Bench Points Card */}
+        <Card>
           <CardHeader className="space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               <TooltipProvider>
@@ -173,7 +214,7 @@ export function PerformanceMetrics({ gameweek }: PerformanceMetricsProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{mockData.benchPoints}</div>
+            <div className="text-2xl font-bold">{entryHistory?.points_on_bench || mockData.benchPoints}</div>
             <p className="text-xs text-muted-foreground">
               Auto Subs: None
             </p>
