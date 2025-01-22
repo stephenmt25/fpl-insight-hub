@@ -106,7 +106,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   <div className='flex-row w-full'>
                     <div className="flex justify-between rounded">
                       <div className="">
-                        Total Transferred Made
+                        Total Transferred Made in GW
                       </div>
                       <div className="text-xl text-right text-gray-600">
                         {formattedTransfers}

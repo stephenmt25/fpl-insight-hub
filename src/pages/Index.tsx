@@ -9,6 +9,7 @@ import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
+import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 
 const Index = () => {
   const [overallFPLData, setOverallFPLData] = useState<any[] | null>(null);
@@ -267,17 +268,23 @@ const Index = () => {
 
 
   return (
-    <div className="space-y-1">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div>
-          <h2 className="text-3xl font-bold tracking-tight">
-            Here's the FPL 2025 season at a glance.
-          </h2>
-          <p className="mt-2 text-muted-foreground">
-            Overall FPL data and statistics.
-          </p>
+    <div className="space-y-6">
+      {isSignedIn ?
+        <section className="space-y-4">
+          <WelcomeBanner />
+        </section>
+        :
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Here's the FPL 2025 season at a glance.
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Overall FPL data and statistics.
+            </p>
+          </div>
         </div>
-      </div>
+      }
       <br />
       <Tabs defaultValue="charts" className="space-y-4">
         <div className="w-full overflow-x-auto no-scrollbar">

@@ -10,8 +10,8 @@ import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { LeagueComparison } from "@/components/LeagueComparison";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
-import { StatsCard } from "@/components/StatsCard";
 import { LiveGWContext } from "@/context/livegw-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // Mock data for the player performance table
 const mockPlayers = [
@@ -99,18 +99,28 @@ export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn } = useAuth();
   const { liveGameweekData } = useContext(LiveGWContext)
-  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData.id);
+  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData?.id);
 
   if (!isSignedIn) {
     return (
-      <Card className="h-screen">
-        <CardHeader>
-          <CardDescription>
-            Please sign in to view performance metrics
-          </CardDescription>
-        </CardHeader>
-        <CardContent></CardContent>
-      </Card>
+
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight">
+              Sign in with your FPL ID to see your performance analytics.
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Track your progress and make informed decisions for your team.
+            </p>
+          </div>
+        </div>
+        <Skeleton className="h-[200px] w-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
+      </div>
     );
   }
 
@@ -140,7 +150,7 @@ export default function Performance() {
         />
         <TabsContent value="overview">
           {/* Performance Metrics */}
-          <div className="grid grid-cols-2 gap-4 p-2">
+          <div className="grid lg:grid-cols-2 gap-4 p-2">
             <div className="">
               <PerformanceMetrics gameweek={currentGameweek} />
             </div>
