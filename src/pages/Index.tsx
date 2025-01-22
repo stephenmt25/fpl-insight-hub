@@ -41,12 +41,14 @@ const Index = () => {
   useEffect(() => {
     const getData = async () => {
       const { data } = await supabase.from('fploveralldata').select();
-      setOverallFPLData(data);
-      updateOverallData(data)
-      // Find the current gameweek and set it
-      const currentGW = data?.find(gw => gw.is_current === "true");
-      if (currentGW) {
-        setCurrentGameweekNumber(currentGW.id);
+      if (data) {
+        setOverallFPLData(data);
+        updateOverallData(data);
+        // Find the current gameweek and set it
+        const currentGW = data.find(gw => gw.is_current === "true");
+        if (currentGW) {
+          setCurrentGameweekNumber(currentGW.id);
+        }
       }
     };
     getData();
@@ -56,38 +58,31 @@ const Index = () => {
   const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
 
   useEffect(() => {
+    const fetchGameweekStats = async (gameweekData: any) => {
+      if (!gameweekData || typeof gameweekData.id === 'undefined') {
+        console.log('No valid gameweek data available');
+        return;
+      }
+
+      try {
+        console.log('Fetching stats for gameweek:', gameweekData.id);
+        const stats = await playerService.getGameweekPlayerStats(gameweekData.id.toString());
+        if (stats?.elements) {
+          setLiveGWStats(stats.elements);
+        }
+      } catch (error) {
+        console.error('Error fetching gameweek stats:', error);
+      }
+    };
+
     if (liveGameweekData) {
       updateLiveGWData(liveGameweekData);
-      const getLiveGWStats = async () => {
-        if (liveGameweekData.id) {  // Add check for id
-          try {
-            const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweekData.id.toString());
-            if (liveGWStats) {
-              setLiveGWStats(liveGWStats.elements);
-            }
-          } catch (error) {
-            console.error('Error fetching live gameweek stats:', error);
-          }
-        }
-      };
-      getLiveGWStats();
+      fetchGameweekStats(liveGameweekData);
     } else if (previousGWData) {
       updateLiveGWData(previousGWData);
-      const getPrevGWStats = async () => {
-        if (previousGWData.id) {  // Add check for id
-          try {
-            const prevGWStats = await playerService.getGameweekPlayerStats(previousGWData.id.toString());
-            if (prevGWStats) {
-              setLiveGWStats(prevGWStats.elements);
-            }
-          } catch (error) {
-            console.error('Error fetching previous gameweek stats:', error);
-          }
-        }
-      };
-      getPrevGWStats();
+      fetchGameweekStats(previousGWData);
     }
-  }, [liveGameweekData]);
+  }, [liveGameweekData, previousGWData]);
 
   const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweekData);
 
@@ -201,7 +196,6 @@ const Index = () => {
     fetchHighScorePlayerAndTeam();
   }, [selectedGameweekData]);
 
-
   useEffect(() => {
     const fetchMostCaptPlayerAndTeam = async () => {
       try {
@@ -268,8 +262,6 @@ const Index = () => {
       signIn(storedFplId, storedManagerData);
     }
   }, []);
-
-  // if (!currentGameweekNumber) return null;
 
   const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
   const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
