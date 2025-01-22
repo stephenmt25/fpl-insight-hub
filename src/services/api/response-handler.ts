@@ -19,8 +19,6 @@ export class ApiError extends Error {
       url: error?.config?.url || 'unknown endpoint'
     };
 
-    console.error('API Error Details:', errorDetails);
-
     if (!error?.response) {
       return new ApiError(
         `Network error: ${errorDetails.message}`,
@@ -65,7 +63,7 @@ export class ApiError extends Error {
 export async function handleApiResponse<T>(promise: Promise<any>): Promise<T> {
   try {
     const response = await promise;
-    
+    // Check if response exists and has data property
     if (!response) {
       console.error('No response received from API');
       throw new ApiError('No response received from API', 500, 'NO_RESPONSE');
@@ -78,36 +76,18 @@ export async function handleApiResponse<T>(promise: Promise<any>): Promise<T> {
       console.error('No data in API response');
       throw new ApiError('No data received from API', 500, 'NO_DATA');
     }
-
-    // Add detailed logging for debugging
-    console.log('API Response:', {
-      endpoint: response.config?.url,
-      status: response.status,
-      dataType: typeof data,
-      hasData: !!data
-    });
     
     return data;
   } catch (error) {
     console.error('API Error:', error);
-    
     if (error instanceof AxiosError) {
       throw ApiError.fromAxiosError(error);
     }
-    
     if (error instanceof ApiError) {
       throw error;
     }
-    
-    // Add more context to unexpected errors
-    console.error('Unexpected API error details:', {
-      error,
-      type: error?.constructor?.name,
-      message: error?.message
-    });
-    
     throw new ApiError(
-      'An unexpected error occurred while fetching data',
+      'An unexpected error occurred',
       500,
       'INTERNAL_ERROR'
     );

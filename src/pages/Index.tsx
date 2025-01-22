@@ -9,7 +9,6 @@ import { LeagueSection } from "@/components/dashboard/LeagueSection";
 import { VisualizationSection } from "@/components/dashboard/VisualizationSection";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
-import { Skeleton } from "@/components/ui/skeleton";
 
 const Index = () => {
   const [overallFPLData, setOverallFPLData] = useState<any[] | null>(null);
@@ -19,7 +18,7 @@ const Index = () => {
   const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext)
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
-  const [liveGWStats, setLiveGWStats] = useState([])
+  const [liveGWStats, setLiveGWStats] = useState([]) // pass element id (-1) for gw stats
   const [highScorePlayerData, setHighScorePlayerData] = useState<any | null>(null);
   const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
   const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
@@ -51,30 +50,13 @@ const Index = () => {
     };
     getData();
   }, []);
-
   const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
   const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
   const totalGameweeks = 38;
 
-  // Add null check for eventStatus
-  const isLive = eventStatus?.status?.some(item => {
+  const isLive = eventStatus.status.some(item => {
     return item.points === 'l';
-  }) || false;
-
-  // If eventStatus is still loading, show a loading state
-  if (!eventStatus) {
-    return (
-      <div className="space-y-4">
-        <Skeleton className="h-[200px] w-full" />
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Skeleton className="h-[125px]" />
-          <Skeleton className="h-[125px]" />
-          <Skeleton className="h-[125px]" />
-          <Skeleton className="h-[125px]" />
-        </div>
-      </div>
-    );
-  }
+  });
 
   useEffect(() => {
     if (liveGameweekData !== undefined) {
@@ -277,6 +259,8 @@ const Index = () => {
       signIn(storedFplId, storedManagerData);
     }
   }, []);
+
+  // if (!currentGameweekNumber) return null;
 
   const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
   const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';

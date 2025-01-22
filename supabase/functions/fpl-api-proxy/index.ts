@@ -28,10 +28,7 @@ serve(async (req) => {
     if (!endpoint) {
       console.error('No endpoint provided in request');
       return new Response(
-        JSON.stringify({ 
-          error: 'Endpoint is required',
-          timestamp: new Date().toISOString()
-        }),
+        JSON.stringify({ error: 'Endpoint is required' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -46,37 +43,14 @@ serve(async (req) => {
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json',
-        'Cache-Control': 'no-cache'
+        'User-Agent': 'Mozilla/5.0',
+        'Accept': 'application/json'
       }
     });
 
-    // Log the response status and headers for debugging
-    console.log('FPL API Response:', {
-      status: response.status,
-      statusText: response.statusText,
-      headers: Object.fromEntries(response.headers.entries())
-    });
-
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error(`FPL API error: ${response.status}`, errorText);
-      
-      // Return a more detailed error response
-      return new Response(
-        JSON.stringify({
-          error: `FPL API Error: ${response.statusText}`,
-          status: response.status,
-          details: errorText,
-          endpoint,
-          timestamp: new Date().toISOString()
-        }),
-        { 
-          status: response.status,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        }
-      );
+      console.error(`FPL API error: ${response.status}`, await response.text());
+      throw new Error(`FPL API returned ${response.status}`);
     }
 
     const data = await response.json();
@@ -96,7 +70,6 @@ serve(async (req) => {
       JSON.stringify({ 
         error: 'Internal Server Error', 
         details: error.message,
-        stack: error.stack,
         timestamp: new Date().toISOString()
       }),
       { 
