@@ -39,6 +39,22 @@ serve(async (req) => {
       );
     }
 
+    // Check for undefined parameters in the endpoint
+    if (endpoint.includes('undefined')) {
+      console.error(`Invalid endpoint with undefined parameters: ${endpoint}`);
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid endpoint: contains undefined parameters',
+          endpoint,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
     console.log(`Fetching data from FPL API endpoint: ${endpoint}`);
 
     // Construct the full URL
@@ -63,7 +79,6 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error(`FPL API error: ${response.status}`, errorText);
       
-      // Return a more detailed error response
       return new Response(
         JSON.stringify({
           error: `FPL API Error: ${response.statusText}`,

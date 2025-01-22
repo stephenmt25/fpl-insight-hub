@@ -18,13 +18,13 @@ interface PerformanceMetricsProps {
 export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
   const { currentManager } = useAuth();
   
-  const { data: gameweekPicks, isLoading } = useQuery({
+  const { data: gameweekPicks, isLoading, error } = useQuery({
     queryKey: ['gameweekPicks', currentManager?.id, gameweek],
     queryFn: () => 
       currentManager?.id 
         ? managerService.getGameweekTeamPicks(currentManager.id.toString(), gameweek.toString())
         : null,
-    enabled: !!currentManager?.id,
+    enabled: !!currentManager?.id && !!gameweek,
   });
 
   // Mock data as fallback
@@ -57,13 +57,6 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
     },
   };
 
-  const getRankIcon = (current: number, previous: number) => {
-    if (current < previous) {
-      return <ArrowUp className="h-4 w-4 text-green-500" />;
-    }
-    return <ArrowDown className="h-4 w-4 text-red-500" />;
-  };
-
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -87,6 +80,17 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
       </div>
     );
   }
+
+  if (error) {
+    console.error('Error fetching gameweek picks:', error);
+  }
+
+  const getRankIcon = (current: number, previous: number) => {
+    if (current < previous) {
+      return <ArrowUp className="h-4 w-4 text-green-500" />;
+    }
+    return <ArrowDown className="h-4 w-4 text-red-500" />;
+  };
 
   const entryHistory = gameweekPicks?.entry_history;
   const captain = gameweekPicks?.picks?.find(pick => pick.is_captain);
@@ -146,12 +150,6 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
               <div className="text-sm">{mockData.captain.points} points</div>
               <div className="text-xs text-muted-foreground">
                 {mockData.captain.streak} week streak
-              </div>
-              <div className="h-1 w-full bg-gray-200 rounded-full">
-                <div
-                  className="h-1 bg-green-500 rounded-full"
-                  style={{ width: `${(mockData.captain.streak / 5) * 100}%` }}
-                />
               </div>
             </div>
           </CardContent>
