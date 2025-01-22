@@ -1,24 +1,22 @@
-// Create a Context
-// context.js
 import { overallService } from '@/services/fpl-api';
 import { createContext, useState } from 'react';
 
 interface LiveGWContextType {
-  liveGameweekData: { id: number };
+  liveGameweekData: { id: number } | null;
   updateLiveGWData: (liveGameweekData: Object) => void;
   eventStatus: {
-    status: StatusItem[]; // Array of status items
+    status: StatusItem[];
     leagues: string;
-  };
+  } | null;
   updateOverallData: (overallData: Object) => void;
-  overallData: Object;
+  overallData: Object | null;
 }
 
 interface StatusItem {
-  bonus_added: boolean; // Whether bonus points have been added
-  date: string; // Date in the format "YYYY-MM-DD"
-  event: number; // Gameweek or event number
-  points: string; // Points scored or status
+  bonus_added: boolean;
+  date: string;
+  event: number;
+  points: string;
 }
 
 const LiveGWContext = createContext<LiveGWContextType>({
@@ -30,30 +28,33 @@ const LiveGWContext = createContext<LiveGWContextType>({
 });
 
 const LiveGWProvider = ({ children }) => {
-  const [liveGameweekData, setLiveGameweekData] = useState(null);
-  const [eventStatus, setEventStatus] = useState<{ status: StatusItem[]; leagues: string }>({
-    status: [{
-      bonus_added: false,
-      date: (new Date()).toString(),
-      event: 1,
-      points: ""
-    }], 
-    leagues: ""
-  })
-  const [overallData, setOverallData] = useState(null)
+  const [liveGameweekData, setLiveGameweekData] = useState<{ id: number } | null>(null);
+  const [eventStatus, setEventStatus] = useState<{ status: StatusItem[]; leagues: string } | null>(null);
+  const [overallData, setOverallData] = useState<Object | null>(null);
 
   const updateOverallData = async (overallData) => {
-    setOverallData(overallData)
+    setOverallData(overallData);
   }
 
   const updateLiveGWData = async (liveGameweekData) => {
-    const status = await overallService.getStatus();
-    setEventStatus(status)
-    setLiveGameweekData(liveGameweekData);
+    try {
+      const status = await overallService.getStatus();
+      setEventStatus(status);
+      setLiveGameweekData(liveGameweekData);
+    } catch (error) {
+      console.error('Error updating live gameweek data:', error);
+      // Don't set the data if there's an error
+    }
   };
 
   return (
-    <LiveGWContext.Provider value={{ liveGameweekData, updateLiveGWData, eventStatus, updateOverallData, overallData }}>
+    <LiveGWContext.Provider value={{ 
+      liveGameweekData, 
+      updateLiveGWData, 
+      eventStatus, 
+      updateOverallData, 
+      overallData 
+    }}>
       {children}
     </LiveGWContext.Provider>
   );

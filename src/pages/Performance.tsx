@@ -12,8 +12,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { StatsCard } from "@/components/StatsCard";
 import { LiveGWContext } from "@/context/livegw-context";
+import { Skeleton } from "@/components/ui/skeleton";
 
-// Mock data for the player performance table
 const mockPlayers = [
   {
     name: "Mohamed Salah",
@@ -94,12 +94,11 @@ const mockPlayers = [
   },
 ];
 
-
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn } = useAuth();
-  const { liveGameweekData } = useContext(LiveGWContext)
-  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData.id);
+  const { liveGameweekData } = useContext(LiveGWContext);
+  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData?.id || 1);
 
   if (!isSignedIn) {
     return (
@@ -111,6 +110,19 @@ export default function Performance() {
         </CardHeader>
         <CardContent></CardContent>
       </Card>
+    );
+  }
+
+  // Show loading state while waiting for liveGameweekData
+  if (!liveGameweekData) {
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-[200px] w-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-[250px]" />
+          <Skeleton className="h-4 w-[200px]" />
+        </div>
+      </div>
     );
   }
 
