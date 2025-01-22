@@ -19,7 +19,7 @@ const Index = () => {
   const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext)
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
-  const [liveGWStats, setLiveGWStats] = useState([]) // pass element id (-1) for gw stats
+  const [liveGWStats, setLiveGWStats] = useState([]);
   const [highScorePlayerData, setHighScorePlayerData] = useState<any | null>(null);
   const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
   const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
@@ -51,35 +51,43 @@ const Index = () => {
     };
     getData();
   }, []);
+
   const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
   const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
-  const totalGameweeks = 38;
-
-  const isLive = eventStatus.status.some(item => {
-    return item.points === 'l';
-  });
 
   useEffect(() => {
-    if (liveGameweekData !== undefined) {
-      updateLiveGWData(liveGameweekData)
+    if (liveGameweekData) {
+      updateLiveGWData(liveGameweekData);
       const getLiveGWStats = async () => {
-        const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweekData?.id.toString())
-        if (liveGWStats) {
-          setLiveGWStats(liveGWStats.elements)
+        if (liveGameweekData.id) {  // Add check for id
+          try {
+            const liveGWStats = await playerService.getGameweekPlayerStats(liveGameweekData.id.toString());
+            if (liveGWStats) {
+              setLiveGWStats(liveGWStats.elements);
+            }
+          } catch (error) {
+            console.error('Error fetching live gameweek stats:', error);
+          }
         }
       };
       getLiveGWStats();
-    } else if (previousGWData !== undefined) {
-      updateLiveGWData(previousGWData)
+    } else if (previousGWData) {
+      updateLiveGWData(previousGWData);
       const getPrevGWStats = async () => {
-        const prevGWStats = await playerService.getGameweekPlayerStats(previousGWData.id.toString())
-        if (prevGWStats) {
-          setLiveGWStats(prevGWStats.elements)
+        if (previousGWData.id) {  // Add check for id
+          try {
+            const prevGWStats = await playerService.getGameweekPlayerStats(previousGWData.id.toString());
+            if (prevGWStats) {
+              setLiveGWStats(prevGWStats.elements);
+            }
+          } catch (error) {
+            console.error('Error fetching previous gameweek stats:', error);
+          }
         }
       };
       getPrevGWStats();
     }
-  }, [liveGameweekData])
+  }, [liveGameweekData]);
 
   const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweekData);
 
@@ -266,7 +274,6 @@ const Index = () => {
   const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
   const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
 
-
   return (
     <div className="space-y-6">
       {isSignedIn ?
@@ -297,7 +304,7 @@ const Index = () => {
           <GameweekPaginator
             currentGameweekNumber={currentGameweekNumber}
             setCurrentGameweekNumber={setCurrentGameweekNumber}
-            totalGameweeks={totalGameweeks}
+            totalGameweeks={38}
             liveGameweekData={liveGameweekData}
           />
 
