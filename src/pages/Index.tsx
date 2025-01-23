@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { useAuth } from "@/context/auth-context";
-import { leagueService } from "@/services/fpl-api";
+import { leagueService, playerService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -12,48 +12,23 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 
 const Index = () => {
+  const [overallFPLData, setOverallFPLData] = useState<any[] | null>(null);
+  const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
   const { isSignedIn, signIn } = useAuth();
   const [pageNumber, setPageNumber] = useState("1");
-  const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext);
+  const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext)
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
-  const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
+  const [liveGWStats, setLiveGWStats] = useState([]);
+  const [highScorePlayerData, setHighScorePlayerData] = useState<any | null>(null);
+  const [highScorePlayerTeam, setHighScorePlayerTeam] = useState<any | null>(null);
+  const [highScorePlayerOpp, setHighScorePlayerOpp] = useState<any | null>(null);
+  const [mostCaptPlayerData, setMostCaptPlayerData] = useState<any | null>([{ status: "loading" }]);
+  const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
+  const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
+  const [mostTransferredPlayerData, setMostTransferredPlayerData] = useState<any | null>(null);
+  const [mostTransferredPlayerTeam, setMostTransferredPlayerTeam] = useState<any | null>(null);
 
-  // Use React Query for FPL overall data
-  const { data: overallFPLData } = useQuery({
-    queryKey: ['overallFPLData'],
-    queryFn: async () => {
-      const { data } = await supabase.from('fploveralldata').select();
-      return data;
-    },
-  });
-
-  useEffect(() => {
-    if (overallFPLData) {
-      updateOverallData(overallFPLData);
-      const currentGW = overallFPLData.find(gw => gw.is_current === "true");
-      if (currentGW) {
-        setCurrentGameweekNumber(currentGW.id);
-      }
-    }
-  }, [overallFPLData, updateOverallData]);
-
-  const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
-  const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweekData);
-
-  // Use React Query for gameweek stats
-  const { data: liveGWStats = [] } = useQuery({
-    queryKey: ['gameweekStats', liveGameweekData?.id || previousGWData?.id],
-    queryFn: async () => {
-      const gameweekData = liveGameweekData || previousGWData;
-      if (!gameweekData?.id) return [];
-      return [];
-    },
-    enabled: !!(liveGameweekData?.id || previousGWData?.id)
-  });
-
-  // Use React Query for league data
   const {
     data: leagueData,
     error: overallLeagueDataError,
@@ -63,90 +38,233 @@ const Index = () => {
     queryFn: () => leagueService.getStandings(leagueId),
   });
 
-  // Use React Query for selected gameweek data
-  const { data: currentGameweekData } = useQuery({
-    queryKey: ['selectedGameweek', currentGameweekNumber],
-    queryFn: async () => {
-      if (!currentGameweekNumber) return null;
-      const { data } = await supabase
-        .from('fploveralldata')
-        .select()
-        .eq('id', currentGameweekNumber)
-        .maybeSingle();
-      return data;
-    },
-    enabled: !!currentGameweekNumber
-  });
+  useEffect(() => {
+    const getData = async () => {
+      const { data } = await supabase.from('fploveralldata').select();
+      if (data) {
+        setOverallFPLData(data);
+        updateOverallData(data);
+        // Find the current gameweek and set it
+        const currentGW = data.find(gw => gw.is_current === "true");
+        if (currentGW) {
+          setCurrentGameweekNumber(currentGW.id);
+        }
+      }
+    };
+    getData();
+  }, []);
+
+  const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
+  const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
 
   useEffect(() => {
-    setSelectedGameweekData(currentGameweekData || liveGameweekData);
-  }, [currentGameweekData, liveGameweekData]);
+    const fetchGameweekStats = async (gameweekData: any) => {
+      if (!gameweekData || typeof gameweekData.id === 'undefined') {
+        console.log('No valid gameweek data available');
+        return;
+      }
 
-  // Player and team data queries
-  const { data: highScorePlayerData } = useQuery({
-    queryKey: ['highScorePlayer', selectedGameweekData?.top_element],
-    queryFn: async () => {
-      if (!selectedGameweekData?.top_element) return null;
-      const { data } = await supabase
-        .from('plplayerdata')
-        .select()
-        .eq('id', selectedGameweekData.top_element);
-      return data;
-    },
-    enabled: !!selectedGameweekData?.top_element
-  });
+      try {
+        console.log('Fetching stats for gameweek:', gameweekData.id);
+        const stats = await playerService.getGameweekPlayerStats(gameweekData.id.toString());
+        if (stats?.elements) {
+          setLiveGWStats(stats.elements);
+        }
+      } catch (error) {
+        console.error('Error fetching gameweek stats:', error);
+      }
+    };
 
-  const { data: highScorePlayerTeam } = useQuery({
-    queryKey: ['highScorePlayerTeam', highScorePlayerData?.[0]?.team],
-    queryFn: async () => {
-      if (!highScorePlayerData?.[0]?.team) return null;
-      const { data } = await supabase
-        .from('plteams')
-        .select()
-        .eq('id', highScorePlayerData[0].team);
-      return data;
-    },
-    enabled: !!(highScorePlayerData?.[0]?.team)
-  });
+    if (liveGameweekData) {
+      updateLiveGWData(liveGameweekData);
+      fetchGameweekStats(liveGameweekData);
+    } else if (previousGWData) {
+      updateLiveGWData(previousGWData);
+      fetchGameweekStats(previousGWData);
+    }
+  }, [liveGameweekData, previousGWData]);
 
-  const { data: mostCaptPlayerData } = useQuery({
-    queryKey: ['mostCaptPlayer', selectedGameweekData?.most_captained],
-    queryFn: async () => {
-      if (!selectedGameweekData?.most_captained) return null;
-      const { data } = await supabase
-        .from('plplayerdata')
-        .select()
-        .eq('id', selectedGameweekData.most_captained);
-      return data;
-    },
-    enabled: !!selectedGameweekData?.most_captained
-  });
+  const [selectedGameweekData, setSelectedGameweekData] = useState(liveGameweekData);
 
-  const { data: mostCaptPlayerTeam } = useQuery({
-    queryKey: ['mostCaptPlayerTeam', mostCaptPlayerData?.[0]?.team],
-    queryFn: async () => {
-      if (!mostCaptPlayerData?.[0]?.team) return null;
-      const { data } = await supabase
-        .from('plteams')
-        .select()
-        .eq('id', mostCaptPlayerData[0].team);
-      return data;
-    },
-    enabled: !!(mostCaptPlayerData?.[0]?.team)
-  });
+  useEffect(() => {
+    const getGameweekData = async () => {
+      if (currentGameweekNumber) {
+        const { data } = await supabase
+          .from('fploveralldata')
+          .select()
+          .eq('id', currentGameweekNumber)
+          .single();
+        setSelectedGameweekData(data);
+      }
+    };
+    getGameweekData();
+  }, [currentGameweekNumber]);
+
+  useEffect(() => {
+    const fetchMostTransferredPlayerAndTeam = async () => {
+      try {
+        if (selectedGameweekData?.most_transferred_in) {
+          const { data: playerData, error: playerError } = await supabase
+            .from('plplayerdata')
+            .select()
+            .eq('id', Number(selectedGameweekData.most_transferred_in));
+
+          if (playerError) {
+            console.error('Error fetching player data:', playerError);
+            return;
+          }
+
+          setMostTransferredPlayerData(playerData);
+
+          if (playerData && playerData[0]?.team) {
+            const { data: teamData, error: teamError } = await supabase
+              .from('plteams')
+              .select()
+              .eq('id', Number(playerData[0].team));
+            if (teamError) {
+              console.error('Error fetching team data:', teamError);
+              return;
+            }
+
+            setMostTransferredPlayerTeam(teamData);
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      }
+    }
+    fetchMostTransferredPlayerAndTeam()
+  }, [selectedGameweekData]);
+
+  useEffect(() => {
+    const fetchHighScorePlayerAndTeam = async () => {
+      try {
+        if (selectedGameweekData?.top_element) {
+          const { data: playerData, error: playerError } = await supabase
+            .from('plplayerdata')
+            .select()
+            .eq('id', Number(selectedGameweekData.top_element));
+
+          if (playerError) {
+            console.error('Error fetching player data:', playerError);
+            return;
+          }
+
+          setHighScorePlayerData(playerData);
+
+          if (playerData && playerData[0]?.team) {
+            const { data: teamData, error: teamError } = await supabase
+              .from('plteams')
+              .select()
+              .eq('id', Number(playerData[0].team));
+            if (teamError) {
+              console.error('Error fetching team data:', teamError);
+              return;
+            }
+
+            setHighScorePlayerTeam(teamData);
+          }
+
+          // Convert number to string when calling getPlayerSummary
+          const playerSummary = await playerService.getPlayerSummary(String(selectedGameweekData.top_element));
+
+          if (playerSummary) {
+            const currentGameweekData = playerSummary.history.find(
+              (item) => item.round === currentGameweekNumber
+            );
+
+            if (currentGameweekData?.opponent_team) {
+              const { data: opponentTeamData, error: opponentTeamError } = await supabase
+                .from('plteams')
+                .select('short_name')
+                .eq('id', Number(currentGameweekData.opponent_team));
+
+              if (opponentTeamError) {
+                console.error('Error fetching opponent team data:', opponentTeamError);
+                return;
+              }
+
+              setHighScorePlayerOpp(opponentTeamData)
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      }
+    };
+
+    fetchHighScorePlayerAndTeam();
+  }, [selectedGameweekData]);
+
+  useEffect(() => {
+    const fetchMostCaptPlayerAndTeam = async () => {
+      try {
+        if (selectedGameweekData?.most_captained) {
+          const { data: playerData, error: playerError } = await supabase
+            .from('plplayerdata')
+            .select()
+            .eq('id', Number(selectedGameweekData.most_captained));
+
+          if (playerError) {
+            console.error('Error fetching most-captained player data:', playerError);
+            return;
+          }
+          if (playerData && playerData[0]?.team) {
+            const { data: teamData, error: teamError } = await supabase
+              .from('plteams')
+              .select()
+              .eq('id', Number(playerData[0].team));
+
+            if (teamError) {
+              console.error('Error fetching most-captained player team data:', teamError);
+              return;
+            }
+
+            setMostCaptPlayerTeam(teamData);
+          }
+
+          // Convert number to string when calling getPlayerSummary
+          const playerSummary = await playerService.getPlayerSummary(String(selectedGameweekData.most_captained));
+
+          if (playerSummary) {
+            const currentGameweekData = playerSummary.history.find(
+              (item) => item.round === currentGameweekNumber
+            );
+            if (currentGameweekData?.opponent_team) {
+              const { data: opponentTeamData, error: opponentTeamError } = await supabase
+                .from('plteams')
+                .select('short_name')
+                .eq('id', Number(currentGameweekData.opponent_team));
+
+              if (opponentTeamError) {
+                console.error('Error fetching opponent team data:', opponentTeamError);
+                return;
+              }
+
+              setMostCaptPlayerOpp(opponentTeamData);
+              setMostCaptPlayerData([...playerData, currentGameweekData.total_points])
+            }
+          }
+
+        }
+      } catch (error) {
+        console.error('Unexpected error:', error);
+      }
+    };
+
+    fetchMostCaptPlayerAndTeam();
+  }, [selectedGameweekData]);
 
   useEffect(() => {
     const storedFplId = localStorage.getItem('fplId');
-    const storedManagerData = JSON.parse(localStorage.getItem('managerData') || 'null');
+    const storedManagerData = JSON.parse(localStorage.getItem('managerData'));
     if (storedManagerData && storedFplId && !isSignedIn) {
       signIn(storedFplId, storedManagerData);
     }
-  }, [isSignedIn, signIn]);
+  }, []);
 
-  const highScorePlayerFixture = highScorePlayerTeam?.[0]?.short_name && highScorePlayerData ? 
-    `${highScorePlayerTeam[0].short_name} v ...` : 'Loading...';
-  const mostCaptPlayerFixture = mostCaptPlayerTeam?.[0]?.short_name && mostCaptPlayerData ? 
-    `${mostCaptPlayerTeam[0].short_name} v ...` : 'Loading...';
+  const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerOpp ? `${highScorePlayerTeam[0].short_name} v ${highScorePlayerOpp[0].short_name}` : '...';
+  const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerOpp ? `${mostCaptPlayerTeam[0].short_name} v ${mostCaptPlayerOpp[0].short_name}` : '...';
 
   return (
     <div className="space-y-6">
@@ -184,7 +302,7 @@ const Index = () => {
 
           <StatsOverview
             currentGW={selectedGameweekData}
-            mostCaptPlayerData={mostCaptPlayerData || []}
+            mostCaptPlayerData={mostCaptPlayerData}
             highScorePlayerData={highScorePlayerData}
             highScorePlayerFixture={highScorePlayerFixture}
             mostCaptPlayerFixture={mostCaptPlayerFixture}
@@ -193,8 +311,8 @@ const Index = () => {
             selectedGameweekData={selectedGameweekData}
             mostCaptPlayerData={mostCaptPlayerData}
             mostCaptPlayerFixture={mostCaptPlayerFixture}
-            mostTransferredPlayerData={null}
-            mostTransferredPlayerTeam={null}
+            mostTransferredPlayerData={mostTransferredPlayerData}
+            mostTransferredPlayerTeam={mostTransferredPlayerTeam}
           />
         </TabsContent>
 
