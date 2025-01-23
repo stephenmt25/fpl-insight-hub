@@ -3,7 +3,7 @@ import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { CaptaincyImpact } from "@/components/CaptaincyImpact";
 import { GameweekAnalysis } from "@/components/GameweekAnalysis";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
@@ -15,106 +15,37 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/fpl-api";
 
-// Mock data for the player performance table
-const mockPlayers = [
-  {
-    name: "Mohamed Salah",
-    team: "LIV",
-    position: "MID",
-    points: 12,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Erling Haaland",
-    team: "MCI",
-    position: "FWD",
-    points: 8,
-    performance: "average" as const,
-  },
-  {
-    name: "Bukayo Saka",
-    team: "ARS",
-    position: "MID",
-    points: 2,
-    performance: "poor" as const,
-  },
-  {
-    name: "Harry Kane",
-    team: "TOT",
-    position: "FWD",
-    points: 10,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Kevin De Bruyne",
-    team: "MCI",
-    position: "MID",
-    points: 7,
-    performance: "average" as const,
-  },
-  {
-    name: "Trent Alexander-Arnold",
-    team: "LIV",
-    position: "DEF",
-    points: 6,
-    performance: "average" as const,
-  },
-  {
-    name: "Alisson Becker",
-    team: "LIV",
-    position: "GK",
-    points: 3,
-    performance: "poor" as const,
-  },
-  {
-    name: "Bruno Fernandes",
-    team: "MUN",
-    position: "MID",
-    points: 14,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Son Heung-min",
-    team: "TOT",
-    position: "MID",
-    points: 11,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Kieran Trippier",
-    team: "NEW",
-    position: "DEF",
-    points: 9,
-    performance: "average" as const,
-  },
-  {
-    name: "Nick Pope",
-    team: "NEW",
-    position: "GK",
-    points: 5,
-    performance: "average" as const,
-  },
-];
-
-
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
-  const { isSignedIn, currentManager } = useAuth();
-  const { liveGameweekData } = useContext(LiveGWContext)
-  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
-  
-  const { data: gameweekPicks, isLoading, error } = useQuery({
-    queryKey: ['gameweekPicks', currentManager?.id, currentGameweek],
+  const { isSignedIn, currentManager, updateGameweekPicks } = useAuth();
+  const { liveGameweekData } = useContext(LiveGWContext);
+  const [currentGameweek, setCurrentGameweek] = useState(
+    liveGameweekData ? liveGameweekData.id : 22
+  );
+
+  const {
+    data: gameweekPicks,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["gameweekPicks", currentManager?.id, currentGameweek],
     queryFn: () =>
       currentManager?.id
-        ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
+        ? managerService.getGameweekTeamPicks(
+            currentManager.id.toString(),
+            currentGameweek.toString()
+          )
         : null,
     enabled: !!currentManager?.id && !!currentGameweek,
+    onSuccess: (data) => {
+      if (data) {
+        updateGameweekPicks(data);
+      }
+    },
   });
 
   if (!isSignedIn) {
     return (
-
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
@@ -137,12 +68,16 @@ export default function Performance() {
 
   return (
     <div className="space-y-6">
-      {/* Hero Section */}
       <section className="space-y-4">
         <WelcomeBanner />
       </section>
       <br />
-      <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="w-full space-y-4">
+      <Tabs
+        defaultValue="overview"
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full space-y-4"
+      >
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -152,7 +87,6 @@ export default function Performance() {
             <TabsTrigger value="compare">Compare League Members</TabsTrigger>
           </TabsList>
         </div>
-        {/* Gameweek Paginator */}
         <GameweekPaginator
           currentGameweekNumber={currentGameweek}
           setCurrentGameweekNumber={setCurrentGameweek}
@@ -160,16 +94,20 @@ export default function Performance() {
           liveGameweekData={liveGameweekData}
         />
         <TabsContent value="overview">
-          {/* Performance Metrics */}
           <div className="grid lg:grid-cols-2 gap-4 p-2">
-            <div className="">
-              <PerformanceMetrics gameweek={currentGameweek} gameweekPicks={gameweekPicks} isLoading={isLoading} error={error}/>
+            <div>
+              <PerformanceMetrics
+                gameweek={currentGameweek}
+                gameweekPicks={gameweekPicks}
+                isLoading={isLoading}
+                error={error}
+              />
             </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">
                 <p className="text-muted-foreground">Player Stats</p>
               </div>
-              <PlayerPerformanceTable players={mockPlayers} />
+              <PlayerPerformanceTable players={[]} />
             </div>
           </div>
         </TabsContent>
