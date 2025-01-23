@@ -92,7 +92,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             setMostCaptPlayerTeam(teamData);
           }
 
-          const playerSummary = await playerService.getPlayerSummary(captain.element.toString());
+          const playerSummary = await playerService.getPlayerSummary(String(captain.element));
 
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
