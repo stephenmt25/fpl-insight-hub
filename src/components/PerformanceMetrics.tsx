@@ -23,7 +23,6 @@ interface PerformanceMetricsProps {
 }
 
 export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, error }: PerformanceMetricsProps) {
-
   const { overallData } = useContext(LiveGWContext)
   const { managerHistory, currentManager } = useAuth();
   const currentGWData = Array.isArray(overallData) ? overallData.filter((gw) => gw.id === gameweek)[0] : undefined;
@@ -93,8 +92,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             setMostCaptPlayerTeam(teamData);
           }
 
-          // Convert number to string when calling getPlayerSummary
-          const playerSummary = await playerService.getPlayerSummary(String(captain.element));
+          const playerSummary = await playerService.getPlayerSummary(captain.element.toString());
 
           if (playerSummary) {
             const currentGameweekData = playerSummary.history.find(
@@ -115,7 +113,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
               setMostCaptPlayerData([...playerData, currentGameweekData.total_points])
             }
           }
-
         }
       } catch (error) {
         console.error('Unexpected error:', error);
