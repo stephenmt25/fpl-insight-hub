@@ -75,7 +75,7 @@ const Index = () => {
         .from('fploveralldata')
         .select()
         .eq('id', currentGameweekNumber)
-        .single();
+        .maybeSingle();
       return data;
     },
     enabled: !!currentGameweekNumber
@@ -102,7 +102,7 @@ const Index = () => {
         .from('plplayerdata')
         .select()
         .eq('id', selectedGameweekData.top_element);
-      return data || null;
+      return data;
     },
     enabled: !!selectedGameweekData?.top_element
   });
@@ -115,7 +115,7 @@ const Index = () => {
         .from('plteams')
         .select()
         .eq('id', highScorePlayerData[0].team);
-      return data || null;
+      return data;
     },
     enabled: !!(highScorePlayerData?.[0]?.team)
   });
@@ -123,12 +123,12 @@ const Index = () => {
   const { data: mostCaptPlayerData } = useQuery({
     queryKey: ['mostCaptPlayer', selectedGameweekData?.most_captained],
     queryFn: async () => {
-      if (!selectedGameweekData?.most_captained) return [{ status: "loading" }];
+      if (!selectedGameweekData?.most_captained) return null;
       const { data } = await supabase
         .from('plplayerdata')
         .select()
         .eq('id', selectedGameweekData.most_captained);
-      return data ? [...data, { status: "success" }] : [{ status: "loading" }];
+      return data || null;
     },
     enabled: !!selectedGameweekData?.most_captained
   });
@@ -141,9 +141,9 @@ const Index = () => {
         .from('plteams')
         .select()
         .eq('id', mostCaptPlayerData[0].team);
-      return data || null;
+      return data;
     },
-    enabled: !!(mostCaptPlayerData?.[0]?.team && mostCaptPlayerData[0].status !== "loading")
+    enabled: !!(mostCaptPlayerData?.[0]?.team)
   });
 
   useEffect(() => {
@@ -155,9 +155,9 @@ const Index = () => {
   }, [isSignedIn, signIn]);
 
   const highScorePlayerFixture = highScorePlayerTeam?.[0]?.short_name && highScorePlayerData ? 
-    `${highScorePlayerTeam[0].short_name} v ...` : '...';
+    `${highScorePlayerTeam[0].short_name} v ...` : 'Loading...';
   const mostCaptPlayerFixture = mostCaptPlayerTeam?.[0]?.short_name && mostCaptPlayerData ? 
-    `${mostCaptPlayerTeam[0].short_name} v ...` : '...';
+    `${mostCaptPlayerTeam[0].short_name} v ...` : 'Loading...';
 
   return (
     <div className="space-y-6">
@@ -195,7 +195,7 @@ const Index = () => {
 
           <StatsOverview
             currentGW={selectedGameweekData}
-            mostCaptPlayerData={mostCaptPlayerData || [{ status: "loading" }]}
+            mostCaptPlayerData={mostCaptPlayerData || []}
             highScorePlayerData={highScorePlayerData}
             highScorePlayerFixture={highScorePlayerFixture}
             mostCaptPlayerFixture={mostCaptPlayerFixture}

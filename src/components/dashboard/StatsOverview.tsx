@@ -12,7 +12,7 @@ interface StatsOverviewProps {
 
 export function StatsOverview({ 
   currentGW, 
-  mostCaptPlayerData = [{ status: "loading" }], 
+  mostCaptPlayerData = [], 
   highScorePlayerData, 
   highScorePlayerFixture, 
   mostCaptPlayerFixture 
@@ -50,12 +50,12 @@ export function StatsOverview({
       />
       <StatsCard
         title="Most Captained"
-        value={mostCaptPlayerData?.[0]?.web_name ?? "..."}
+        value={mostCaptPlayerData?.[0]?.web_name ?? "Loading..."}
         description={mostCaptPlayerFixture || "Loading..."}
       />
       <StatsCard
         title="Highest Scoring Player"
-        value={highScorePlayerData?.[0]?.web_name ?? "..."}
+        value={highScorePlayerData?.[0]?.web_name ?? "Loading..."}
         description={highScorePlayerFixture || "Loading..."}
       />
     </div>
