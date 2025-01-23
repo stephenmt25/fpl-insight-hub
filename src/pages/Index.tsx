@@ -26,16 +26,17 @@ const Index = () => {
       const { data } = await supabase.from('fploveralldata').select();
       return data;
     },
-    onSuccess: (data) => {
-      if (data) {
-        updateOverallData(data);
-        const currentGW = data.find(gw => gw.is_current === "true");
-        if (currentGW) {
-          setCurrentGameweekNumber(currentGW.id);
-        }
+  });
+
+  useEffect(() => {
+    if (overallFPLData) {
+      updateOverallData(overallFPLData);
+      const currentGW = overallFPLData.find(gw => gw.is_current === "true");
+      if (currentGW) {
+        setCurrentGameweekNumber(currentGW.id);
       }
     }
-  });
+  }, [overallFPLData, updateOverallData]);
 
   const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
   const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
@@ -92,15 +93,16 @@ const Index = () => {
     setSelectedGameweekData(currentGameweekData || liveGameweekData);
   }, [currentGameweekData, liveGameweekData]);
 
-  // Player and team data queries
+  // Player and team data queries with proper type checking
   const { data: highScorePlayerData } = useQuery({
     queryKey: ['highScorePlayer', selectedGameweekData?.top_element],
     queryFn: async () => {
+      if (!selectedGameweekData?.top_element) return null;
       const { data } = await supabase
         .from('plplayerdata')
         .select()
-        .eq('id', Number(selectedGameweekData?.top_element));
-      return data;
+        .eq('id', selectedGameweekData.top_element);
+      return data || null;
     },
     enabled: !!selectedGameweekData?.top_element
   });
@@ -108,11 +110,12 @@ const Index = () => {
   const { data: highScorePlayerTeam } = useQuery({
     queryKey: ['highScorePlayerTeam', highScorePlayerData?.[0]?.team],
     queryFn: async () => {
+      if (!highScorePlayerData?.[0]?.team) return null;
       const { data } = await supabase
         .from('plteams')
         .select()
-        .eq('id', Number(highScorePlayerData[0].team));
-      return data;
+        .eq('id', highScorePlayerData[0].team);
+      return data || null;
     },
     enabled: !!(highScorePlayerData?.[0]?.team)
   });
@@ -120,11 +123,12 @@ const Index = () => {
   const { data: mostCaptPlayerData } = useQuery({
     queryKey: ['mostCaptPlayer', selectedGameweekData?.most_captained],
     queryFn: async () => {
+      if (!selectedGameweekData?.most_captained) return [{ status: "loading" }];
       const { data } = await supabase
         .from('plplayerdata')
         .select()
-        .eq('id', Number(selectedGameweekData?.most_captained));
-      return data ? [...data, 0] : null; // Adding default points value
+        .eq('id', selectedGameweekData.most_captained);
+      return data ? [...data, { status: "success" }] : [{ status: "loading" }];
     },
     enabled: !!selectedGameweekData?.most_captained
   });
@@ -132,27 +136,28 @@ const Index = () => {
   const { data: mostCaptPlayerTeam } = useQuery({
     queryKey: ['mostCaptPlayerTeam', mostCaptPlayerData?.[0]?.team],
     queryFn: async () => {
+      if (!mostCaptPlayerData?.[0]?.team) return null;
       const { data } = await supabase
         .from('plteams')
         .select()
-        .eq('id', Number(mostCaptPlayerData[0].team));
-      return data;
+        .eq('id', mostCaptPlayerData[0].team);
+      return data || null;
     },
-    enabled: !!(mostCaptPlayerData?.[0]?.team)
+    enabled: !!(mostCaptPlayerData?.[0]?.team && mostCaptPlayerData[0].status !== "loading")
   });
 
   useEffect(() => {
     const storedFplId = localStorage.getItem('fplId');
-    const storedManagerData = JSON.parse(localStorage.getItem('managerData'));
+    const storedManagerData = JSON.parse(localStorage.getItem('managerData') || 'null');
     if (storedManagerData && storedFplId && !isSignedIn) {
       signIn(storedFplId, storedManagerData);
     }
-  }, []);
+  }, [isSignedIn, signIn]);
 
-  const highScorePlayerFixture = highScorePlayerTeam && highScorePlayerData ? 
-    `${highScorePlayerTeam[0]?.short_name || '...'} v ...` : '...';
-  const mostCaptPlayerFixture = mostCaptPlayerTeam && mostCaptPlayerData ? 
-    `${mostCaptPlayerTeam[0]?.short_name || '...'} v ...` : '...';
+  const highScorePlayerFixture = highScorePlayerTeam?.[0]?.short_name && highScorePlayerData ? 
+    `${highScorePlayerTeam[0].short_name} v ...` : '...';
+  const mostCaptPlayerFixture = mostCaptPlayerTeam?.[0]?.short_name && mostCaptPlayerData ? 
+    `${mostCaptPlayerTeam[0].short_name} v ...` : '...';
 
   return (
     <div className="space-y-6">
@@ -190,7 +195,7 @@ const Index = () => {
 
           <StatsOverview
             currentGW={selectedGameweekData}
-            mostCaptPlayerData={mostCaptPlayerData}
+            mostCaptPlayerData={mostCaptPlayerData || [{ status: "loading" }]}
             highScorePlayerData={highScorePlayerData}
             highScorePlayerFixture={highScorePlayerFixture}
             mostCaptPlayerFixture={mostCaptPlayerFixture}
