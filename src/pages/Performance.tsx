@@ -156,8 +156,7 @@ export default function Performance() {
             </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">
-                <h2 className="text-2xl font-bold">Player Performance</h2>
-                <p className="text-muted-foreground">Gameweek Performance</p>
+                <p className="text-muted-foreground">Player Stats</p>
               </div>
               <PlayerPerformanceTable players={mockPlayers} />
             </div>

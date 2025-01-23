@@ -59,13 +59,13 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
     return (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 className="text-5xl font-bold tracking-tight">
+          <h2 className="lg:text-5xl text-3xl font-bold tracking-tight">
             {currentManager?.name}
           </h2>
-          <p className="mt-2 flex gap-2 text-muted-foreground text-2xl uppercase">
+          <p className="mt-2 flex gap-2 text-muted-foreground lg:text-xl uppercase">
             {currentManager?.player_first_name} {currentManager?.player_last_name} | {currentManager?.player_region_iso_code_long} <span className={`fi fi-${currentManager?.player_region_iso_code_short.toLowerCase()}`}></span>
           </p>
-          <p className="mt-2 flex gap-2 text-muted-foreground text-xl uppercase">
+          <p className="mt-2 flex gap-2 text-muted-foreground lg:text-xl uppercase">
             YR
             <div className="text-black">
               {currentManager?.years_active}
@@ -79,25 +79,25 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
               {averageRank}
             </div>
             <Tooltip>
-              <TooltipTrigger><Info></Info></TooltipTrigger>
+              <TooltipTrigger><Info className="w-4 lg:w-5"></Info></TooltipTrigger>
               <TooltipContent>
                 <p>YR - FPL Seasons Completed</p>
                 <p>AVG PTS - Average Total Points</p>
                 <p>AVG OR - Average Overall Rank</p>
               </TooltipContent>
             </Tooltip>
-            
+
             {/* <Info></Info> */}
           </p>
         </div>
         <div className="lg:text-right">
-          <p className=" flex gap-2 text-muted-foreground text-2xl uppercase">
+          <p className=" flex gap-2 text-muted-foreground text-2xl sm:text-xl uppercase">
             <div className="text-black">
               {formattedPoints}
             </div>
             | total points
           </p>
-          <p className="mt-2 flex gap-2 text-muted-foreground text-2xl uppercase">
+          <p className="mt-2 flex gap-2 text-muted-foreground text-2xl sm:text-xl uppercase">
             <div className="text-black">
               {formattedOR}
             </div>
