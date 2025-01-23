@@ -38,13 +38,13 @@ export function StatsOverview({
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatsCard
         title="Highest GW Points"
-        value={currentGW?.highest_score ?? "..."}
+        value={currentGW?.highest_score ?? "Loading..."}
         description={highscoreDelta !== 0 ? `${highscoreDelta > 0 ? '+' : ''}${highscoreDelta}` : "Loading..."}
         style={highscoreStyle}
       />
       <StatsCard
         title="Average GW Points"
-        value={currentGW?.average_entry_score ?? "..."}
+        value={currentGW?.average_entry_score ?? "Loading..."}
         description={averageDelta !== 0 ? `${averageDelta > 0 ? '+' : ''}${averageDelta}` : "Loading..."}
         style={averageStyle}
       />

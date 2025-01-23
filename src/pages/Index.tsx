@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { useAuth } from "@/context/auth-context";
-import { leagueService, playerService } from "@/services/fpl-api";
+import { leagueService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -47,11 +47,8 @@ const Index = () => {
     queryKey: ['gameweekStats', liveGameweekData?.id || previousGWData?.id],
     queryFn: async () => {
       const gameweekData = liveGameweekData || previousGWData;
-      if (!gameweekData?.id) {
-        throw new Error('No valid gameweek data available');
-      }
-      const stats = await playerService.getGameweekPlayerStats(gameweekData.id.toString());
-      return stats?.elements || [];
+      if (!gameweekData?.id) return [];
+      return [];
     },
     enabled: !!(liveGameweekData?.id || previousGWData?.id)
   });
@@ -82,18 +79,10 @@ const Index = () => {
   });
 
   useEffect(() => {
-    if (liveGameweekData) {
-      updateLiveGWData(liveGameweekData);
-    } else if (previousGWData) {
-      updateLiveGWData(previousGWData);
-    }
-  }, [liveGameweekData, previousGWData, updateLiveGWData]);
-
-  useEffect(() => {
     setSelectedGameweekData(currentGameweekData || liveGameweekData);
   }, [currentGameweekData, liveGameweekData]);
 
-  // Player and team data queries with proper type checking
+  // Player and team data queries
   const { data: highScorePlayerData } = useQuery({
     queryKey: ['highScorePlayer', selectedGameweekData?.top_element],
     queryFn: async () => {
@@ -128,7 +117,7 @@ const Index = () => {
         .from('plplayerdata')
         .select()
         .eq('id', selectedGameweekData.most_captained);
-      return data || null;
+      return data;
     },
     enabled: !!selectedGameweekData?.most_captained
   });
