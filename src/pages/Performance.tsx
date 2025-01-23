@@ -12,6 +12,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { LiveGWContext } from "@/context/livegw-context";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useQuery } from "@tanstack/react-query";
+import { managerService } from "@/services/fpl-api";
 
 // Mock data for the player performance table
 const mockPlayers = [
@@ -97,9 +99,18 @@ const mockPlayers = [
 
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
-  const { isSignedIn } = useAuth();
+  const { isSignedIn, currentManager } = useAuth();
   const { liveGameweekData } = useContext(LiveGWContext)
-  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData?.id);
+  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
+  
+  const { data: gameweekPicks, isLoading, error } = useQuery({
+    queryKey: ['gameweekPicks', currentManager?.id, currentGameweek],
+    queryFn: () =>
+      currentManager?.id
+        ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
+        : null,
+    enabled: !!currentManager?.id && !!currentGameweek,
+  });
 
   if (!isSignedIn) {
     return (
@@ -152,7 +163,7 @@ export default function Performance() {
           {/* Performance Metrics */}
           <div className="grid lg:grid-cols-2 gap-4 p-2">
             <div className="">
-              <PerformanceMetrics gameweek={currentGameweek} />
+              <PerformanceMetrics gameweek={currentGameweek} gameweekPicks={gameweekPicks} isLoading={isLoading} error={error}/>
             </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">

@@ -17,9 +17,8 @@ interface WelcomeBannerProps {
 }
 
 export function WelcomeBanner({ }: WelcomeBannerProps) {
-  const { isSignedIn, currentManager } = useAuth();
+  const { isSignedIn, currentManager, updateManagerHistory } = useAuth();
   const [managerHistory, setManagerHistory] = useState<ManagerHistory>()
-
   const triggerSync = async () => {
     try {
       const { data, error } = await supabase.functions.invoke('sync-fpl-data');
@@ -36,6 +35,7 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
       try {
         const managerHistoryData = await managerService.getHistory(currentManager?.id);
         setManagerHistory(managerHistoryData)
+        updateManagerHistory(managerHistoryData)
       } catch (error) {
         console.error('Unexpected error:', error);
       }

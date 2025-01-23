@@ -13,27 +13,25 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useContext, useEffect, useState } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
 import { supabase } from "@/integrations/supabase/client";
+import { GameweekPicks, ManagerTransfers } from "@/types/fpl";
 
 interface PerformanceMetricsProps {
   gameweek: number;
+  gameweekPicks: GameweekPicks;
+  isLoading: boolean;
+  error: Object;
 }
 
-export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
-  const { currentManager } = useAuth();
+export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, error }: PerformanceMetricsProps) {
+
   const { overallData } = useContext(LiveGWContext)
+  const { managerHistory, currentManager } = useAuth();
   const currentGWData = Array.isArray(overallData) ? overallData.filter((gw) => gw.id === gameweek)[0] : undefined;
   const [mostCaptPlayerData, setMostCaptPlayerData] = useState<any | null>([{ status: "loading" }]);
   const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
   const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
 
-  const { data: gameweekPicks, isLoading, error } = useQuery({
-    queryKey: ['gameweekPicks', currentManager?.id, gameweek],
-    queryFn: () =>
-      currentManager?.id
-        ? managerService.getGameweekTeamPicks(currentManager.id.toString(), gameweek.toString())
-        : null,
-    enabled: !!currentManager?.id && !!gameweek,
-  });
+  const [managerTransfers, setManagerTransfers] = useState<Array<ManagerTransfers>>(null);
 
   const entryHistory = gameweekPicks?.entry_history;
   const captain = gameweekPicks?.picks?.find(pick => pick.is_captain);
@@ -67,7 +65,7 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
       streak: 3,
     },
   };
-
+  
   useEffect(() => {
     const fetchMostCaptPlayerAndTeam = async () => {
       try {
@@ -123,8 +121,18 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
         console.error('Unexpected error:', error);
       }
     };
-
     fetchMostCaptPlayerAndTeam();
+
+    const fetchManagerTransfers = async () => {
+      try {
+        const transfers = await managerService.getTransfers(currentManager.id)
+        let filtered = transfers.filter(item => item.event === gameweek);
+        setManagerTransfers(filtered)
+      } catch (error) {
+        console.error(error)
+      }
+    }
+    fetchManagerTransfers()
   }, [gameweek]);
 
   if (isLoading) {
@@ -179,6 +187,18 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
           <Medal className="text-blue-600" />;
   };
 
+  const getValueSymbol = (currValue: number, prevValue: number) => {
+    let change = ((currValue - prevValue) / 10).toFixed(1)
+    return Number(change) > 0 ?
+      <span className="text-green-500">
+        +{change}m
+      </span>
+      :
+      <span className="text-red-500">
+        {change}m
+      </span>
+  }
+
   return (
     <div className="space-y-4">
       <div className="text-start space-y-2">
@@ -228,14 +248,14 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
         </Card>
 
         {/* Captain Performance Card */}
-        <Card>
-          <CardHeader className="space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              {mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
-                <>
+        {
+          mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
+            <Card>
+              <CardHeader className="space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
                   <div className="text-2xl gap-2 items-center justify-between flex font-bold">
                     <div className="flex gap-2">
                       {mostCaptPlayerData[0].web_name}
@@ -251,56 +271,64 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
                       v {mostCaptPlayerOpp[0].short_name}
                     </div>
                   </div>
-                </>
-                :
-                <Skeleton></Skeleton>
-              }
-
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </CardContent>
+            </Card>
+            :
+            <Skeleton className="h-full w-full rounded-xl" />
+        }
 
         {/* Transfers Card */}
-        <Card>
-          <CardHeader className="space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Transfers</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-2">
-              <div className="flex justify-between">
-                <span>Made:</span>
-                <span>{entryHistory?.event_transfers || mockData.transfers.count}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Cost:</span>
-                <span>-{entryHistory?.event_transfers_cost || mockData.transfers.cost}</span>
-              </div>
-              {/* <div className="text-xs space-y-1">
+        {
+          managerHistory && managerHistory.current[gameweek] && managerTransfers ?
+            <Card>
+              <CardHeader className="space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Transfers</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-2">
+                  <div className="flex justify-between">
+                    <span>Made:</span>
+                    <span>{managerTransfers.length}</span>
+                  </div>
+                  <div className="flex justify-between text-red-500">
+                    <span>Cost:</span>
+                    <span>-{managerHistory.current[gameweek].event_transfers_cost}</span>
+                  </div>
+                  {/* <div className="text-xs space-y-1">
                 <div className="text-green-500">
-                  In: {mockData.transfers.in.map(p => `${p.name} (+${p.points})`).join(', ')}
+                In: {mockData.transfers.in.map(p => `${p.name} (+${p.points})`).join(', ')}
                 </div>
                 <div className="text-red-500">
                   Out: {mockData.transfers.out.map(p => `${p.name} (+${p.points})`).join(', ')}
-                </div>
+                  </div>
               </div> */}
-            </div>
-          </CardContent>
-        </Card>
+                </div>
+              </CardContent>
+            </Card>
+            :
+            <Skeleton className="h-full w-full rounded-xl" />
+        }
 
         {/* Team Value Card */}
-        <Card>
-          <CardHeader className="space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Team Value</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              £{((entryHistory?.value || 0) / 10).toFixed(1)}m
-            </div>
-            <p className={`text-xs ${mockData.teamValue.change >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-              {mockData.teamValue.change >= 0 ? '+' : ''}{mockData.teamValue.change}m
-            </p>
-          </CardContent>
-        </Card>
+        {
+          managerHistory && entryHistory ?
+            <Card>
+              <CardHeader className="space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Team Value</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold pb-2">
+                  £{((entryHistory.value || 0) / 10).toFixed(1)}m
+                </div>
+                <p className="text-sm">
+                  {getValueSymbol(entryHistory.value, managerHistory.current[gameweek - 2].value)}
+                </p>
+              </CardContent>
+            </Card>
+            :
+            <Skeleton className="h-full w-full rounded-xl" />
+        }
 
         {/* Bench Points Card */}
         <Card>
@@ -317,8 +345,8 @@ export function PerformanceMetrics({ gameweek = 22 }: PerformanceMetricsProps) {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{entryHistory?.points_on_bench || mockData.benchPoints}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl pb-2 font-bold">{entryHistory?.points_on_bench || mockData.benchPoints}</div>
+            <p className="text-sm text-muted-foreground">
               Auto Subs: None
             </p>
           </CardContent>

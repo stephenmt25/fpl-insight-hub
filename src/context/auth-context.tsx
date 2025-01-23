@@ -1,3 +1,4 @@
+import { Manager, ManagerHistory } from "@/types/fpl";
 import { createContext, useContext, useState, ReactNode } from "react";
 
 interface AuthContextType {
@@ -5,7 +6,9 @@ interface AuthContextType {
   fplId: string | null;
   signIn: (id: string, manager: Object) => void;
   signOut: () => void;
+  updateManagerHistory: (history: ManagerHistory) => void;
   currentManager: any;
+  managerHistory: ManagerHistory
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -14,6 +17,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [fplId, setFplId] = useState<string | null>(null);
   const [ currentManager, setCurrentManager ] = useState<any | null>(null);
+  const [ managerHistory, setManagerHistory ] = useState<ManagerHistory>(null);
 
   const signIn = (id: string, manager: Object) => {
     setFplId(id);
@@ -27,8 +31,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setFplId(null);
   };
 
+  const updateManagerHistory = (history: ManagerHistory) => {
+    setManagerHistory(history)
+  }
+
   return (
-    <AuthContext.Provider value={{ isSignedIn, fplId, signIn, signOut, currentManager }}>
+    <AuthContext.Provider value={{ isSignedIn, fplId, signIn, signOut, currentManager, managerHistory, updateManagerHistory }}>
       {children}
     </AuthContext.Provider>
   );

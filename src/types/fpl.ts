@@ -21,6 +21,12 @@ export interface GameweekHistory {
   total_points: number;
   rank: number;
   overall_rank: number;
+  percentile_rank: number,
+  bank: number,
+  value: number,
+  event_transfers: number,
+  event_transfers_cost: number,
+  points_on_bench: number
 }
 
 export interface ManagerHistory {
