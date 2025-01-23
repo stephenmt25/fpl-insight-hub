@@ -2,6 +2,9 @@ export interface Manager {
   id: number;
   player_first_name: string;
   player_last_name: string;
+  player_region_iso_code_long?: string;
+  player_region_iso_code_short?: string;
+  years_active?: number;
   summary_overall_points: number;
   summary_overall_rank: number;
   summary_event_points: number;

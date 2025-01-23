@@ -202,7 +202,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   return (
     <div className="space-y-4">
       <div className="text-start space-y-2">
-        {/* <h2 className="text-2xl font-bold">{currentManager?.name || 'Team Name'}</h2> */}
+        <h2 className="text-2xl font-bold">{currentManager?.name || 'Team Name'}</h2>
         <p className="text-muted-foreground">Manager Stats</p>
       </div>
 
@@ -213,7 +213,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             <CardTitle className="text-sm font-medium">Gameweek Points</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* <div className="text-2xl flex justify-between font-bold pb-2">{entryHistory?.points || mockData.points} {getPerfIcon(entryHistory?.points, currentGWData?.average_entry_score)}</div> */}
             <div className="flex items-center justify-between gap-2 pb-2">
               <span className="text-2xl font-bold">
                 {entryHistory?.points || mockData.points}
@@ -295,14 +294,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
                     <span>Cost:</span>
                     <span>-{managerHistory.current[gameweek].event_transfers_cost}</span>
                   </div>
-                  {/* <div className="text-xs space-y-1">
-                <div className="text-green-500">
-                In: {mockData.transfers.in.map(p => `${p.name} (+${p.points})`).join(', ')}
-                </div>
-                <div className="text-red-500">
-                  Out: {mockData.transfers.out.map(p => `${p.name} (+${p.points})`).join(', ')}
-                  </div>
-              </div> */}
                 </div>
               </CardContent>
             </Card>

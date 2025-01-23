@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
@@ -37,12 +37,13 @@ export default function Performance() {
           )
         : null,
     enabled: !!currentManager?.id && !!currentGameweek,
-    onSuccess: (data) => {
-      if (data) {
-        updateGameweekPicks(data);
-      }
-    },
   });
+
+  useEffect(() => {
+    if (gameweekPicks) {
+      updateGameweekPicks(gameweekPicks);
+    }
+  }, [gameweekPicks, updateGameweekPicks]);
 
   if (!isSignedIn) {
     return (
