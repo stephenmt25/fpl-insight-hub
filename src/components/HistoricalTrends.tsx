@@ -4,6 +4,12 @@ import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/api/manager.service";
 import { useAuth } from "@/context/auth-context";
 import { GameweekHistory } from "@/types/fpl";
+import { Info } from "lucide-react";
+import {
+  Tooltip as UITooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function HistoricalTrends() {
   const { currentManager } = useAuth();
@@ -61,7 +67,18 @@ export function HistoricalTrends() {
       {/* Points Breakdown Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Points Breakdown</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Points Breakdown</CardTitle>
+            <UITooltip>
+              <TooltipTrigger><Info className="w-4 lg:w-5" /></TooltipTrigger>
+              <TooltipContent>
+                <p>Each bar shows the points breakdown per gameweek:</p>
+                <p>- Green: Actual points scored</p>
+                <p>- Orange: Points left on bench</p>
+                <p>- Red: Points deducted for transfers</p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
           <p className="text-sm text-muted-foreground">
             Analyze actual points, bench points, and transfer cost deductions
           </p>
@@ -73,9 +90,7 @@ export function HistoricalTrends() {
                 data={managerHistory?.current}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                {/* <CartesianGrid strokeDasharray="3 3" /> */}
                 <XAxis dataKey="event" tickFormatter={formatGameweekLabel} />
-                {/* <YAxis /> */}
                 <Tooltip
                   formatter={(value: number, name: string) => {
                     switch (name) {
@@ -109,7 +124,18 @@ export function HistoricalTrends() {
       {/* Rank Progression Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Rank Progression</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Rank Progression</CardTitle>
+            <UITooltip>
+              <TooltipTrigger><Info className="w-4 lg:w-5" /></TooltipTrigger>
+              <TooltipContent>
+                <p>Line chart showing overall rank changes:</p>
+                <p>- Lower position means better rank</p>
+                <p>- Downward trend indicates rank improvement</p>
+                <p>- Hover to see exact rank for each gameweek</p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
           <p className="text-sm text-muted-foreground">
             Track how your rank has evolved throughout the season
           </p>
@@ -153,7 +179,18 @@ export function HistoricalTrends() {
       {/* Team Value Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Team Value</CardTitle>
+          <div className="flex items-center gap-2">
+            <CardTitle>Team Value</CardTitle>
+            <UITooltip>
+              <TooltipTrigger><Info className="w-4 lg:w-5" /></TooltipTrigger>
+              <TooltipContent>
+                <p>Area chart showing team value changes:</p>
+                <p>- Y-axis shows team value in millions</p>
+                <p>- Upward trend indicates value increase</p>
+                <p>- Value changes based on player price changes</p>
+              </TooltipContent>
+            </UITooltip>
+          </div>
           <p className="text-sm text-muted-foreground">
             Monitor your team's value fluctuations throughout the season
           </p>
@@ -165,7 +202,6 @@ export function HistoricalTrends() {
                 data={managerHistory?.current}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                {/* <CartesianGrid strokeDasharray="3 3" /> */}
                 <XAxis dataKey="event" tickFormatter={formatGameweekLabel} />
                 <YAxis domain={["dataMin", "dataMax"]} tickFormatter={(value) => `£${value / 10}m`}  />
                 <Tooltip
