@@ -30,6 +30,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   const [mostCaptPlayerData, setMostCaptPlayerData] = useState<any | null>([{ status: "loading" }]);
   const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
   const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
+  // const [currentGWCaptData, setCurrentGWCaptData] = useState<any | null>(null);
 
   const [managerTransfers, setManagerTransfers] = useState<Array<ManagerTransfers>>(null);
 
@@ -65,7 +66,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
       streak: 3,
     },
   };
-  
+
   useEffect(() => {
     const fetchMostCaptPlayerAndTeam = async () => {
       try {
@@ -115,25 +116,35 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
               setMostCaptPlayerData([...playerData, currentGameweekData.total_points])
             }
           }
-
         }
       } catch (error) {
         console.error('Unexpected error:', error);
       }
     };
     fetchMostCaptPlayerAndTeam();
-
-    const fetchManagerTransfers = async () => {
-      try {
-        const transfers = await managerService.getTransfers(currentManager.id)
-        let filtered = transfers.filter(item => item.event === gameweek);
-        setManagerTransfers(filtered)
-      } catch (error) {
-        console.error(error)
-      }
-    }
-    fetchManagerTransfers()
   }, [gameweek]);
+
+
+  const {
+    data: managerTransfersData,
+    isLoading: isLoadingTransfers,
+    error: transferFetchError,
+  } = useQuery({
+    queryKey: ['managerTransfers', currentManager?.id, gameweek],
+    queryFn: () =>
+      currentManager?.id
+        ? managerService.getTransfers(currentManager.id.toString())
+        : null,
+    enabled: !!currentManager?.id,
+  });
+
+  useEffect(() => {
+    if (!isLoadingTransfers) {
+      let filtered = managerTransfersData.filter((item) => item.event === gameweek);
+      setManagerTransfers(filtered);
+    }
+  }, [isLoadingTransfers])
+
 
   if (isLoading) {
     return (
@@ -202,7 +213,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   return (
     <div className="space-y-4">
       <div className="text-start space-y-2">
-        {/* <h2 className="text-2xl font-bold">{currentManager?.name || 'Team Name'}</h2> */}
         <p className="text-muted-foreground">Manager Stats</p>
       </div>
 
@@ -213,7 +223,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             <CardTitle className="text-sm font-medium">Gameweek Points</CardTitle>
           </CardHeader>
           <CardContent>
-            {/* <div className="text-2xl flex justify-between font-bold pb-2">{entryHistory?.points || mockData.points} {getPerfIcon(entryHistory?.points, currentGWData?.average_entry_score)}</div> */}
             <div className="flex items-center justify-between gap-2 pb-2">
               <span className="text-2xl font-bold">
                 {entryHistory?.points || mockData.points}
@@ -248,8 +257,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
         </Card>
 
         {/* Captain Performance Card */}
-        {
-          mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
+        {mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
             <Card>
               <CardHeader className="space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
@@ -275,60 +283,56 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
               </CardContent>
             </Card>
             :
-            <Skeleton className="h-full w-full rounded-xl" />
+            <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
+            </CardHeader>
+            <CardContent>
+              Loading ...
+            </CardContent>
+          </Card>
         }
 
-        {/* Transfers Card */}
-        {
-          managerHistory && managerHistory.current[gameweek] && managerTransfers ?
-            <Card>
-              <CardHeader className="space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Transfers</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="flex justify-between">
-                    <span>Made:</span>
-                    <span>{managerTransfers.length}</span>
-                  </div>
-                  <div className="flex justify-between text-red-500">
-                    <span>Cost:</span>
-                    <span>-{managerHistory.current[gameweek].event_transfers_cost}</span>
-                  </div>
-                  {/* <div className="text-xs space-y-1">
-                <div className="text-green-500">
-                In: {mockData.transfers.in.map(p => `${p.name} (+${p.points})`).join(', ')}
+        {managerHistory && managerTransfers ?
+          <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Transfers</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="flex justify-between">
+                  <span>Made:</span>
+                  <span>{managerTransfers.length}</span>
                 </div>
-                <div className="text-red-500">
-                  Out: {mockData.transfers.out.map(p => `${p.name} (+${p.points})`).join(', ')}
-                  </div>
-              </div> */}
+                <div className="flex justify-between text-red-500">
+                  <span>Cost:</span>
+                  <span>{managerHistory.current[gameweek - 1].event_transfers_cost}</span>
                 </div>
-              </CardContent>
-            </Card>
-            :
-            <Skeleton className="h-full w-full rounded-xl" />
+              </div>
+            </CardContent>
+          </Card>
+          :
+          <Skeleton className="h-full w-full rounded-xl" />
         }
 
-        {/* Team Value Card */}
-        {
-          managerHistory && entryHistory ?
-            <Card>
-              <CardHeader className="space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Team Value</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold pb-2">
-                  £{((entryHistory.value || 0) / 10).toFixed(1)}m
-                </div>
-                <p className="text-sm">
-                  {getValueSymbol(entryHistory.value, managerHistory.current[gameweek - 2].value)}
-                </p>
-              </CardContent>
-            </Card>
-            :
-            <Skeleton className="h-full w-full rounded-xl" />
+        {managerHistory && entryHistory ?
+          <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Team Value</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold pb-2">
+                £{((entryHistory.value || 0) / 10).toFixed(1)}m
+              </div>
+              <p className="text-sm">
+                {getValueSymbol(entryHistory.value, managerHistory.current[gameweek - 2].value)}
+              </p>
+            </CardContent>
+          </Card>
+          :
+          <Skeleton className="h-full w-full rounded-xl" />
         }
+
 
         {/* Bench Points Card */}
         <Card>

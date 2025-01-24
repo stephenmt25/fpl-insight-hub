@@ -12,7 +12,6 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 
 const Index = () => {
-  const [overallFPLData, setOverallFPLData] = useState<any[] | null>(null);
   const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
   const { isSignedIn, signIn } = useAuth();
   const [pageNumber, setPageNumber] = useState("1");
@@ -38,24 +37,28 @@ const Index = () => {
     queryFn: () => leagueService.getStandings(leagueId),
   });
 
+  const {
+    data: overallFplData,
+    error: overallFplDataError,
+    isLoading: isLoadingOverallFplData,
+  } = useQuery({
+    queryKey: [],
+    queryFn: () => supabase.from('fploveralldata').select(),
+  });
+
   useEffect(() => {
-    const getData = async () => {
-      const { data } = await supabase.from('fploveralldata').select();
-      if (data) {
-        setOverallFPLData(data);
-        updateOverallData(data);
+      if (!isLoadingOverallFplData) {
+        updateOverallData(overallFplData.data);
         // Find the current gameweek and set it
-        const currentGW = data.find(gw => gw.is_current === "true");
+        const currentGW = overallFplData.data.find(gw => gw.is_current === "true");
         if (currentGW) {
           setCurrentGameweekNumber(currentGW.id);
         }
       }
-    };
-    getData();
-  }, []);
+  }, [isLoadingOverallFplData]);
 
-  const previousGWData = overallFPLData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweekData = overallFPLData?.filter((gw) => gw.is_current === "true")[0] || null;
+  const previousGWData = overallFplData?.data.filter((gw) => gw.is_previous === "true")[0];
+  const liveGameweekData = overallFplData?.data.filter((gw) => gw.is_current === "true")[0] || null;
 
   useEffect(() => {
     const fetchGameweekStats = async (gameweekData: any) => {
