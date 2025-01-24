@@ -106,9 +106,9 @@ export function HistoricalTrends() {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="points" name="Points" stackId="a" fill="#4ade80" />
+                <Bar dataKey="points" name="Points" stackId="a" fill="hsl(var(--chart-2))" />
                 <Bar dataKey="event_transfers_cost" name="Transfer Cost" stackId="a" fill="#ef4444" />
-                <Bar dataKey="points_on_bench" name="Bench" stackId="a" fill="#fb923c" />
+                <Bar dataKey="points_on_bench" name="Bench" stackId="a" fill="hsl(var(--chart-3))" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -130,8 +130,8 @@ export function HistoricalTrends() {
               <TooltipTrigger><Info className="w-4 lg:w-5" /></TooltipTrigger>
               <TooltipContent>
                 <p>Line chart showing overall rank changes:</p>
-                <p>- Lower position means better rank</p>
-                <p>- Downward trend indicates rank improvement</p>
+                <p>- Higher position means better rank</p>
+                <p>- Upward trend indicates rank improvement</p>
                 <p>- Hover to see exact rank for each gameweek</p>
               </TooltipContent>
             </UITooltip>
@@ -159,7 +159,7 @@ export function HistoricalTrends() {
                   type="monotone"
                   dataKey="overall_rank"
                   name="Overall Rank"
-                  stroke="#3b82f6"
+                  stroke="hsl(var(--chart-2))"
                   strokeWidth={2}
                   dot={{ r: 4 }}
                   activeDot={{ r: 8 }}
@@ -186,8 +186,7 @@ export function HistoricalTrends() {
               <TooltipContent>
                 <p>Area chart showing team value changes:</p>
                 <p>- Y-axis shows team value in millions</p>
-                <p>- Upward trend indicates value increase</p>
-                <p>- Value changes based on player price changes</p>
+                <p>- Hover to see exact team value for each gameweek</p>
               </TooltipContent>
             </UITooltip>
           </div>
@@ -213,8 +212,8 @@ export function HistoricalTrends() {
                   type="monotone"
                   dataKey="value"
                   name="Team Value"
-                  stroke="#22c55e"
-                  fill="#22c55e"
+                  stroke="hsl(var(--chart-2))"
+                  fill="hsl(var(--chart-2))"
                   fillOpacity={0.3}
                 />
               </AreaChart>
