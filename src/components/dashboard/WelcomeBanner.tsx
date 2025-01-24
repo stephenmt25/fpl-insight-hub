@@ -12,54 +12,63 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+
 interface WelcomeBannerProps {
 }
 
 export function WelcomeBanner({ }: WelcomeBannerProps) {
   const { isSignedIn, currentManager, updateManagerHistory } = useAuth();
-  const [managerHistory, setManagerHistory] = useState<ManagerHistory>();
+  const [managerHistory, setManagerHistory] = useState<ManagerHistory>()
+  const triggerSync = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-fpl-data');
+      if (error) throw error;
+      toast.success('FPL data sync triggered successfully');
+    } catch (error) {
+      console.error('Error triggering sync:', error);
+      toast.error('Failed to sync FPL data');
+    }
+  };
 
   useEffect(() => {
     const fetchManagerHistory = async () => {
       try {
-        if (currentManager?.id) {
-          const managerHistoryData = await managerService.getHistory(String(currentManager.id));
-          setManagerHistory(managerHistoryData);
-          updateManagerHistory(managerHistoryData);
-        }
+        const managerHistoryData = await managerService.getHistory(currentManager?.id);
+        setManagerHistory(managerHistoryData)
+        updateManagerHistory(managerHistoryData)
       } catch (error) {
         console.error('Unexpected error:', error);
       }
     }
-    fetchManagerHistory();
-  }, [currentManager]);
+    fetchManagerHistory()
+  }, [])
 
   let formattedPoints = new Intl.NumberFormat('en-US').format(Number(currentManager?.summary_overall_points));
   let formattedOR = new Intl.NumberFormat('en-US').format(Number(currentManager?.summary_overall_rank));
 
+
   const totalPointsSum = managerHistory?.past.reduce((sum: number, season: any) => sum + season.total_points, 0);
   const rankSum = managerHistory?.past.reduce((sum: number, season: any) => sum + season.rank, 0);
 
-  const averagePoints = new Intl.NumberFormat('en-US').format(Math.round(totalPointsSum / (managerHistory?.past.length || 1)));
-  const averageRank = new Intl.NumberFormat('en-US').format(Math.round(rankSum / (managerHistory?.past.length || 1)));
+  const averagePoints = new Intl.NumberFormat('en-US').format(Math.round(totalPointsSum / managerHistory?.past.length));
+  const averageRank = new Intl.NumberFormat('en-US').format(Math.round(rankSum / managerHistory?.past.length));
 
-  if (isSignedIn && currentManager) {
+
+
+  if (isSignedIn) {
     return (
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="lg:text-5xl text-3xl font-bold tracking-tight">
-            {currentManager.name}
+            {currentManager?.name}
           </h2>
           <p className="mt-2 flex gap-2 text-muted-foreground lg:text-xl uppercase">
-            {currentManager.player_first_name} {currentManager.player_last_name} | {currentManager.player_region_iso_code_long} 
-            {currentManager.player_region_iso_code_short && 
-              <span className={`fi fi-${currentManager.player_region_iso_code_short.toLowerCase()}`}></span>
-            }
+            {currentManager?.player_first_name} {currentManager?.player_last_name} | {currentManager?.player_region_iso_code_long} <span className={`fi fi-${currentManager?.player_region_iso_code_short.toLowerCase()}`}></span>
           </p>
           <p className="mt-2 flex gap-2 text-muted-foreground lg:text-xl uppercase">
             YR
             <div className="text-black">
-              {currentManager.years_active || 'N/A'}
+              {currentManager?.years_active}
             </div>
             | AVG PTS
             <div className="text-black">
@@ -77,10 +86,12 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
                 <p>AVG OR - Average Overall Rank</p>
               </TooltipContent>
             </Tooltip>
+
+            {/* <Info></Info> */}
           </p>
         </div>
         <div className="lg:text-right">
-          <p className="flex gap-2 text-muted-foreground text-2xl sm:text-xl uppercase">
+          <p className=" flex gap-2 text-muted-foreground text-2xl sm:text-xl uppercase">
             <div className="text-black">
               {formattedPoints}
             </div>
@@ -93,8 +104,10 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
             | Overall ranks
           </p>
         </div>
+        {/* <button onClick={triggerSync}>
+          trigger
+        </button> */}
       </div>
     );
   }
-  return null;
 }
