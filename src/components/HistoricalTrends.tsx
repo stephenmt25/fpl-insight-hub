@@ -10,7 +10,7 @@ export function HistoricalTrends() {
 
   const { data: managerHistory } = useQuery({
     queryKey: ['manager-history', currentManager?.id],
-    queryFn: () => managerService.getHistory(String(currentManager?.id)),
+    queryFn: () => managerService.getHistory(currentManager?.id as number),
     enabled: !!currentManager?.id,
   });
 
