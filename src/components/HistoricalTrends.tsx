@@ -10,7 +10,7 @@ export function HistoricalTrends() {
 
   const { data: managerHistory } = useQuery({
     queryKey: ['manager-history', currentManager?.id],
-    queryFn: () => managerService.getHistory(currentManager?.id as number),
+    queryFn: () => managerService.getHistory(currentManager?.id),
     enabled: !!currentManager?.id,
   });
 
@@ -56,27 +56,26 @@ export function HistoricalTrends() {
   const formatValue = (value: number) => `£${(value / 10).toFixed(1)}m`;
 
   return (
-    <div className="space-y-8">
-      <h3 className="text-2xl font-semibold">Historical Performance</h3>
-      
+    <div className=" grid grid-cols-1 lg:grid-cols-3 gap-2">
+      <h3 className="text-2xl font-semibold col-span-1 lg:col-span-3">Historical Performance</h3>
       {/* Points Breakdown Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Points Breakdown by Gameweek</CardTitle>
+          <CardTitle>Points Breakdown</CardTitle>
           <p className="text-sm text-muted-foreground">
             Analyze actual points, bench points, and transfer cost deductions
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={managerHistory?.current}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                {/* <CartesianGrid strokeDasharray="3 3" /> */}
                 <XAxis dataKey="event" tickFormatter={formatGameweekLabel} />
-                <YAxis />
+                {/* <YAxis /> */}
                 <Tooltip
                   formatter={(value: number, name: string) => {
                     switch (name) {
@@ -93,8 +92,8 @@ export function HistoricalTrends() {
                 />
                 <Legend />
                 <Bar dataKey="points" name="Points" stackId="a" fill="#4ade80" />
-                <Bar dataKey="points_on_bench" name="Bench" stackId="a" fill="#fb923c" />
                 <Bar dataKey="event_transfers_cost" name="Transfer Cost" stackId="a" fill="#ef4444" />
+                <Bar dataKey="points_on_bench" name="Bench" stackId="a" fill="#fb923c" />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -110,13 +109,13 @@ export function HistoricalTrends() {
       {/* Rank Progression Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Rank Progression Over Gameweeks</CardTitle>
+          <CardTitle>Rank Progression</CardTitle>
           <p className="text-sm text-muted-foreground">
             Track how your rank has evolved throughout the season
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart
                 data={managerHistory?.current}
@@ -124,7 +123,7 @@ export function HistoricalTrends() {
               >
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="event" tickFormatter={formatGameweekLabel} />
-                <YAxis reversed={true} />
+                <YAxis reversed={true} hide />
                 <Tooltip
                   formatter={(value: number) => [`${value.toLocaleString()}`, 'Overall Rank']}
                   labelFormatter={(label) => `Gameweek ${label}`}
@@ -154,21 +153,21 @@ export function HistoricalTrends() {
       {/* Team Value Chart */}
       <Card>
         <CardHeader>
-          <CardTitle>Team Value Trend by Gameweek</CardTitle>
+          <CardTitle>Team Value</CardTitle>
           <p className="text-sm text-muted-foreground">
             Monitor your team's value fluctuations throughout the season
           </p>
         </CardHeader>
         <CardContent>
-          <div className="h-[400px]">
+          <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart
                 data={managerHistory?.current}
                 margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
               >
-                <CartesianGrid strokeDasharray="3 3" />
+                {/* <CartesianGrid strokeDasharray="3 3" /> */}
                 <XAxis dataKey="event" tickFormatter={formatGameweekLabel} />
-                <YAxis tickFormatter={(value) => `£${value / 10}m`} />
+                <YAxis domain={["dataMin", "dataMax"]} tickFormatter={(value) => `£${value / 10}m`}  />
                 <Tooltip
                   formatter={(value: number) => [formatValue(value), 'Team Value']}
                   labelFormatter={(label) => `Gameweek ${label}`}
