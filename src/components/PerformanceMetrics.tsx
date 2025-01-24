@@ -258,36 +258,36 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
 
         {/* Captain Performance Card */}
         {mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
-            <Card>
-              <CardHeader className="space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-2">
-                  <div className="text-2xl gap-2 items-center justify-between flex font-bold">
-                    <div className="flex gap-2">
-                      {mostCaptPlayerData[0].web_name}
-                      <div className="text-muted-foreground">
-                        ({mostCaptPlayerTeam[0].short_name})
-                      </div>
-                    </div>
-                    {getCaptIcon(mostCaptPlayerData[1])}
-                  </div>
-                  <div className="text-xl flex items-center gap-1">
-                    {mostCaptPlayerData[1]} PTS
-                    <div className=" text-muted-foreground">
-                      v {mostCaptPlayerOpp[0].short_name}
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-            :
-            <Card>
+          <Card>
             <CardHeader className="space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
             </CardHeader>
             <CardContent>
+              <div className="space-y-2">
+                <div className="text-2xl gap-2 items-center justify-between flex font-bold">
+                  <div className="flex gap-2">
+                    {mostCaptPlayerData[0].web_name}
+                    <div className="text-muted-foreground">
+                      ({mostCaptPlayerTeam[0].short_name})
+                    </div>
+                  </div>
+                  {getCaptIcon(mostCaptPlayerData[1])}
+                </div>
+                <div className="text-xl flex items-center gap-1">
+                  {mostCaptPlayerData[1]} PTS
+                  <div className=" text-muted-foreground">
+                    v {mostCaptPlayerOpp[0].short_name}
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          :
+          <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
               Loading ...
             </CardContent>
           </Card>
@@ -312,7 +312,14 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             </CardContent>
           </Card>
           :
-          <Skeleton className="h-full w-full rounded-xl" />
+          <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
+              Loading ...
+            </CardContent>
+          </Card>
         }
 
         {managerHistory && entryHistory ?
