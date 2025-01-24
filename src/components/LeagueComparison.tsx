@@ -52,18 +52,17 @@ export function LeagueComparison() {
             onManagerSelect={setSelectedManager}
             setLeagueId={setLeagueId}
           />
-          <Button onClick={() => handleClick('insights')} className="w-full" variant="outline">
-            View League Insights
-          </Button>
+          <div className="flex gap-4">
+            <Button onClick={() => handleClick('insights')} variant="outline">
+              View League Insights
+            </Button>
+            <Button onClick={() => handleClick('trends')} >View League Trends</Button>
+          </div>
         </div>
         <div className="space-y-4">
           <ComparisonMetrics selectedManager={selectedManager} />
           <HistoricalComparison selectedManager={selectedManager} />
         </div>
-      </div>
-      <div className="flex justify-center gap-4">
-        <Button onClick={() => handleClick('table')} variant="outline">Analyze Another League</Button>
-        <Button onClick={() => handleClick('trends')} >View Detailed League Trends</Button>
       </div>
     </div>
   );
