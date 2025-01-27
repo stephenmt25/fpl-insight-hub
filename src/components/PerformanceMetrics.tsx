@@ -14,6 +14,7 @@ import { useContext, useEffect, useState } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
 import { supabase } from "@/integrations/supabase/client";
 import { GameweekPicks, ManagerTransfers } from "@/types/fpl";
+import { useTeamsContext } from "@/context/teams-context";
 
 interface PerformanceMetricsProps {
   gameweek: number;
@@ -22,10 +23,19 @@ interface PerformanceMetricsProps {
   error: Object;
 }
 
+// Add this interface for type safety
+interface CaptainData {
+  playerData: any;
+  teamData: any;
+  opponentData: any;
+  captPoints: number;
+}
+
 export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, error }: PerformanceMetricsProps) {
 
   const { overallData } = useContext(LiveGWContext)
   const { managerHistory, currentManager } = useAuth();
+  const { data: teams, isLoading: teamsLoading } = useTeamsContext()
   const currentGWData = Array.isArray(overallData) ? overallData.filter((gw) => gw.id === gameweek)[0] : undefined;
   const [mostCaptPlayerData, setMostCaptPlayerData] = useState<any | null>([{ status: "loading" }]);
   const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
@@ -67,63 +77,43 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
     },
   };
 
-  useEffect(() => {
-    const fetchMostCaptPlayerAndTeam = async () => {
-      try {
-        if (captain?.element) {
-          const { data: playerData, error: playerError } = await supabase
-            .from('plplayerdata')
-            .select()
-            .eq('id', Number(captain.element));
+  const { data: captainData, isLoading: isCaptainLoading } = useQuery<CaptainData>({
+    queryKey: ['captainPerformance', captain?.element, gameweek],
+    queryFn: async () => {
+      if (!captain?.element) return null;
 
-          if (playerError) {
-            console.error('Error fetching most-captained player data:', playerError);
-            return;
-          }
-          if (playerData && playerData[0]?.team) {
-            const { data: teamData, error: teamError } = await supabase
-              .from('plteams')
-              .select()
-              .eq('id', Number(playerData[0].team));
+      // Fetch parallel data
+      const [playerRes, summaryRes] = await Promise.all([
+        supabase.from('plplayerdata').select().eq('id', captain.element),
+        playerService.getPlayerSummary(captain.element.toString())
+      ]);
 
-            if (teamError) {
-              console.error('Error fetching most-captained player team data:', teamError);
-              return;
-            }
+      // Error handling
+      if (playerRes.error) throw playerRes.error;
+      if (!playerRes.data?.[0]) throw new Error('Player not found');
 
-            setMostCaptPlayerTeam(teamData);
-          }
+      // Get team data from context instead of Supabase
+      const teamData = teams?.find(t => t.id === playerRes.data[0].team);
+      if (!teamData) throw new Error('Team not found');
 
-          // Convert number to string when calling getPlayerSummary
-          const playerSummary = await playerService.getPlayerSummary(String(captain.element));
+      // Get current GW data
+      const gwData = summaryRes.history.find((h: any) => h.round === gameweek);
+      if (!gwData) throw new Error('GW data not found');
 
-          if (playerSummary) {
-            const currentGameweekData = playerSummary.history.find(
-              (item) => item.round === gameweek
-            );
-            if (currentGameweekData?.opponent_team) {
-              const { data: opponentTeamData, error: opponentTeamError } = await supabase
-                .from('plteams')
-                .select('short_name')
-                .eq('id', Number(currentGameweekData.opponent_team));
+      // Get opponent from pre-loaded teams
+      const opponentData = teams?.find(t => t.id === gwData.opponent_team);
+      if (!opponentData) throw new Error('Opponent not found');
 
-              if (opponentTeamError) {
-                console.error('Error fetching opponent team data:', opponentTeamError);
-                return;
-              }
-
-              setMostCaptPlayerOpp(opponentTeamData);
-              setMostCaptPlayerData([...playerData, currentGameweekData.total_points])
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Unexpected error:', error);
-      }
-    };
-    fetchMostCaptPlayerAndTeam();
-  }, [gameweek]);
-
+      return {
+        playerData: playerRes.data[0],
+        teamData,
+        opponentData,
+        captPoints: gwData.total_points
+      };
+    },
+    enabled: !!captain?.element && !!teams,
+    staleTime: Infinity // Cache indefinitely for same gameweek
+  });
 
   const {
     data: managerTransfersData,
@@ -257,7 +247,37 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
         </Card>
 
         {/* Captain Performance Card */}
-        {mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
+        <Card>
+          <CardHeader className="space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {isCaptainLoading ? (
+              <Skeleton className="h-[76px] w-full" />
+            ) : captainData ? (
+              <div className="space-y-2">
+                <div className="text-2xl gap-2 items-center justify-between flex font-bold">
+                  <div className="flex gap-2">
+                    {captainData.playerData.web_name}
+                    <div className="text-muted-foreground">
+                      ({captainData.teamData.short_name})
+                    </div>
+                  </div>
+                  {getCaptIcon(captainData.captPoints)}
+                </div>
+                <div className="text-xl flex items-center gap-1">
+                  {captainData.captPoints * 2} PTS
+                  <div className="text-muted-foreground">
+                    v {captainData.opponentData.short_name}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="text-muted-foreground">No captain data</div>
+            )}
+          </CardContent>
+        </Card>
+        {/* {mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
           <Card>
             <CardHeader className="space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
@@ -291,7 +311,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
               Loading ...
             </CardContent>
           </Card>
-        }
+        } */}
 
         {managerHistory && managerTransfers ?
           <Card>

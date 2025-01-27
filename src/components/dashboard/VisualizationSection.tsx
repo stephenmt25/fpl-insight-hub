@@ -132,7 +132,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
               <Card className="lg:h-[48%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
-                    Captaincy Performance
+                    Total Transferred Made in GW
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col lg:flex-row gap-4">
