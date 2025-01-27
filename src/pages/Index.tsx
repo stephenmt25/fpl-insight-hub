@@ -10,7 +10,7 @@ import { VisualizationSection } from "@/components/dashboard/VisualizationSectio
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
-import { useTeamsContext } from "@/context/teams-context";
+import { useTeamsContext } from "@/context/teams-context"; // Add this import
 
 const Index = () => {
   const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
@@ -28,7 +28,7 @@ const Index = () => {
   const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
   const [mostTransferredPlayerData, setMostTransferredPlayerData] = useState<any | null>(null);
   const [mostTransferredPlayerTeam, setMostTransferredPlayerTeam] = useState<any | null>(null);
-  const { data: teams } = useTeamsContext();
+  const { data: teams } = useTeamsContext(); // Get teams from context
 
   const {
     data: leagueData,
@@ -44,27 +44,23 @@ const Index = () => {
     error: overallFplDataError,
     isLoading: isLoadingOverallFplData,
   } = useQuery({
-    queryKey: ['overallFplData'],
-    queryFn: async () => {
-      const { data, error } = await supabase.from('fploveralldata').select();
-      if (error) throw error;
-      return data;
-    },
+    queryKey: [],
+    queryFn: () => supabase.from('fploveralldata').select(),
   });
 
   useEffect(() => {
-    if (!isLoadingOverallFplData && overallFplData) {
-      updateOverallData(overallFplData);
-      // Find the current gameweek and set it
-      const currentGW = overallFplData.find(gw => gw.is_current === "true");
-      if (currentGW) {
-        setCurrentGameweekNumber(currentGW.id);
+      if (!isLoadingOverallFplData) {
+        updateOverallData(overallFplData.data);
+        // Find the current gameweek and set it
+        const currentGW = overallFplData.data.find(gw => gw.is_current === "true");
+        if (currentGW) {
+          setCurrentGameweekNumber(currentGW.id);
+        }
       }
-    }
-  }, [isLoadingOverallFplData, overallFplData]);
+  }, [isLoadingOverallFplData]);
 
-  const previousGWData = overallFplData?.filter((gw) => gw.is_previous === "true")[0];
-  const liveGameweekData = overallFplData?.filter((gw) => gw.is_current === "true")[0] || null;
+  const previousGWData = overallFplData?.data.filter((gw) => gw.is_previous === "true")[0];
+  const liveGameweekData = overallFplData?.data.filter((gw) => gw.is_current === "true")[0] || null;
 
   useEffect(() => {
     const fetchGameweekStats = async (gameweekData: any) => {

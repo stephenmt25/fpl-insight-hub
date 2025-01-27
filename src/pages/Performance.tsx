@@ -1,9 +1,11 @@
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
+import { CaptaincyImpact } from "@/components/CaptaincyImpact";
+import { GameweekAnalysis } from "@/components/GameweekAnalysis";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { LeagueComparison } from "@/components/LeagueComparison";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,10 +14,8 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/fpl-api";
-import { useNavigate } from "react-router-dom";
-import { useTeamsContext } from "@/context/teams-context";
-import { useIsMobile } from "@/hooks/use-mobile";
 
+// Mock data for the player performance table
 const mockPlayers = [
   {
     name: "Mohamed Salah",
@@ -96,60 +96,36 @@ const mockPlayers = [
   },
 ];
 
+
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn, currentManager } = useAuth();
-  const { liveGameweekData } = useContext(LiveGWContext);
-  const { data: teams, isLoading: isLoadingTeams } = useTeamsContext();
-  const navigate = useNavigate();
-  const isMobile = useIsMobile();
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const { liveGameweekData } = useContext(LiveGWContext)
   const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
-
-  // Handle initial loading and navigation
-  useEffect(() => {
-    if (!isSignedIn) {
-      navigate('/');
-    }
-  }, [isSignedIn, navigate]);
-
-  // Handle initial load state
-  useEffect(() => {
-    if (!isLoadingTeams && currentManager?.id) {
-      setIsInitialLoad(false);
-    }
-  }, [isLoadingTeams, currentManager]);
-
-  // Wait for all context data to be ready before fetching gameweek picks
-  const canFetchData = isSignedIn && currentManager?.id && currentGameweek && !isLoadingTeams && !isInitialLoad;
 
   const {
     data: gameweekPicks,
     isLoading,
-    error,
-    isError
+    error
   } = useQuery({
     queryKey: ['gameweekPicks', currentManager?.id, currentGameweek],
     queryFn: () =>
       currentManager?.id
         ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
         : null,
-    enabled: canFetchData,
-    retry: 1,
-    staleTime: 30000,
+    enabled: !!currentManager?.id && !!currentGameweek,
   });
 
-  // Show loading state while checking auth and context data
-  if (!isSignedIn || isLoadingTeams || isInitialLoad) {
+  if (!isSignedIn) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">
-              Loading your performance data...
+              Sign in with your FPL ID to see your performance analytics.
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Please wait while we fetch your information.
+              Track your progress and make informed decisions for your team.
             </p>
           </div>
         </div>
@@ -157,24 +133,6 @@ export default function Performance() {
         <div className="space-y-2">
           <Skeleton className="h-4 w-[250px]" />
           <Skeleton className="h-4 w-[200px]" />
-        </div>
-      </div>
-    );
-  }
-
-  // Show error state if data fetching fails
-  if (isError) {
-    return (
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h2 className="text-3xl font-bold tracking-tight text-red-600">
-              Error loading performance data
-            </h2>
-            <p className="mt-2 text-muted-foreground">
-              Please try refreshing the page. If the problem persists, try signing out and back in.
-            </p>
-          </div>
         </div>
       </div>
     );
@@ -191,7 +149,9 @@ export default function Performance() {
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>
+            {/* <TabsTrigger value="gameweek">Gameweek Analysis</TabsTrigger> */}
             <TabsTrigger value="historical">Historical Trends</TabsTrigger>
+            {/* <TabsTrigger value="captaincy">Captaincy Impact</TabsTrigger> */}
             <TabsTrigger value="compare">Mini-League Tables</TabsTrigger>
           </TabsList>
         </div>
@@ -206,12 +166,7 @@ export default function Performance() {
           {/* Performance Metrics */}
           <div className="grid lg:grid-cols-2 gap-4 p-2">
             <div className="">
-              <PerformanceMetrics 
-                gameweek={currentGameweek} 
-                gameweekPicks={gameweekPicks} 
-                isLoading={isLoading} 
-                error={error} 
-              />
+              <PerformanceMetrics gameweek={currentGameweek} gameweekPicks={gameweekPicks} isLoading={isLoading} error={error} />
             </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">
