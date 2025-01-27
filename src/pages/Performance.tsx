@@ -14,6 +14,7 @@ import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/fpl-api";
 import { useNavigate } from "react-router-dom";
 import { useTeamsContext } from "@/context/teams-context";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const mockPlayers = [
   {
@@ -101,17 +102,26 @@ export default function Performance() {
   const { liveGameweekData } = useContext(LiveGWContext);
   const { data: teams, isLoading: isLoadingTeams } = useTeamsContext();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
 
-  // Add effect to handle initial loading and navigation
+  // Handle initial loading and navigation
   useEffect(() => {
     if (!isSignedIn) {
       navigate('/');
     }
   }, [isSignedIn, navigate]);
 
+  // Handle initial load state
+  useEffect(() => {
+    if (!isLoadingTeams && currentManager?.id) {
+      setIsInitialLoad(false);
+    }
+  }, [isLoadingTeams, currentManager]);
+
   // Wait for all context data to be ready before fetching gameweek picks
-  const canFetchData = isSignedIn && currentManager?.id && currentGameweek && !isLoadingTeams;
+  const canFetchData = isSignedIn && currentManager?.id && currentGameweek && !isLoadingTeams && !isInitialLoad;
 
   const {
     data: gameweekPicks,
@@ -124,13 +134,13 @@ export default function Performance() {
       currentManager?.id
         ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
         : null,
-    enabled: canFetchData, // Only fetch when all dependencies are ready
+    enabled: canFetchData,
     retry: 1,
-    staleTime: 30000, // Cache data for 30 seconds
+    staleTime: 30000,
   });
 
   // Show loading state while checking auth and context data
-  if (!isSignedIn || isLoadingTeams) {
+  if (!isSignedIn || isLoadingTeams || isInitialLoad) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
