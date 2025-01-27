@@ -26,14 +26,17 @@ export function DifferentialPicks() {
       try {
         const { data: playerData, error: playerError } = await supabase
           .from('plplayerdata')
-          .select('web_name, form, selected_by_percent, team')
+          .select('web_name, form, selected_by_percent, team, element_type')
           .not('form', 'is', null);
 
         if (playerError) throw playerError;
 
         const filteredPlayers = playerData
           .filter(player => parseFloat(player.form || '0') >= 2) // Exclude players with form < 4
-          .filter(player => parseFloat(player.selected_by_percent || '0') > 0); // Exclude players with 0% ownership
+          .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
+          .filter(player => player.element_type !== 5);
+
+        console.log(filteredPlayers)
 
         const teamIds = [...new Set(filteredPlayers.map(player => player.team))];
         const { data: teamData, error: teamError } = await supabase

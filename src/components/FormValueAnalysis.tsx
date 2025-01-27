@@ -29,7 +29,7 @@ export function FormValueAnalysis() {
       try {
         const { data: playerData, error: playerError } = await supabase
           .from('plplayerdata')
-          .select('web_name, now_cost, form, selected_by_percent, team')
+          .select('web_name, now_cost, form, selected_by_percent, team, element_type')
           .not('form', 'is', null)
 
         if (playerError) throw playerError;
@@ -37,7 +37,8 @@ export function FormValueAnalysis() {
         const filteredPlayers = playerData
           .filter(player => parseFloat(player.form || '0') >= 2) // Exclude players with form < 1
           .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
-
+          .filter(player => player.element_type !== 5);
+          
         const teamIds = [...new Set(filteredPlayers.map(player => player.team))];
         const { data: teamData, error: teamError } = await supabase
           .from('plteams')
