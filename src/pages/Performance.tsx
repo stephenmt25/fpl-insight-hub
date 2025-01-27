@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
@@ -13,7 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/fpl-api";
 import { useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useTeamsContext } from "@/context/teams-context";
 
 const mockPlayers = [
   {
@@ -99,15 +99,19 @@ export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn, currentManager } = useAuth();
   const { liveGameweekData } = useContext(LiveGWContext);
+  const { data: teams, isLoading: isLoadingTeams } = useTeamsContext();
   const navigate = useNavigate();
   const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
 
-  // Add effect to handle initial loading
+  // Add effect to handle initial loading and navigation
   useEffect(() => {
     if (!isSignedIn) {
       navigate('/');
     }
   }, [isSignedIn, navigate]);
+
+  // Wait for all context data to be ready before fetching gameweek picks
+  const canFetchData = isSignedIn && currentManager?.id && currentGameweek && !isLoadingTeams;
 
   const {
     data: gameweekPicks,
@@ -120,21 +124,22 @@ export default function Performance() {
       currentManager?.id
         ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
         : null,
-    enabled: !!currentManager?.id && !!currentGameweek && isSignedIn,
+    enabled: canFetchData, // Only fetch when all dependencies are ready
     retry: 1,
+    staleTime: 30000, // Cache data for 30 seconds
   });
 
-  // Show loading state while checking auth
-  if (!isSignedIn) {
+  // Show loading state while checking auth and context data
+  if (!isSignedIn || isLoadingTeams) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl font-bold tracking-tight">
-              Sign in with your FPL ID to see your performance analytics.
+              Loading your performance data...
             </h2>
             <p className="mt-2 text-muted-foreground">
-              Track your progress and make informed decisions for your team.
+              Please wait while we fetch your information.
             </p>
           </div>
         </div>
@@ -191,7 +196,12 @@ export default function Performance() {
           {/* Performance Metrics */}
           <div className="grid lg:grid-cols-2 gap-4 p-2">
             <div className="">
-              <PerformanceMetrics gameweek={currentGameweek} gameweekPicks={gameweekPicks} isLoading={isLoading} error={error} />
+              <PerformanceMetrics 
+                gameweek={currentGameweek} 
+                gameweekPicks={gameweekPicks} 
+                isLoading={isLoading} 
+                error={error} 
+              />
             </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">
