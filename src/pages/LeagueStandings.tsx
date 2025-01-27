@@ -7,15 +7,15 @@ import { useContext } from 'react';
 import { TabContext } from '../context/standings-tabs-context';
 import { leagueService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/StatsCard";
+import { LiveGWContext } from "@/context/livegw-context";
 
 export default function LeagueStandings() {
   const [selectedLeague, setSelectedLeague] = useState("Overall");
   const [id, setId] = useState("314")
   const { activeTab } = useContext(TabContext);
   const overallLeagueId = "314"
-
+  const { liveGameweekData } = useContext(LiveGWContext)
   const [leagueId, setLeagueId] = useState(overallLeagueId)
   const [pageNumber, setPageNumber] = useState("1")
 
@@ -84,7 +84,7 @@ export default function LeagueStandings() {
                 description=""
               /> :
               <>
-                <LeagueTable leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+                <LeagueTable gameweekNumber={liveGameweekData.id} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
               </>
           }
 

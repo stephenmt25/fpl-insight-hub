@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { LeagueTable } from "@/components/LeagueTable";
 import { StatsCard } from "@/components/StatsCard";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { LiveGWContext } from "@/context/livegw-context";
 
 interface LeagueSectionProps {
   pageNumber: string;
@@ -31,7 +31,7 @@ export function LeagueSection({
 
   const [selectedLeague, setSelectedLeague] = useState("Overall");
   const [id, setId] = useState("314")
-
+  const { liveGameweekData } = useContext(LiveGWContext)
   const updateSelectedLeague = (leagueId: string) => {
     const managerData = localStorage.getItem("managerData");
     if (managerData) {
@@ -67,7 +67,7 @@ export function LeagueSection({
         <StatsCard title="Loading Table Data" value="..." description="" />
       ) : (
         <>
-          <LeagueTable leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+          <LeagueTable gameweekNumber={liveGameweekData.id} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
         </>
       )}
     </div>

@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Star, AlertCircle, Minus } from "lucide-react";
+import { Minus, ThumbsDown, ThumbsUp } from "lucide-react";
 
 interface Player {
   name: string;
@@ -24,9 +24,9 @@ export function PlayerPerformanceTable({ players }: PlayerPerformanceTableProps)
   const getPerformanceIcon = (performance: string) => {
     switch (performance) {
       case 'exceptional':
-        return <Star className="h-4 w-4 text-yellow-500" />;
+        return <ThumbsUp className="h-4 w-4 text-green-500" />;
       case 'poor':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <ThumbsDown className="h-4 w-4 text-red-500" />;
       default:
         return <Minus className="h-4 w-4 text-gray-500" />;
     }

@@ -3,98 +3,16 @@ import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
-import { CaptaincyImpact } from "@/components/CaptaincyImpact";
-import { GameweekAnalysis } from "@/components/GameweekAnalysis";
-import { HistoricalTrends } from "@/components/HistoricalTrends";
-import { LeagueComparison } from "@/components/LeagueComparison";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { LiveGWContext } from "@/context/livegw-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
-import { managerService } from "@/services/fpl-api";
-
-// Mock data for the player performance table
-const mockPlayers = [
-  {
-    name: "Mohamed Salah",
-    team: "LIV",
-    position: "MID",
-    points: 12,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Erling Haaland",
-    team: "MCI",
-    position: "FWD",
-    points: 8,
-    performance: "average" as const,
-  },
-  {
-    name: "Bukayo Saka",
-    team: "ARS",
-    position: "MID",
-    points: 2,
-    performance: "poor" as const,
-  },
-  {
-    name: "Harry Kane",
-    team: "TOT",
-    position: "FWD",
-    points: 10,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Kevin De Bruyne",
-    team: "MCI",
-    position: "MID",
-    points: 7,
-    performance: "average" as const,
-  },
-  {
-    name: "Trent Alexander-Arnold",
-    team: "LIV",
-    position: "DEF",
-    points: 6,
-    performance: "average" as const,
-  },
-  {
-    name: "Alisson Becker",
-    team: "LIV",
-    position: "GK",
-    points: 3,
-    performance: "poor" as const,
-  },
-  {
-    name: "Bruno Fernandes",
-    team: "MUN",
-    position: "MID",
-    points: 14,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Son Heung-min",
-    team: "TOT",
-    position: "MID",
-    points: 11,
-    performance: "exceptional" as const,
-  },
-  {
-    name: "Kieran Trippier",
-    team: "NEW",
-    position: "DEF",
-    points: 9,
-    performance: "average" as const,
-  },
-  {
-    name: "Nick Pope",
-    team: "NEW",
-    position: "GK",
-    points: 5,
-    performance: "average" as const,
-  },
-];
+import { managerService, playerService } from "@/services/fpl-api";
+import { supabase } from "@/integrations/supabase/client";
+import { useTeamsContext } from "@/context/teams-context";
+import { HistoricalTrends } from "@/components/HistoricalTrends";
+import { LeagueComparison } from "@/components/LeagueComparison";
 
 
 export default function Performance() {
@@ -102,19 +20,65 @@ export default function Performance() {
   const { isSignedIn, currentManager } = useAuth();
   const { liveGameweekData } = useContext(LiveGWContext)
   const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
+  const { data: teams } = useTeamsContext();
 
-  const {
-    data: gameweekPicks,
-    isLoading,
-    error
-  } = useQuery({
+  // Fetch gameweek picks
+  const { data: gameweekPicks, isLoading, error } = useQuery({
     queryKey: ['gameweekPicks', currentManager?.id, currentGameweek],
-    queryFn: () =>
-      currentManager?.id
-        ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
-        : null,
+    queryFn: () => currentManager?.id
+      ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
+      : null,
     enabled: !!currentManager?.id && !!currentGameweek,
   });
+
+  // Fetch all players data
+  const { data: allPlayers } = useQuery({
+    queryKey: ['allPlayers'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('plplayerdata').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  // Fetch gameweek player stats
+  const { data: gameweekPlayerStats } = useQuery({
+    queryKey: ['gameweekPlayerStats', currentGameweek],
+    queryFn: () => playerService.getGameweekPlayerStats(currentGameweek.toString()),
+    enabled: !!currentGameweek,
+  });
+
+  // Process live data for the table
+  const getPosition = (elementType: number) => {
+    switch (elementType) {
+      case 1: return 'GK';
+      case 2: return 'DEF';
+      case 3: return 'MID';
+      case 4: return 'FWD';
+      default: return '';
+    }
+  };
+
+  const realPlayers = gameweekPicks?.picks
+    ?.filter(pick => pick.position <= 11) // Starting 11 only
+    .map(pick => {
+      const player = allPlayers?.find(p => p.id === pick.element);
+      const team = teams?.find(t => t.id === player?.team);
+      const playerStats = gameweekPlayerStats?.elements?.find((e: any) => e.id === pick.element);
+      const points = playerStats?.stats?.total_points || 0;
+
+      let performance: 'exceptional' | 'average' | 'poor' = 'average';
+      if (points >= 6) performance = 'exceptional';
+      else if (points < 5) performance = 'poor';
+
+      return {
+        name: player?.web_name || 'Unknown',
+        team: team?.short_name || '',
+        position: player ? getPosition(player.element_type) : '',
+        points,
+        performance,
+      };
+    }) || [];
 
   if (!isSignedIn) {
     return (
@@ -156,23 +120,31 @@ export default function Performance() {
           </TabsList>
         </div>
         <TabsContent value="overview">
-          {/* Gameweek Paginator */}
           <GameweekPaginator
             currentGameweekNumber={currentGameweek}
             setCurrentGameweekNumber={setCurrentGameweek}
             totalGameweeks={38}
             liveGameweekData={liveGameweekData}
           />
-          {/* Performance Metrics */}
+
           <div className="grid lg:grid-cols-2 gap-4 p-2">
             <div className="">
-              <PerformanceMetrics gameweek={currentGameweek} gameweekPicks={gameweekPicks} isLoading={isLoading} error={error} />
+              <PerformanceMetrics
+                gameweek={currentGameweek}
+                gameweekPicks={gameweekPicks}
+                isLoading={isLoading}
+                error={error}
+              />
             </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">
                 <p className="text-muted-foreground">Player Stats</p>
               </div>
-              <PlayerPerformanceTable players={mockPlayers} />
+              {isLoading || !allPlayers || !teams ? (
+                <Skeleton className="h-[400px] w-full" />
+              ) : (
+                <PlayerPerformanceTable players={realPlayers} />
+              )}
             </div>
           </div>
         </TabsContent>

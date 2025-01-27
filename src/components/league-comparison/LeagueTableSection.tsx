@@ -1,7 +1,7 @@
-import { Button } from "@/components/ui/button";
 import { LeagueTable } from "@/components/LeagueTable";
 import { StatsCard } from "@/components/StatsCard";
-import { useState } from "react";
+import { useContext, useState } from "react";
+import { LiveGWContext } from "@/context/livegw-context";
 
 interface LeagueTableSectionProps {
   isLoadingoverallLeagueData: boolean;
@@ -20,15 +20,8 @@ export function LeagueTableSection({
   onManagerSelect,
   setLeagueId
 }: LeagueTableSectionProps) {
-  const handlePreviousPage = () => {
-    const newPage = (parseInt(pageNumber) - 1).toString();
-    setPageNumber(newPage);
-  };
 
-  const handleNextPage = () => {
-    const newPage = (parseInt(pageNumber) + 1).toString();
-    setPageNumber(newPage);
-  };
+  const { liveGameweekData } = useContext(LiveGWContext)
 
   const [selectedLeague, setSelectedLeague] = useState("Overall");
   const [id, setId] = useState("314")
@@ -72,7 +65,7 @@ export function LeagueTableSection({
         />
       ) : (
         <>
-          <LeagueTable onManagerSelect={onManagerSelect} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+          <LeagueTable gameweekNumber={liveGameweekData.id} onManagerSelect={onManagerSelect} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
         </>
       )}
     </div>

@@ -36,7 +36,7 @@ interface LeagueTableProps {
   updateSelectedLeague: (leagueId: string) => void;
   hasNext: boolean;
   leagueId: string;
-  gameweekNumber?: number;
+  gameweekNumber: number;
   rowsPerPage?: number;
 }
 
@@ -49,7 +49,7 @@ export function LeagueTable({
   updateSelectedLeague,
   hasNext,
   leagueId,
-  gameweekNumber = 21,
+  gameweekNumber,
   rowsPerPage = 10,
 }: LeagueTableProps) {
   const [rowsToDisplay, setRowsToDisplay] = useState(rowsPerPage);
