@@ -3,9 +3,7 @@ import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
 import { useAuth } from "@/context/auth-context";
-import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
-import { CaptaincyImpact } from "@/components/CaptaincyImpact";
-import { GameweekAnalysis } from "@/components/GameweekAnalysis";
+import { Card, CardContent } from "@/components/ui/card";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { LeagueComparison } from "@/components/LeagueComparison";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -14,8 +12,9 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/fpl-api";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
-// Mock data for the player performance table
 const mockPlayers = [
   {
     name: "Mohamed Salah",
@@ -96,26 +95,36 @@ const mockPlayers = [
   },
 ];
 
-
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn, currentManager } = useAuth();
-  const { liveGameweekData } = useContext(LiveGWContext)
+  const { liveGameweekData } = useContext(LiveGWContext);
+  const navigate = useNavigate();
   const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
+
+  // Add effect to handle initial loading
+  useEffect(() => {
+    if (!isSignedIn) {
+      navigate('/');
+    }
+  }, [isSignedIn, navigate]);
 
   const {
     data: gameweekPicks,
     isLoading,
-    error
+    error,
+    isError
   } = useQuery({
     queryKey: ['gameweekPicks', currentManager?.id, currentGameweek],
     queryFn: () =>
       currentManager?.id
         ? managerService.getGameweekTeamPicks(currentManager.id.toString(), currentGameweek.toString())
         : null,
-    enabled: !!currentManager?.id && !!currentGameweek,
+    enabled: !!currentManager?.id && !!currentGameweek && isSignedIn,
+    retry: 1,
   });
 
+  // Show loading state while checking auth
   if (!isSignedIn) {
     return (
       <div className="space-y-6">
@@ -138,6 +147,24 @@ export default function Performance() {
     );
   }
 
+  // Show error state if data fetching fails
+  if (isError) {
+    return (
+      <div className="space-y-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h2 className="text-3xl font-bold tracking-tight text-red-600">
+              Error loading performance data
+            </h2>
+            <p className="mt-2 text-muted-foreground">
+              Please try refreshing the page. If the problem persists, try signing out and back in.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Hero Section */}
@@ -149,9 +176,7 @@ export default function Performance() {
         <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            {/* <TabsTrigger value="gameweek">Gameweek Analysis</TabsTrigger> */}
             <TabsTrigger value="historical">Historical Trends</TabsTrigger>
-            {/* <TabsTrigger value="captaincy">Captaincy Impact</TabsTrigger> */}
             <TabsTrigger value="compare">Mini-League Tables</TabsTrigger>
           </TabsList>
         </div>
