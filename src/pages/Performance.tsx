@@ -173,14 +173,12 @@ export default function Performance() {
           />
 
           <div className="grid lg:grid-cols-2 gap-4">
-            <div className="">
               <PerformanceMetrics
                 gameweek={currentGameweek}
                 gameweekPicks={gameweekPicks}
                 isLoading={isLoading}
                 error={error}
               />
-            </div>
             <div className="space-y-4">
               <div className="text-start space-y-2">
                 <p className="text-muted-foreground">Player Stats</p>
