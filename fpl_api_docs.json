@@ -623,7 +623,7 @@ Manager Data
   },
   // ... more transfer entries
 ]
-/my-team/{manager_id}/: Detailed information about a managers current team.
+/my-team/{manager_id}/: Detailed information about a managers current team. //needs authentication
 {
   "picks": [
     {

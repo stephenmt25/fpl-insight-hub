@@ -12,13 +12,13 @@ export function StatsCard({ title, value, description, style }: StatsCardProps) 
   return (
     <Card>
       <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm font-medium"></CardTitle>
       </CardHeader>
-      <CardContent className="pb-1">
+      <CardContent className="flex justify-between pb-1">
+        <div className="text-2xl ">{title}</div>
         <div className="text-2xl font-bold">{value}</div>
-
       </CardContent>
-      <CardFooter  className={style ? style : "text-sm font-medium" }>
+      <CardFooter  className={style ? style : "text-sm font-medium justify-end" }>
         {description && description} {style && <p className="text-black text-sm font-medium">from prev</p>}
       </CardFooter>
     </Card>

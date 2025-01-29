@@ -11,6 +11,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LiveGWContext } from "@/context/livegw-context";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { useTeamsContext } from "@/context/teams-context";
+import { ArrowUp10, ChartNoAxesCombined } from "lucide-react";
 
 const Index = () => {
   const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
@@ -117,14 +118,14 @@ const Index = () => {
             .from('plplayerdata')
             .select()
             .eq('id', Number(selectedGameweekData.most_transferred_in));
-  
+
           if (playerError) throw playerError;
           if (!playerData?.[0]) throw new Error('Player not found');
-  
+
           // Get team data from context
           const playerTeam = teams.find(t => t.id === playerData[0].team);
           if (!playerTeam) throw new Error('Team not found');
-  
+
           setMostTransferredPlayerData(playerData);
           setMostTransferredPlayerTeam(playerTeam);
         }
@@ -182,7 +183,7 @@ const Index = () => {
             .eq('id', Number(selectedGameweekData.most_captained));
 
           if (playerError) throw playerError;
-          
+
           const playerSummary = await playerService.getPlayerSummary(
             String(selectedGameweekData.most_captained)
           );
@@ -216,17 +217,17 @@ const Index = () => {
     }
   }, []);
 
-  const highScorePlayerFixture = highScorePlayerData?.[0] && highScorePlayerOpp ? 
-  `${teams.find(t => t.id === highScorePlayerData[0].team)?.short_name} v ${highScorePlayerOpp.short_name}` : 
-  '...';
+  const highScorePlayerFixture = highScorePlayerData?.[0] && highScorePlayerOpp ?
+    `${teams.find(t => t.id === highScorePlayerData[0].team)?.short_name} v ${highScorePlayerOpp.short_name}` :
+    '...';
 
-  const mostCaptPlayerFixture = mostCaptPlayerData?.[0] && mostCaptPlayerOpp ? 
-  `${teams.find(t => t.id === mostCaptPlayerData[0].team)?.short_name} v ${mostCaptPlayerOpp.short_name}` : 
-  '...';
+  const mostCaptPlayerFixture = mostCaptPlayerData?.[0] && mostCaptPlayerOpp ?
+    `${teams.find(t => t.id === mostCaptPlayerData[0].team)?.short_name} v ${mostCaptPlayerOpp.short_name}` :
+    '...';
 
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-14 md:pb-0">
       {isSignedIn ?
         <section className="space-y-4">
           <WelcomeBanner />
@@ -234,20 +235,25 @@ const Index = () => {
         :
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">
+            <h2 className="text-3xl font-bold text-center tracking-tight">
               Here's the FPL 2025 season at a glance.
             </h2>
-            <p className="mt-2 text-muted-foreground">
-              Overall FPL data and statistics.
-            </p>
           </div>
         </div>
       }
-      <br />
       <Tabs defaultValue="charts" className="space-y-4">
-        <div className="w-full overflow-x-auto no-scrollbar">
+        {/* Mobile Bottom Navigation */}
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden">
+          <TabsList className="w-full h-18 rounded-none bg-gray-900 justify-around">
+            <TabsTrigger value="charts" className="w-full h-full flex-col"><ChartNoAxesCombined /><p>Stats</p></TabsTrigger>
+            <TabsTrigger value="table" className="w-full h-full flex-col"><ArrowUp10 /><p>Standings</p></TabsTrigger>
+          </TabsList>
+        </div>
+
+        {/* Desktop Tabs */}
+        <div className="hidden md:block w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
-            <TabsTrigger value="charts">FPL Data Visualized</TabsTrigger>
+            <TabsTrigger value="charts">FPL Stats</TabsTrigger>
             <TabsTrigger value="table">FPL Standings</TabsTrigger>
           </TabsList>
         </div>

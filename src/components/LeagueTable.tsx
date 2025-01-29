@@ -138,8 +138,8 @@ export function LeagueTable({
 
   return (
     <>
-      <div className="p-2 items-center justify-between hidden lg:flex">
-        <h3 className="text-lg font-medium">{selectedLeague} Standings</h3>
+      <div className="p-2 items-center justify-between lg:flex">
+        <h3 className="text-xl font-semibold">{selectedLeague} Standings</h3>
         <div className="flex gap-2 items-center">
           <div className="flex gap-2 items-center">
             <span className="whitespace-nowrap">Page: {pageNumber}</span>

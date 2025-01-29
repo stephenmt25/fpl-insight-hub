@@ -35,7 +35,7 @@ export function GameweekPaginator({
 
   return (
     <div className="flex items-center justify-between px-2">
-      <h2 className="text-xl font-semibold text-fpl-primary w-auto whitespace-nowrap">
+      <h2 className="text-xl font-semibold w-auto whitespace-nowrap">
         Gameweek {currentGameweekNumber}
       </h2>
       <Pagination className="justify-end">

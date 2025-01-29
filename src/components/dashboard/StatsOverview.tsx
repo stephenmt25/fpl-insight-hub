@@ -15,10 +15,10 @@ export function StatsOverview({ currentGW, mostCaptPlayerData, highScorePlayerDa
   const previousGWData = Array.isArray(overallData) ? overallData.filter((gw) => gw.id === currentGW?.id - 1)[0] : undefined;
   
   const averageDelta = currentGW?.average_entry_score - previousGWData?.average_entry_score
-  const averageStyle = averageDelta > 0 ? 'text-green-500 text-sm font-medium gap-2' : averageDelta < 0 ? 'text-red-500 text-sm font-medium gap-2' : 'text-black text-sm font-medium gap-2'
+  const averageStyle = averageDelta > 0 ? 'text-green-500 text-sm font-medium gap-2 justify-end' : averageDelta < 0 ? 'text-red-500 text-sm font-medium gap-2 justify-end' : 'text-black text-sm font-medium gap-2 justify-end'
 
   const highscoreDelta = currentGW?.highest_score - previousGWData?.highest_score
-  const highscoreStyle = highscoreDelta > 0 ? 'text-green-500 text-sm font-medium gap-2' : highscoreDelta < 0 ? 'text-red-500 text-sm font-medium gap-2' : 'text-black text-sm font-medium gap-2'
+  const highscoreStyle = highscoreDelta > 0 ? 'text-green-500 text-sm font-medium gap-2 justify-end' : highscoreDelta < 0 ? 'text-red-500 text-sm font-medium gap-2 justify-end' : 'text-black text-sm font-medium gap-2 justify-end'
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">

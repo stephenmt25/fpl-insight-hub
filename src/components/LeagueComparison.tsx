@@ -52,7 +52,7 @@ export function LeagueComparison() {
             onManagerSelect={setSelectedManager}
             setLeagueId={setLeagueId}
           />
-          <div className="flex gap-4">
+          <div className="flex gap-4 pb-4">
             <Button onClick={() => handleClick('insights')} variant="outline">
               View League Insights
             </Button>

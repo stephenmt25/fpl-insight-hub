@@ -9,6 +9,7 @@ import { leagueService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { StatsCard } from "@/components/StatsCard";
 import { LiveGWContext } from "@/context/livegw-context";
+import { ArrowUp10, ChartNoAxesCombined, TrendingUpDown } from "lucide-react";
 
 export default function LeagueStandings() {
   const [selectedLeague, setSelectedLeague] = useState("Overall");
@@ -58,16 +59,17 @@ export default function LeagueStandings() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="space-y-4">
-        <h1 className="text-4xl font-bold text-fpl-primary">League Standings</h1>
-        <p className="text-xl text-muted-foreground">
-          Track and analyze your mini-league performance
-        </p>
-
-      </div>
-      <Tabs defaultValue={activeTab} className="w-full">
-        <div className="w-full overflow-x-auto no-scrollbar">
+    <div className="space-y-4 pb-14 md:pb-0">
+      <h1 className="text-4xl font-bold text-center">League Performances</h1>
+      <Tabs defaultValue={activeTab} className="space-y-4">
+        <div className="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden">
+          <TabsList className="w-full h-18 rounded-none bg-gray-900 justify-around">
+            <TabsTrigger value="table" className="w-full h-full flex-col"><ArrowUp10 /><p>Standings</p></TabsTrigger>
+            <TabsTrigger value="insights" className="w-full h-full flex-col"><ChartNoAxesCombined />Stats</TabsTrigger>
+            <TabsTrigger value="trends" className="w-full h-full flex-col"><TrendingUpDown />Trends</TabsTrigger>
+          </TabsList>
+        </div>
+        <div className="hidden md:block w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="table">League Table</TabsTrigger>
             <TabsTrigger value="insights">League Insights</TabsTrigger>
@@ -75,7 +77,7 @@ export default function LeagueStandings() {
           </TabsList>
         </div>
         <TabsContent value="table">
-          
+
           {
             isLoadingoverallLeagueData ?
               <StatsCard
@@ -84,7 +86,7 @@ export default function LeagueStandings() {
                 description=""
               /> :
               <>
-                <LeagueTable gameweekNumber={liveGameweekData.id} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+                <LeagueTable gameweekNumber={liveGameweekData.id} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id} />
               </>
           }
 

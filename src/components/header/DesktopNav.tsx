@@ -6,29 +6,29 @@ interface DesktopNavProps {
 
 export function DesktopNav({ handleClick }: DesktopNavProps) {
   return (
-    <nav className="hidden md:flex items-center gap-6">
+    <nav className="hidden md:flex items-center text-gray-300 gap-6">
       <Link
         to="/"
-        className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
+        className="text-sm font-medium hover:text-white"
       >
         Dashboard
       </Link>
       <Link
         to="/performance"
-        className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
+        className="text-sm font-medium hover:text-white"
       >
         Performance
       </Link>
       <Link
         onClick={() => handleClick('table')}
         to="/standings"
-        className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
+        className="text-sm font-medium hover:text-white"
       >
         League Standings
       </Link>
       <Link
         to="/insights"
-        className="text-sm font-medium text-gray-700 hover:text-fpl-primary"
+        className="text-sm font-medium hover:text-white"
       >
         Insights
       </Link>

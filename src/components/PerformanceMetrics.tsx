@@ -15,6 +15,7 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { supabase } from "@/integrations/supabase/client";
 import { GameweekPicks, ManagerTransfers } from "@/types/fpl";
 import { useTeamsContext } from "@/context/teams-context";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface PerformanceMetricsProps {
   gameweek: number;
@@ -37,10 +38,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   const { managerHistory, currentManager } = useAuth();
   const { data: teams, isLoading: teamsLoading } = useTeamsContext()
   const currentGWData = Array.isArray(overallData) ? overallData.filter((gw) => gw.id === gameweek)[0] : undefined;
-  const [mostCaptPlayerData, setMostCaptPlayerData] = useState<any | null>([{ status: "loading" }]);
-  const [mostCaptPlayerTeam, setMostCaptPlayerTeam] = useState<any | null>(null);
-  const [mostCaptPlayerOpp, setMostCaptPlayerOpp] = useState<any | null>(null);
-  // const [currentGWCaptData, setCurrentGWCaptData] = useState<any | null>(null);
 
   const [managerTransfers, setManagerTransfers] = useState<Array<ManagerTransfers>>(null);
 
@@ -126,6 +123,21 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
         ? managerService.getTransfers(currentManager.id.toString())
         : null,
     enabled: !!currentManager?.id,
+  });
+
+  const { data: allPlayers } = useQuery({
+    queryKey: ['allPlayers'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('plplayerdata').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
+  const { data: gwPlayerStats } = useQuery({
+    queryKey: ['gwPlayerStats', gameweek],
+    queryFn: () => playerService.getGameweekPlayerStats(gameweek.toString()),
+    enabled: !!gameweek,
   });
 
   useEffect(() => {
@@ -277,41 +289,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             )}
           </CardContent>
         </Card>
-        {/* {mostCaptPlayerData && mostCaptPlayerTeam && mostCaptPlayerOpp ?
-          <Card>
-            <CardHeader className="space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-2">
-                <div className="text-2xl gap-2 items-center justify-between flex font-bold">
-                  <div className="flex gap-2">
-                    {mostCaptPlayerData[0].web_name}
-                    <div className="text-muted-foreground">
-                      ({mostCaptPlayerTeam[0].short_name})
-                    </div>
-                  </div>
-                  {getCaptIcon(mostCaptPlayerData[1])}
-                </div>
-                <div className="text-xl flex items-center gap-1">
-                  {mostCaptPlayerData[1]} PTS
-                  <div className=" text-muted-foreground">
-                    v {mostCaptPlayerOpp[0].short_name}
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-          :
-          <Card>
-            <CardHeader className="space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Captain Performance</CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-bold">
-              Loading ...
-            </CardContent>
-          </Card>
-        } */}
 
         {managerHistory && managerTransfers ?
           <Card>
@@ -382,6 +359,70 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
             </p>
           </CardContent>
         </Card>
+
+        {managerHistory && managerTransfers ?
+          <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Transfer Impact</CardTitle>
+            </CardHeader>
+            <CardContent>
+                {managerTransfers.length > 0 && (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>In</TableHead>
+                        <TableHead>Out</TableHead>
+                        <TableHead className="text-right">-/+</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {managerTransfers.map((transfer, index) => {
+                        const playerIn = allPlayers?.find(p => p.id === transfer.element_in);
+                        const playerOut = allPlayers?.find(p => p.id === transfer.element_out);
+                        const playerInPoints = gwPlayerStats?.elements?.find((e: any) => e.id === transfer.element_in)?.stats?.total_points || 0;
+                        const playerOutPoints = gwPlayerStats?.elements?.find((e: any) => e.id === transfer.element_out)?.stats?.total_points || 0;
+                        const pointsDelta = playerInPoints - playerOutPoints;
+
+                        return (
+                          <TableRow key={transfer.element_in}>
+                            <TableCell>
+                              {playerIn?.web_name || 'Unknown'}
+                              <span className="text-muted-foreground ml-2 text-xs">
+                                ({teams?.find(t => t.id === playerIn?.team)?.short_name || '?'})
+                              </span>
+                            </TableCell>
+                            <TableCell>
+                              {playerOut?.web_name || 'Unknown'}
+                              <span className="text-muted-foreground ml-2 text-xs">
+                                ({teams?.find(t => t.id === playerOut?.team)?.short_name || '?'})
+                              </span>
+                            </TableCell>
+                            <TableCell className={`text-right ${pointsDelta >= 0 ? 'text-green-500' : 'text-red-500'}`}>
+                              {pointsDelta >= 0 ? '+' : ''}{pointsDelta}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                )}
+                {managerTransfers.length === 0 && (
+                  <div className="text-center text-muted-foreground py-4">
+                    No transfers made this gameweek
+                  </div>
+                )}
+            </CardContent>
+          </Card>
+          :
+          <Card>
+            <CardHeader className="space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Transfer Impact</CardTitle>
+            </CardHeader>
+            <CardContent className="text-2xl font-bold">
+              <Skeleton className="h-[100px] w-full" />
+            </CardContent>
+          </Card>
+        }
       </div>
     </div>
   );
