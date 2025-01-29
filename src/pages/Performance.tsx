@@ -172,7 +172,7 @@ export default function Performance() {
             liveGameweekData={liveGameweekData}
           />
 
-          <div className="grid lg:grid-cols-2 gap-4">
+          <div className="grid  grid-cols-1 lg:grid-cols-2 gap-2">
               <PerformanceMetrics
                 gameweek={currentGameweek}
                 gameweekPicks={gameweekPicks}
