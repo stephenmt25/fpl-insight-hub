@@ -164,7 +164,7 @@ export default function Performance() {
             <TabsTrigger value="compare">Mini-League Tables</TabsTrigger>
           </TabsList>
         </div>
-        <TabsContent value="overview">
+        <TabsContent value="overview" className="space-y-4">
           <GameweekPaginator
             currentGameweekNumber={currentGameweek}
             setCurrentGameweekNumber={setCurrentGameweek}
@@ -172,7 +172,7 @@ export default function Performance() {
             liveGameweekData={liveGameweekData}
           />
 
-          <div className="grid lg:grid-cols-2 gap-4 p-2">
+          <div className="grid lg:grid-cols-2 gap-4">
             <div className="">
               <PerformanceMetrics
                 gameweek={currentGameweek}
@@ -200,7 +200,7 @@ export default function Performance() {
           <LeagueComparison />
         </TabsContent>
         <TabsContent value="transfers">
-          <div className="grid lg:grid-cols-2 gap-4 p-2">
+          <div className="grid lg:grid-cols-2 gap-4">
             {/* Transfers Table */}
             <div className="rounded-md border">
               <Table>
