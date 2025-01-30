@@ -113,12 +113,12 @@ export const TransfersTab = () => {
         {/* Transfer Summary Card */}
         <Card>
           <CardHeader>
-            <CardTitle>Transfer Summary</CardTitle>
+            <CardTitle className="text-lg">Transfer Summary</CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Total Transfer Cost</span>
-              <span className="text-lg font-semibold">{totalTransferCost} pts</span>
+              <span className="text-lg font-semibold text-red-500">- {totalTransferCost} pts</span>
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Net Transfer Impact</span>
@@ -128,7 +128,7 @@ export const TransfersTab = () => {
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Best GW Transfers</span>
-              <span className="text-lg font-semibold">GW{bestGW?.gameweek}: {bestGW?.totalImpact} pts</span>
+              <span className="text-lg font-semibold text-green-500">GW{bestGW?.gameweek}: +{bestGW?.totalImpact} pts</span>
             </div>
             <div className="flex flex-col">
               <span className="text-sm text-muted-foreground">Worst GW Transfers</span>
@@ -141,7 +141,7 @@ export const TransfersTab = () => {
         {selectedGWTransfers ? (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">GW{selectedGWTransfers} Transfers</CardTitle>
+              <CardTitle className="text-lg">GW{selectedGWTransfers} Transfers</CardTitle>
             </CardHeader>
             <CardContent>
               <TransferImpactCard transfers={managerTransfers?.filter(t => t.event === selectedGWTransfers) || []} gameweek={selectedGWTransfers} />
@@ -160,6 +160,7 @@ export const TransfersTab = () => {
       </div>
       {/* Transfers Table */}
       <div className="rounded-md border lg:col-span-1">
+        <h3 className="p-6 text-lg font-bold">Transfers Table</h3>
         <Table>
           <TableHeader>
             <TableRow>

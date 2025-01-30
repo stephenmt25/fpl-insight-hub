@@ -38,7 +38,6 @@ export function TransferImpactCard({ transfers, gameweek }: TransferImpactCardPr
     <Table>
       <TableHeader>
             <TableRow>
-              <TableHead></TableHead>
               <TableHead>Player In</TableHead>
               <TableHead>Player Out</TableHead>
               <TableHead className="text-right">Impact</TableHead>
@@ -54,7 +53,6 @@ export function TransferImpactCard({ transfers, gameweek }: TransferImpactCardPr
 
           return (
             <TableRow key={transfer.element_in}>
-              <TableCell>{index + 1}</TableCell>
               <TableCell>
                 {playerIn?.web_name || 'Unknown'} 
                 <span className="text-muted-foreground ml-2 text-xs">
