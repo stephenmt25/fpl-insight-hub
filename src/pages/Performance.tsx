@@ -13,10 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTeamsContext } from "@/context/teams-context";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { LeagueComparison } from "@/components/LeagueComparison";
-import { TransferImpactCard } from "@/components/transferImpactCard"; // Assume this exists from previous implementation
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ArrowRightLeft, ArrowUp10, ChartNoAxesCombined, TrendingUpDown } from "lucide-react";
+import { TransfersTab } from "@/components/TransfersTab";
 
 interface GameweekTransfers {
   gameweek: number;
@@ -173,12 +171,12 @@ export default function Performance() {
           />
 
           <div className="grid  grid-cols-1 lg:grid-cols-2 gap-2">
-              <PerformanceMetrics
-                gameweek={currentGameweek}
-                gameweekPicks={gameweekPicks}
-                isLoading={isLoading}
-                error={error}
-              />
+            <PerformanceMetrics
+              gameweek={currentGameweek}
+              gameweekPicks={gameweekPicks}
+              isLoading={isLoading}
+              error={error}
+            />
             <div className="space-y-4">
               <div className="text-start space-y-2">
                 <p className="text-muted-foreground">Player Stats</p>
@@ -198,90 +196,7 @@ export default function Performance() {
           <LeagueComparison />
         </TabsContent>
         <TabsContent value="transfers">
-          <div className="grid lg:grid-cols-2 gap-4">
-            {/* Transfers Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>GW</TableHead>
-                    <TableHead>Transfers</TableHead>
-                    <TableHead>Cost</TableHead>
-                    <TableHead className="text-right">Impact</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {gameweekTransfers.map((gw) => (
-                    <TableRow
-                      key={gw.gameweek}
-                      onClick={() => setSelectedGWTransfers(gw.gameweek)}
-                      className={`cursor-pointer ${selectedGWTransfers === gw.gameweek ? 'bg-muted' : ''}`}
-                    >
-                      <TableCell>{gw.gameweek}</TableCell>
-                      <TableCell>{gw.transferCount}</TableCell>
-                      <TableCell>{gw.transferCost}</TableCell>
-                      <TableCell className={`text-right ${gw.totalImpact >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {gw.totalImpact >= 0 ? '+' : ''}{gw.totalImpact}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {gameweekTransfers.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-muted-foreground py-4">
-                        No transfers made this season
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-
-            {/* Transfer Overview Card */}
-            <div className="space-y-4">
-              {selectedGWTransfers ? (
-                <Card>
-                  <CardHeader className="space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">
-                      GW{selectedGWTransfers} Transfers
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <TransferImpactCard
-                      transfers={managerTransfers?.filter(t => t.event === selectedGWTransfers) || []}
-                      gameweek={selectedGWTransfers}
-                    />
-                    <div className="mt-4 grid grid-cols-2 gap-4">
-                      <div className="flex flex-col">
-                        <span className="text-sm text-muted-foreground">Total Cost</span>
-                        <span className="text-lg font-semibold">
-                          {gameweekTransfers.find(gw => gw.gameweek === selectedGWTransfers)?.transferCost || 0}
-                        </span>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-sm text-muted-foreground">Net Impact</span>
-                        <span className={`text-lg font-semibold ${(gameweekTransfers.find(gw => gw.gameweek === selectedGWTransfers)?.totalImpact || 0) >= 0
-                          ? 'text-green-500'
-                          : 'text-red-500'
-                          }`}>
-                          {(gameweekTransfers.find(gw => gw.gameweek === selectedGWTransfers)?.totalImpact || 0) >= 0 ? '+' : ''}
-                          {gameweekTransfers.find(gw => gw.gameweek === selectedGWTransfers)?.totalImpact || 0}
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card>
-                  <CardHeader className="space-y-0 pb-2">
-                    <CardTitle className="text-sm font-medium">Select a Gameweek</CardTitle>
-                  </CardHeader>
-                  <CardContent className="text-muted-foreground text-center py-8">
-                    Click on a gameweek in the table to view detailed transfer information
-                  </CardContent>
-                </Card>
-              )}
-            </div>
-          </div>
+          <TransfersTab />
         </TabsContent>
       </Tabs>
     </div>

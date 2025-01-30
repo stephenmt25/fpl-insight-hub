@@ -36,6 +36,14 @@ export function TransferImpactCard({ transfers, gameweek }: TransferImpactCardPr
 
   return (
     <Table>
+      <TableHeader>
+            <TableRow>
+              <TableHead></TableHead>
+              <TableHead>Player In</TableHead>
+              <TableHead>Player Out</TableHead>
+              <TableHead className="text-right">Impact</TableHead>
+            </TableRow>
+          </TableHeader>
       <TableBody>
         {transfers.map((transfer, index) => {
           const playerIn = allPlayers?.find(p => p.id === transfer.element_in);
