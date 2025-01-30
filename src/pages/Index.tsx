@@ -12,12 +12,15 @@ import { LiveGWContext } from "@/context/livegw-context";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
 import { useTeamsContext } from "@/context/teams-context";
 import { ArrowUp10, ChartNoAxesCombined } from "lucide-react";
+import { SignInModal } from "@/components/SignInModal";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
   const { isSignedIn, signIn } = useAuth();
   const [pageNumber, setPageNumber] = useState("1");
-  const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext)
+  const { updateLiveGWData, eventStatus, updateOverallData } = useContext(LiveGWContext);
+  const [isSignInModalOpen, setIsSignInModalOpen] = useState(false);
   const overallLeagueId = "314";
   const [leagueId, setLeagueId] = useState(overallLeagueId);
   const [liveGWStats, setLiveGWStats] = useState([]);
@@ -225,22 +228,33 @@ const Index = () => {
     `${teams.find(t => t.id === mostCaptPlayerData[0].team)?.short_name} v ${mostCaptPlayerOpp.short_name}` :
     '...';
 
-
   return (
     <div className="space-y-6 pb-14 md:pb-0">
-      {isSignedIn ?
+      {isSignedIn ? (
         <section className="space-y-4">
           <WelcomeBanner />
         </section>
-        :
+      ) : (
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
             <h2 className="text-3xl font-bold text-center tracking-tight">
               Here's the FPL 2025 season at a glance.
             </h2>
+            <Button 
+              onClick={() => setIsSignInModalOpen(true)}
+              className="mt-4"
+            >
+              Sign In with FPL ID
+            </Button>
           </div>
         </div>
-      }
+      )}
+      
+      <SignInModal 
+        isOpen={isSignInModalOpen} 
+        onOpenChange={setIsSignInModalOpen}
+      />
+
       <Tabs defaultValue="charts" className="space-y-4">
         {/* Mobile Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden">
