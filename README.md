@@ -3,7 +3,7 @@
 
 A comprehensive Fantasy Premier League analytics application that helps managers make data-driven decisions for their FPL teams.
 
-![FPL Analytics Dashboard](public/og-image.png)
+![FPL Analytics Dashboard](public/screencapture-preview-fpl-insight-hub-lovable-app-2025-05-12-23_29_03.png)
 
 ## 🌟 Features
 
