@@ -41,6 +41,7 @@ A comprehensive Fantasy Premier League analytics application that helps managers
 - **FPL ID Integration**: Sign in using your official FPL ID
 - **Personalized Experience**: Access your team data and league information
 - **Data Persistence**: Your FPL ID is securely stored for future visits
+- **Guest Experience**: Try the app with a demo account using the "Try as Guest" feature
 
 ## 📱 Mobile & Desktop Support
 
@@ -57,9 +58,26 @@ A comprehensive Fantasy Premier League analytics application that helps managers
 - Interactive data visualization with Recharts
 
 ### Backend Integration
-- Connects to the official Fantasy Premier League API via Supabase Functions
+- Connects to the official Fantasy Premier League API via Supabase Edge Functions
 - Utilizes Supabase for data storage and retrieval
 - Implements real-time updates for live gameweek data
+
+### Supabase Integration
+- **Database Storage**: FPL data is stored in Supabase tables for improved performance and reduced API calls
+- **Edge Functions**: Custom serverless functions to proxy API requests to the FPL API
+- **Data Synchronization**: Regular updates to keep database in sync with the latest FPL data
+- **Tables Structure**:
+  - `fploveralldata`: Stores gameweek information and overall statistics
+  - `plplayerdata`: Contains detailed player statistics and attributes
+  - `plteams`: Holds information about Premier League teams
+
+### Data Flow Architecture
+1. **Data Fetching**: Edge function `sync-fpl-data` periodically retrieves data from the official FPL API
+2. **Data Processing**: The fetched data is processed and transformed for storage
+3. **Database Storage**: Processed data is stored in Supabase tables with appropriate schema
+4. **API Proxy**: Additional edge function `fpl-api-proxy` handles real-time requests that need fresh data
+5. **Client Access**: React application fetches data from Supabase tables and processes it for display
+6. **User-Specific Data**: User authentication enables personalized data retrieval (team info, leagues)
 
 ### Data Analysis
 - Historical performance tracking
