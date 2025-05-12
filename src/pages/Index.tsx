@@ -1,7 +1,7 @@
 import { useState, useEffect, useContext } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { useAuth } from "@/context/auth-context";
-import { leagueService, playerService } from "@/services/fpl-api";
+import { leagueService, playerService, managerService } from "@/services/fpl-api";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { StatsOverview } from "@/components/dashboard/StatsOverview";
@@ -14,6 +14,7 @@ import { useTeamsContext } from "@/context/teams-context";
 import { ArrowUp10, ChartNoAxesCombined } from "lucide-react";
 import { SignInModal } from "@/components/SignInModal";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 const Index = () => {
   const [currentGameweekNumber, setCurrentGameweekNumber] = useState<number | null>(null);
@@ -55,6 +56,35 @@ const Index = () => {
       return data;
     },
   });
+
+  // Add loading state for guest sign-in
+  const [isGuestSigningIn, setIsGuestSigningIn] = useState(false);
+
+  // Function to handle guest sign-in
+  const handleGuestSignIn = async () => {
+    const guestFplId = "7788626"; // The provided FPL ID
+    
+    setIsGuestSigningIn(true);
+    try {
+      const managerData = await managerService.getInfo(guestFplId);
+      
+      if (!managerData) {
+        toast.error("Unable to fetch guest manager data. Please try again.");
+        return;
+      }
+
+      // Store FPL ID in localStorage
+      localStorage.setItem('fplId', guestFplId);
+      signIn(guestFplId, managerData);
+      
+      toast.success("You're now signed in as a guest!");
+    } catch (error) {
+      console.error("Error during guest sign-in:", error);
+      toast.error("Error signing in as guest. Please try again later.");
+    } finally {
+      setIsGuestSigningIn(false);
+    }
+  };
 
   useEffect(() => {
     if (!isLoadingOverallFplData && overallFplData) {
@@ -240,12 +270,20 @@ const Index = () => {
             <h2 className="text-3xl font-bold text-center tracking-tight">
               Here's the FPL 2025 season at a glance.
             </h2>
-            <Button 
-              onClick={() => setIsSignInModalOpen(true)}
-              className="mt-4"
-            >
-              Sign In with FPL ID
-            </Button>
+            <div className="mt-4 flex flex-col sm:flex-row gap-3">
+              <Button 
+                onClick={() => setIsSignInModalOpen(true)}
+              >
+                Sign In with FPL ID
+              </Button>
+              <Button 
+                variant="secondary" 
+                onClick={handleGuestSignIn}
+                disabled={isGuestSigningIn}
+              >
+                {isGuestSigningIn ? "Signing in..." : "Try as Guest"}
+              </Button>
+            </div>
           </div>
         </div>
       )}
