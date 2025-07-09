@@ -217,3 +217,5 @@ Premier League team information:
 - **Status Badges**: Clear indication of current state and changes
 
 This FPL Analytics Dashboard transforms raw Fantasy Premier League data into actionable insights, helping managers make informed decisions and track their performance throughout the season.
+
+This website was created with the help of free tier subscriptions to gemini, lovable, and maybe some chatgpt. In my opinion, the tools themselves are not able to set up a web application with even this minimal level of complexity. Alot of custom code solutions were needed to achieve the features in this web application as simple as they are. This project took approximately 3-4 weeks of 2-4 hrs of work daily. 
