@@ -5,9 +5,9 @@ A comprehensive Fantasy Premier League analytics application that helps managers
 
 ![FPL Analytics Dashboard](public/screencapture-preview-fpl-insight-hub-lovable-app-2025-05-12-23_29_03.png)
 
-## 🌟 Features Overview
+## Features Overview
 
-### 🏠 Dashboard Home
+### Dashboard Home
 The main dashboard provides a comprehensive overview of the current FPL season:
 
 - **Live Gameweek Information**: Displays current gameweek number, deadline times, and status
@@ -19,7 +19,7 @@ The main dashboard provides a comprehensive overview of the current FPL season:
   - Transfer activity and performance metrics
 - **League Standings Preview**: Quick access to major FPL leagues (Overall, Second Chance, GW1 starters)
 
-### 📊 Performance Analytics
+### Performance Analytics
 Detailed performance tracking for signed-in managers:
 
 #### Manager Statistics Cards
@@ -49,7 +49,7 @@ Detailed performance tracking for signed-in managers:
 - **Performance Comparison**: Compare against league rivals
 - **Position Tracking**: Monitor your league position changes
 
-### 🎯 Insights & Strategy
+### Insights & Strategy
 Data-driven insights to improve your FPL performance:
 
 #### Player Insights
@@ -70,7 +70,7 @@ Data-driven insights to improve your FPL performance:
 - **Ownership Analysis**: Identify differentials and template players
 - **ROI Calculations**: Expected points return on investment
 
-### 🏆 League Standings
+### League Standings
 Comprehensive league analysis and standings:
 
 #### League Tables
@@ -85,7 +85,7 @@ Comprehensive league analysis and standings:
 - **Competitive Analysis**: Compare against league averages
 - **Achievement Tracking**: Milestone and record tracking
 
-## 🔐 Authentication & Personalization
+## Authentication & Personalization
 
 ### FPL ID Integration
 - **Secure Sign-In**: Use your official FPL ID for authentication
@@ -100,7 +100,7 @@ Comprehensive league analysis and standings:
 4. Your FPL ID is the number in the URL after "/entry/" (e.g., 1234567)
 5. Mobile users: Enable "Request Desktop Site" to see the full URL
 
-## 📱 Responsive Design
+## Responsive Design
 
 ### Desktop Experience
 - **Full Dashboard Layout**: Comprehensive view with multiple data panels
@@ -115,7 +115,7 @@ Comprehensive league analysis and standings:
 - **Responsive Charts**: Optimized visualizations for smaller screens
 - **Collapsible Sections**: Expandable content to maximize screen usage
 
-## 🛠️ Technical Architecture
+## Technical Architecture
 
 ### Frontend Technology Stack
 - **React 18**: Modern React with hooks and functional components
@@ -168,7 +168,7 @@ Premier League team information:
 - **Code Splitting**: Reduced initial bundle size
 - **Responsive Images**: Appropriate image sizes for different devices
 
-## 🚀 Getting Started
+## Getting Started
 
 ### For Users
 1. **Visit the Application**: Navigate to the deployed URL
@@ -182,7 +182,7 @@ Premier League team information:
 - **Sample Data**: Explore all features with example FPL manager data
 - **No Registration**: Test the application without providing your FPL ID
 
-## 📊 Data Sources & Updates
+## Data Sources & Updates
 
 ### Official FPL API
 - **Real-time Data**: Live gameweek scores and player statistics
@@ -196,7 +196,7 @@ Premier League team information:
 - **Secure Storage**: FPL IDs encrypted and securely stored
 - **Privacy First**: No personal data beyond what's publicly available on FPL
 
-## 🎨 Design Philosophy
+## Design Philosophy
 
 ### User Experience
 - **Data-First Design**: Information hierarchy based on relevance and importance
