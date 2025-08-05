@@ -3,6 +3,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Content-Security-Policy': "default-src 'self'",
 }
 
 const FPL_BASE_URL = 'https://fantasy.premierleague.com/api';
@@ -25,11 +30,12 @@ serve(async (req) => {
     
     const { endpoint } = body;
 
-    if (!endpoint) {
+    // Enhanced input validation and sanitization
+    if (!endpoint || typeof endpoint !== 'string') {
       console.error('No endpoint provided in request');
       return new Response(
         JSON.stringify({ 
-          error: 'Endpoint is required',
+          error: 'Endpoint is required and must be a string',
           timestamp: new Date().toISOString()
         }),
         { 
@@ -39,13 +45,25 @@ serve(async (req) => {
       );
     }
 
-    // Check for undefined parameters in the endpoint
-    if (endpoint.includes('undefined')) {
-      console.error(`Invalid endpoint with undefined parameters: ${endpoint}`);
+    // Sanitize endpoint to prevent injection attacks
+    const sanitizedEndpoint = endpoint.trim().replace(/[<>'"]/g, '');
+    
+    // Validate endpoint format (must start with expected FPL API paths)
+    const validPaths = [
+      '/bootstrap-static/',
+      '/entry/',
+      '/leagues-classic/',
+      '/event/',
+      '/element-summary/',
+      '/dream-team/'
+    ];
+    
+    const isValidPath = validPaths.some(path => sanitizedEndpoint.startsWith(path));
+    if (!isValidPath) {
+      console.error(`Invalid API endpoint: ${sanitizedEndpoint}`);
       return new Response(
         JSON.stringify({
-          error: 'Invalid endpoint: contains undefined parameters',
-          endpoint,
+          error: 'Invalid API endpoint',
           timestamp: new Date().toISOString()
         }),
         {
@@ -55,10 +73,26 @@ serve(async (req) => {
       );
     }
 
-    console.log(`Fetching data from FPL API endpoint: ${endpoint}`);
+    // Check for undefined parameters in the sanitized endpoint
+    if (sanitizedEndpoint.includes('undefined')) {
+      console.error(`Invalid endpoint with undefined parameters: ${sanitizedEndpoint}`);
+      return new Response(
+        JSON.stringify({
+          error: 'Invalid endpoint: contains undefined parameters',
+          endpoint: sanitizedEndpoint,
+          timestamp: new Date().toISOString()
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        }
+      );
+    }
 
-    // Construct the full URL
-    const url = `${FPL_BASE_URL}${endpoint}`;
+    console.log(`Fetching data from FPL API endpoint: ${sanitizedEndpoint}`);
+
+    // Construct the full URL with sanitized endpoint
+    const url = `${FPL_BASE_URL}${sanitizedEndpoint}`;
     
     const response = await fetch(url, {
       headers: {

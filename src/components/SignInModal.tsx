@@ -43,13 +43,24 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
     e.preventDefault();
     setError("");
 
-    if (!fplId.match(/^\d+$/)) {
+    // Enhanced input validation with sanitization
+    const sanitizedFplId = fplId.trim().replace(/[^\d]/g, '');
+    
+    if (!sanitizedFplId || sanitizedFplId.length < 1 || sanitizedFplId.length > 10) {
+      setError("Please enter a valid FPL ID (1-10 digits only)");
+      return;
+    }
+
+    if (!sanitizedFplId.match(/^\d+$/)) {
       setError("Please enter a valid FPL ID (numbers only)");
       return;
     }
 
+    setFplId(sanitizedFplId);
+
     try {
-      const { data } = await refetch();
+      // Use sanitized ID for API call
+      const data = await managerService.getInfo(sanitizedFplId);
       
       if (!data) {
         toast({
@@ -68,9 +79,9 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
         return;
       }
 
-      // Store FPL ID in localStorage
-      localStorage.setItem('fplId', fplId);
-      signIn(fplId, data);
+      // Store sanitized FPL ID securely
+      localStorage.setItem('fplId', sanitizedFplId);
+      signIn(sanitizedFplId, data);
       toast({
         title: "Success!",
         description: "You're now signed in!",
