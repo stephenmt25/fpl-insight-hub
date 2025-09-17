@@ -1,11 +1,11 @@
-import { useContext, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
 import { useAuth } from "@/context/auth-context";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { WelcomeBanner } from "@/components/dashboard/WelcomeBanner";
-import { LiveGWContext } from "@/context/livegw-context";
+
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
 import { managerService, playerService } from "@/services/fpl-api";
@@ -27,7 +27,7 @@ interface GameweekTransfers {
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn, currentManager } = useAuth();
-  const { liveGameweekData } = useContext(LiveGWContext)
+  
   const [currentGameweek, setCurrentGameweek] = useState<number | null>(null);
   const { data: teams } = useTeamsContext();
   const [selectedGWTransfers, setSelectedGWTransfers] = useState<number | null>(null);
@@ -50,6 +50,9 @@ export default function Performance() {
       return data;
     }
   });
+
+  // Get the current live gameweek data
+  const liveGameweekData = overallFplData?.find(gw => gw.is_current === "true");
 
   // Fetch all players data
   const { data: allPlayers } = useQuery({
