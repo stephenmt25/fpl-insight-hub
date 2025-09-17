@@ -65,7 +65,7 @@ export function LeagueTableSection({
         />
       ) : (
         <>
-          <LeagueTable gameweekNumber={liveGameweekData.id} onManagerSelect={onManagerSelect} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
+          <LeagueTable gameweekNumber={liveGameweekData?.id || 1} onManagerSelect={onManagerSelect} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id}/>
         </>
       )}
     </div>

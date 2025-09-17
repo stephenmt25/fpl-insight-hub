@@ -86,7 +86,7 @@ export default function LeagueStandings() {
                 description=""
               /> :
               <>
-                <LeagueTable gameweekNumber={liveGameweekData.id} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id} />
+                <LeagueTable gameweekNumber={liveGameweekData?.id || 1} leagueData={leagueData.standings.results} hasNext={leagueData.standings.has_next} selectedLeague={selectedLeague} pageNumber={pageNumber} setPageNumber={setPageNumber} updateSelectedLeague={updateSelectedLeague} leagueId={id} />
               </>
           }
 
