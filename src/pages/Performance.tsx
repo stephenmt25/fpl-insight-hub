@@ -1,4 +1,4 @@
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { GameweekPaginator } from "@/components/GameweekPaginator";
 import { PerformanceMetrics } from "@/components/PerformanceMetrics";
 import { PlayerPerformanceTable } from "@/components/PlayerPerformanceTable";
@@ -28,7 +28,7 @@ export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
   const { isSignedIn, currentManager } = useAuth();
   const { liveGameweekData } = useContext(LiveGWContext)
-  const [currentGameweek, setCurrentGameweek] = useState(liveGameweekData ? liveGameweekData.id : 22);
+  const [currentGameweek, setCurrentGameweek] = useState<number | null>(null);
   const { data: teams } = useTeamsContext();
   const [selectedGWTransfers, setSelectedGWTransfers] = useState<number | null>(null);
 
@@ -41,6 +41,16 @@ export default function Performance() {
     enabled: !!currentManager?.id && !!currentGameweek,
   });
 
+  // Fetch overall FPL data to determine current gameweek
+  const { data: overallFplData, isLoading: isLoadingOverallFplData } = useQuery({
+    queryKey: ['overallFplData'],
+    queryFn: async () => {
+      const { data, error } = await supabase.from('fploveralldata').select('*');
+      if (error) throw error;
+      return data;
+    }
+  });
+
   // Fetch all players data
   const { data: allPlayers } = useQuery({
     queryKey: ['allPlayers'],
@@ -50,6 +60,16 @@ export default function Performance() {
       return data;
     }
   });
+
+  // Set current gameweek when data loads
+  useEffect(() => {
+    if (!isLoadingOverallFplData && overallFplData) {
+      const currentGW = overallFplData.find(gw => gw.is_current === "true");
+      if (currentGW && !currentGameweek) {
+        setCurrentGameweek(currentGW.id);
+      }
+    }
+  }, [isLoadingOverallFplData, overallFplData, currentGameweek]);
 
   // Fetch gameweek player stats
   const { data: gameweekPlayerStats } = useQuery({
@@ -163,12 +183,16 @@ export default function Performance() {
           </TabsList>
         </div>
         <TabsContent value="overview" className="space-y-4">
-          <GameweekPaginator
-            currentGameweekNumber={currentGameweek}
-            setCurrentGameweekNumber={setCurrentGameweek}
-            totalGameweeks={38}
-            liveGameweekData={liveGameweekData}
-          />
+          {currentGameweek ? (
+            <GameweekPaginator
+              currentGameweekNumber={currentGameweek}
+              setCurrentGameweekNumber={setCurrentGameweek}
+              totalGameweeks={38}
+              liveGameweekData={liveGameweekData}
+            />
+          ) : (
+            <Skeleton className="h-12 w-full" />
+          )}
 
           <div className="grid  grid-cols-1 lg:grid-cols-2 gap-2">
             <PerformanceMetrics
