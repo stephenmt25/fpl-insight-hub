@@ -303,7 +303,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
                 </div>
                 <div className="flex justify-between text-red-500">
                   <span>Cost:</span>
-                  <span>{managerHistory.current[gameweek - 1].event_transfers_cost}</span>
+                  <span>{managerHistory.current[gameweek - 1]?.event_transfers_cost || 0}</span>
                 </div>
               </div>
             </CardContent>
