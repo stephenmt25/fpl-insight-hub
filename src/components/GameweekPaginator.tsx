@@ -28,7 +28,8 @@ export function GameweekPaginator({
   };
 
   const handleNext = () => {
-    if (currentGameweekNumber < totalGameweeks) {
+    const maxGameweek = liveGameweekData?.id || totalGameweeks;
+    if (currentGameweekNumber < maxGameweek) {
       setCurrentGameweekNumber(currentGameweekNumber + 1);
     }
   };
@@ -56,8 +57,9 @@ export function GameweekPaginator({
           {/* Desktop: Show a range of Gameweeks */}
           <PaginationItem className="hidden lg:flex">
             {[...Array(3)].map((_, i) => {
-              const gameweek = currentGameweekNumber - 2 + i;
-              if (gameweek > 0 && gameweek <= totalGameweeks) {
+              const gameweek = currentGameweekNumber - 1 + i;
+              const maxGameweek = liveGameweekData?.id || totalGameweeks;
+              if (gameweek > 0 && gameweek <= maxGameweek) {
                 return (
                   <PaginationItem className="px-1" key={gameweek}>
                     <PaginationLink
@@ -74,7 +76,7 @@ export function GameweekPaginator({
             })}
           </PaginationItem>
           <PaginationItem>
-            {currentGameweekNumber !== liveGameweekData?.id && (
+            {currentGameweekNumber < (liveGameweekData?.id || totalGameweeks) && (
               <>
               <PaginationNext className="hidden lg:flex" onClick={handleNext} />
               <ChevronRight className=" lg:hidden" onClick={handleNext} />
