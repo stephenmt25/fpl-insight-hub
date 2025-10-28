@@ -112,14 +112,18 @@ serve(async (req) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`FPL API error: ${response.status}`, errorText);
+      // Log detailed error server-side
+      console.error('FPL API error details:', {
+        status: response.status,
+        statusText: response.statusText,
+        details: errorText,
+        endpoint,
+        timestamp: new Date().toISOString()
+      });
       
       return new Response(
         JSON.stringify({
-          error: `FPL API Error: ${response.statusText}`,
-          status: response.status,
-          details: errorText,
-          endpoint,
-          timestamp: new Date().toISOString()
+          error: 'Failed to fetch data from FPL API'
         }),
         { 
           status: response.status,
@@ -139,14 +143,17 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in fpl-api-proxy:', error);
+    // Log full error details server-side only for debugging
+    console.error('Error in fpl-api-proxy:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
     
+    // Return generic error message to client without exposing internal details
     return new Response(
       JSON.stringify({ 
-        error: 'Internal Server Error', 
-        details: error.message,
-        stack: error.stack,
-        timestamp: new Date().toISOString()
+        error: 'Internal Server Error'
       }),
       { 
         status: 500,
