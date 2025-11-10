@@ -1,1 +1,10 @@
 project_id = "lyqozlofyngahpslmwti"
+
+[functions.sync-gameweek-history]
+verify_jwt = false
+
+[functions.sync-price-changes]
+verify_jwt = false
+
+[functions.sync-upcoming-fixtures]
+verify_jwt = false

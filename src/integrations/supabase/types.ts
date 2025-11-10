@@ -98,6 +98,63 @@ export type Database = {
         }
         Relationships: []
       }
+      player_gameweek_history: {
+        Row: {
+          assists: number | null
+          bonus: number | null
+          bps: number | null
+          created_at: string | null
+          expected_assists: number | null
+          expected_goals: number | null
+          fixture_difficulty: number | null
+          form: number | null
+          gameweek: number
+          goals_scored: number | null
+          id: string
+          minutes: number | null
+          opponent_team: number | null
+          player_id: number
+          points: number | null
+          was_home: boolean | null
+        }
+        Insert: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          created_at?: string | null
+          expected_assists?: number | null
+          expected_goals?: number | null
+          fixture_difficulty?: number | null
+          form?: number | null
+          gameweek: number
+          goals_scored?: number | null
+          id?: string
+          minutes?: number | null
+          opponent_team?: number | null
+          player_id: number
+          points?: number | null
+          was_home?: boolean | null
+        }
+        Update: {
+          assists?: number | null
+          bonus?: number | null
+          bps?: number | null
+          created_at?: string | null
+          expected_assists?: number | null
+          expected_goals?: number | null
+          fixture_difficulty?: number | null
+          form?: number | null
+          gameweek?: number
+          goals_scored?: number | null
+          id?: string
+          minutes?: number | null
+          opponent_team?: number | null
+          player_id?: number
+          points?: number | null
+          was_home?: boolean | null
+        }
+        Relationships: []
+      }
       plplayerdata: {
         Row: {
           assists: string | null
@@ -449,6 +506,93 @@ export type Database = {
           team_division?: string | null
           unavailable?: boolean | null
           win?: string | null
+        }
+        Relationships: []
+      }
+      price_change_history: {
+        Row: {
+          created_at: string | null
+          date: string
+          form: number | null
+          id: string
+          new_price: number
+          old_price: number
+          ownership_percent: number | null
+          player_id: number
+          transfers_in_24h: number | null
+          transfers_out_24h: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          form?: number | null
+          id?: string
+          new_price: number
+          old_price: number
+          ownership_percent?: number | null
+          player_id: number
+          transfers_in_24h?: number | null
+          transfers_out_24h?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          form?: number | null
+          id?: string
+          new_price?: number
+          old_price?: number
+          ownership_percent?: number | null
+          player_id?: number
+          transfers_in_24h?: number | null
+          transfers_out_24h?: number | null
+        }
+        Relationships: []
+      }
+      upcoming_fixtures_enriched: {
+        Row: {
+          away_attack_strength: number | null
+          away_defense_strength: number | null
+          away_difficulty: number | null
+          away_team_id: number
+          created_at: string | null
+          fixture_id: number
+          gameweek: number
+          home_attack_strength: number | null
+          home_defense_strength: number | null
+          home_difficulty: number | null
+          home_team_id: number
+          id: string
+          kickoff_time: string | null
+        }
+        Insert: {
+          away_attack_strength?: number | null
+          away_defense_strength?: number | null
+          away_difficulty?: number | null
+          away_team_id: number
+          created_at?: string | null
+          fixture_id: number
+          gameweek: number
+          home_attack_strength?: number | null
+          home_defense_strength?: number | null
+          home_difficulty?: number | null
+          home_team_id: number
+          id?: string
+          kickoff_time?: string | null
+        }
+        Update: {
+          away_attack_strength?: number | null
+          away_defense_strength?: number | null
+          away_difficulty?: number | null
+          away_team_id?: number
+          created_at?: string | null
+          fixture_id?: number
+          gameweek?: number
+          home_attack_strength?: number | null
+          home_defense_strength?: number | null
+          home_difficulty?: number | null
+          home_team_id?: number
+          id?: string
+          kickoff_time?: string | null
         }
         Relationships: []
       }
