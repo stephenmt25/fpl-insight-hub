@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.sync-upcoming-fixtures]
 verify_jwt = false
+
+[functions.predict-price-changes]
+verify_jwt = false

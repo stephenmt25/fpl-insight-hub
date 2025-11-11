@@ -23,3 +23,21 @@ export interface ClusterResult {
 export interface DifferentialPick extends ClusterResult {
   reasoning: string[];
 }
+
+export interface PriceChangePrediction {
+  playerId: number;
+  playerName: string;
+  teamName: string;
+  position: string;
+  currentPrice: number;
+  priceChangeDirection: 'rise' | 'fall' | 'stable';
+  probability: number;
+  transfersIn24h: number;
+  transfersOut24h: number;
+  transferDelta: number;
+  ownership: number;
+  form: number;
+  reasoning: string[];
+  expectedChangeDate: string;
+  confidence: 'high' | 'medium' | 'low';
+}
