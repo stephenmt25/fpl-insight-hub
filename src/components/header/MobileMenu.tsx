@@ -46,6 +46,9 @@ export function MobileMenu({ isMobileMenuOpen, setIsMobileMenuOpen }: MobileMenu
         <DropdownMenuItem>
           <Link to="/insights" className="w-full">Insights</Link>
         </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link to="/testing" className="w-full">Testing</Link>
+        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
