@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import Performance from "./pages/Performance";
 import Insights from "./pages/Insights";
 import LeagueStandings from "./pages/LeagueStandings";
+import DataSyncTesting from "./pages/DataSyncTesting";
 import { TabProvider } from './context/standings-tabs-context.tsx';
 import { AuthProvider } from "./context/auth-context";
 import { LiveGWProvider } from "./context/livegw-context.tsx";
@@ -31,6 +32,7 @@ const App = () => (
                     <Route path="/performance" element={<Performance />} />
                     <Route path="/insights" element={<Insights />} />
                     <Route path="/standings" element={<LeagueStandings />} />
+                    <Route path="/testing" element={<DataSyncTesting />} />
                   </Route>
                 </Routes>
               </BrowserRouter>

@@ -289,18 +289,23 @@ export default function DataSyncTesting() {
       .select('*', { count: 'exact', head: true })
       .or('points.lt.0,minutes.lt.0');
 
-    const { data: rangeData } = await supabase.rpc('exec_sql', {
-      query: `SELECT 
-        MIN(points) as min_pts, MAX(points) as max_pts,
-        MIN(minutes) as min_mins, MAX(minutes) as max_mins,
-        AVG(form::float) as avg_form
-      FROM player_gameweek_history`
-    }).single();
+    // Get sample data to check ranges
+    const { data: sampleData } = await supabase
+      .from('player_gameweek_history')
+      .select('points, minutes, form')
+      .limit(100);
+
+    const stats = sampleData ? {
+      minPoints: Math.min(...sampleData.map(d => d.points || 0)),
+      maxPoints: Math.max(...sampleData.map(d => d.points || 0)),
+      minMinutes: Math.min(...sampleData.map(d => d.minutes || 0)),
+      maxMinutes: Math.max(...sampleData.map(d => d.minutes || 0)),
+    } : null;
 
     updateLastResult({ 
       status: negativeCount === 0 ? 'success' : 'error',
-      message: `${negativeCount === 0 ? '✅' : '❌'} No negative values found. Range checks: ${JSON.stringify(rangeData)}`,
-      data: { negativeCount, rangeData }
+      message: `${negativeCount === 0 ? '✅' : '❌'} No negative values. Sample ranges: ${JSON.stringify(stats)}`,
+      data: { negativeCount, stats }
     });
 
     // Check price_change_history data quality
