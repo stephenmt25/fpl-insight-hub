@@ -32,6 +32,12 @@ export function DesktopNav({ handleClick }: DesktopNavProps) {
       >
         Insights
       </Link>
+      <Link
+        to="/testing"
+        className="text-sm font-medium hover:text-white"
+      >
+        Testing
+      </Link>
     </nav>
   );
 }
