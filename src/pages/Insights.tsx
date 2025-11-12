@@ -5,6 +5,7 @@ import { TransferSuggestions } from "@/components/TransferSuggestions";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { PriceChangePredictions } from "@/components/ml/PriceChangePredictions";
 import { DifferentialPicks } from "@/components/DifferentialPicks";
+import { FormTrendAnalyzer } from "@/components/ml/FormTrendAnalyzer";
 import { ArrowRightLeft, CalendarRange, Lightbulb, TrendingUpDown, Brain } from "lucide-react";
 
 export default function Insights() {
@@ -45,6 +46,7 @@ export default function Insights() {
         <TabsContent value="ml-insights" className="space-y-4">
           <DifferentialPicks />
           <PriceChangePredictions />
+          <FormTrendAnalyzer />
         </TabsContent>
 
 

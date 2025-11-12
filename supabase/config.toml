@@ -11,3 +11,6 @@ verify_jwt = false
 
 [functions.predict-price-changes]
 verify_jwt = false
+
+[functions.predict-form-trends]
+verify_jwt = false
