@@ -41,3 +41,24 @@ export interface PriceChangePrediction {
   expectedChangeDate: string;
   confidence: 'high' | 'medium' | 'low';
 }
+
+export interface FormTrendPrediction {
+  playerId: number;
+  playerName: string;
+  teamName: string;
+  position: string;
+  currentForm: number;
+  historicalForm: number[];
+  gameweeks: number[];
+  predictedForm: {
+    gameweek: number;
+    predictedPoints: number;
+    confidence: number;
+  }[];
+  trend: 'rising' | 'falling' | 'stable';
+  trendStrength: number;
+  volatility: number;
+  momentum: number;
+  reasoning: string[];
+  overallConfidence: 'high' | 'medium' | 'low';
+}
