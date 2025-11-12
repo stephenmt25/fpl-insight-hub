@@ -55,7 +55,8 @@ serve(async (req) => {
       '/leagues-classic/',
       '/event/',
       '/element-summary/',
-      '/dream-team/'
+      '/dream-team/',
+      '/event-status/'
     ];
     
     const isValidPath = validPaths.some(path => sanitizedEndpoint.startsWith(path));
