@@ -24,10 +24,10 @@ serve(async (req) => {
     console.log('Received request for league ID:', leagueId);
 
     // Enhanced input validation and sanitization
-    if (!leagueId || typeof leagueId !== 'string') {
-      console.error('No league ID provided or invalid type');
+    if (!leagueId) {
+      console.error('No league ID provided');
       return new Response(
-        JSON.stringify({ error: 'League ID is required and must be a string' }),
+        JSON.stringify({ error: 'League ID is required' }),
         { 
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -35,8 +35,8 @@ serve(async (req) => {
       );
     }
 
-    // Sanitize league ID to prevent injection attacks
-    const sanitizedLeagueId = leagueId.trim().replace(/[^\d]/g, '');
+    // Convert to string and sanitize league ID to prevent injection attacks
+    const sanitizedLeagueId = String(leagueId).trim().replace(/[^\d]/g, '');
     
     if (!sanitizedLeagueId || sanitizedLeagueId.length < 1 || sanitizedLeagueId.length > 10) {
       console.error('Invalid league ID format');
@@ -54,7 +54,16 @@ serve(async (req) => {
       `https://fantasy.premierleague.com/api/leagues-classic/${sanitizedLeagueId}/standings/`,
       {
         headers: {
-          'Content-Type': 'application/json',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*',
+          'Accept-Language': 'en-GB,en;q=0.9',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Referer': 'https://fantasy.premierleague.com/',
+          'Origin': 'https://fantasy.premierleague.com',
+          'Connection': 'keep-alive',
+          'Sec-Fetch-Dest': 'empty',
+          'Sec-Fetch-Mode': 'cors',
+          'Sec-Fetch-Site': 'same-origin'
         },
       }
     );
