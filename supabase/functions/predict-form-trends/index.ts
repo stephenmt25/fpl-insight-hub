@@ -10,6 +10,12 @@ interface PlayerGameweekData {
   points: number;
   minutes: number;
   form: number;
+  expectedGoals: number;
+  expectedAssists: number;
+  bps: number;
+  bonus: number;
+  goalsScored: number;
+  assists: number;
 }
 
 interface FormTrendResult {
@@ -55,10 +61,10 @@ Deno.serve(async (req) => {
 
     console.log(`Current gameweek: ${currentGameweek}, analyzing from GW${minGameweek}`);
 
-    // Fetch player gameweek history for last 6 gameweeks
+    // Fetch player gameweek history with detailed stats
     const { data: historyData, error: historyError } = await supabase
       .from('player_gameweek_history')
-      .select('player_id, gameweek, points, minutes, form')
+      .select('player_id, gameweek, points, minutes, form, expected_goals, expected_assists, bps, bonus, goals_scored, assists')
       .gte('gameweek', minGameweek)
       .order('player_id', { ascending: true })
       .order('gameweek', { ascending: true });
@@ -91,7 +97,13 @@ Deno.serve(async (req) => {
         gameweek: record.gameweek,
         points: record.points || 0,
         minutes: record.minutes || 0,
-        form: parseFloat(record.form || '0')
+        form: parseFloat(record.form || '0'),
+        expectedGoals: parseFloat(record.expected_goals || '0'),
+        expectedAssists: parseFloat(record.expected_assists || '0'),
+        bps: record.bps || 0,
+        bonus: record.bonus || 0,
+        goalsScored: record.goals_scored || 0,
+        assists: record.assists || 0
       });
     });
 
