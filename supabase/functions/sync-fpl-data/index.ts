@@ -110,6 +110,27 @@ interface FPLPlayer {
   direct_freekicks_text: string | null
   penalties_order: number | null
   penalties_text: string | null
+  clearances_blocks_interceptions: number
+  recoveries: number
+  tackles: number
+  defensive_contribution: number
+  expected_goals_per_90: string
+  saves_per_90: string
+  expected_assists_per_90: string
+  expected_goal_involvements_per_90: string
+  expected_goals_conceded_per_90: string
+  goals_conceded_per_90: string
+  now_cost_rank: number
+  now_cost_rank_type: number
+  form_rank: number
+  form_rank_type: number
+  points_per_game_rank: number
+  points_per_game_rank_type: number
+  selected_rank: number
+  selected_rank_type: number
+  starts_per_90: string
+  clean_sheets_per_90: string
+  defensive_contribution_per_90: string
 }
 
 interface FPLResponse {
@@ -257,7 +278,28 @@ async function updateSupabasePlayerData(supabase: any, player: FPLPlayer) {
       direct_freekicks_order: player.direct_freekicks_order?.toString(),
       direct_freekicks_text: player.direct_freekicks_text,
       penalties_order: player.penalties_order?.toString(),
-      penalties_text: player.penalties_text
+      penalties_text: player.penalties_text,
+      clearances_blocks_interceptions: player.clearances_blocks_interceptions.toString(),
+      recoveries: player.recoveries.toString(),
+      tackles: player.tackles.toString(),
+      defensive_contribution: player.defensive_contribution.toString(),
+      expected_goals_per_90: player.expected_goals_per_90,
+      saves_per_90: player.saves_per_90,
+      expected_assists_per_90: player.expected_assists_per_90,
+      expected_goal_involvements_per_90: player.expected_goal_involvements_per_90,
+      expected_goals_conceded_per_90: player.expected_goals_conceded_per_90,
+      goals_conceded_per_90: player.goals_conceded_per_90,
+      now_cost_rank: player.now_cost_rank,
+      now_cost_rank_type: player.now_cost_rank_type,
+      form_rank: player.form_rank,
+      form_rank_type: player.form_rank_type,
+      points_per_game_rank: player.points_per_game_rank,
+      points_per_game_rank_type: player.points_per_game_rank_type,
+      selected_rank: player.selected_rank,
+      selected_rank_type: player.selected_rank_type,
+      starts_per_90: player.starts_per_90,
+      clean_sheets_per_90: player.clean_sheets_per_90,
+      defensive_contribution_per_90: player.defensive_contribution_per_90,
     });
 
   if (upsertError) {
