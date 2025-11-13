@@ -44,7 +44,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
               <Card className="lg:h-[48%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
-                    Popular Captain Performance
+                    GW Most Captained Points
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col lg:flex-row gap-4">
@@ -74,7 +74,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
               <Card className="lg:h-[48%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
-                    Captaincy Performance
+                    GW Most Captained Points
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col lg:flex-row gap-4">
@@ -99,7 +99,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
               <Card className="lg:h-[48%] lg:w-4/5 lg:float-right">
                 <CardHeader>
                   <CardDescription>
-                    Transfers
+                    Overall GW Transfer Info
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-col lg:flex-row gap-4">
