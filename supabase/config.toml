@@ -1,5 +1,8 @@
 project_id = "lyqozlofyngahpslmwti"
 
+[functions.sync-fpl-data]
+verify_jwt = false
+
 [functions.sync-gameweek-history]
 verify_jwt = false
 
