@@ -130,7 +130,7 @@ export function DifferentialPicks() {
   if (loading) return <div>Loading...</div>;
 
   return (
-    <div className="w-full gap-4 lg:gap-20 grid grid-cols-5">
+    <div className="w-full gap-4 grid grid-cols-5">
       <Card className="col-span-5 lg:col-span-3">
         <CardHeader>
           <CardTitle>ML-Powered Differential Analysis</CardTitle>
@@ -235,51 +235,51 @@ export function DifferentialPicks() {
             High-performing players with low ownership (&lt;35%), ranked by ML confidence
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3">
+        <CardContent className="flex flex-col gap-3 h-[500px] overflow-y-auto">
           {differentialPicks.length === 0 ? (
             <p className="text-sm text-muted-foreground">No differentials found matching criteria</p>
           ) : (
             differentialPicks.map((player, index) => (
               <div
-                key={index}
-                className={`p-3 rounded-lg border transition-all ${
-                  index === 0 
-                    ? 'bg-primary/5 border-primary shadow-sm' 
-                    : 'bg-muted/30 border-border hover:bg-muted/50'
-                }`}
+          key={index}
+          className={`p-3 rounded-lg border transition-all ${
+            index === 0 
+              ? 'bg-primary/5 border-primary shadow-sm' 
+              : 'bg-muted/30 border-border hover:bg-muted/50'
+          }`}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <div>
-                    <p className="font-semibold text-foreground">{player.name}</p>
-                    <p className="text-xs text-muted-foreground">{player.teamName}</p>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    style={{ 
-                      backgroundColor: CLUSTER_COLORS[player.cluster] + '20',
-                      borderColor: CLUSTER_COLORS[player.cluster]
-                    }}
-                  >
-                    {player.confidenceScore}%
-                  </Badge>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-2">
-                  <div>Form: <span className="font-medium text-foreground">{player.form.toFixed(1)}</span></div>
-                  <div>Own: <span className="font-medium text-foreground">{player.ownership.toFixed(1)}%</span></div>
-                  <div>xG/90: <span className="font-medium text-foreground">{player.xgPer90.toFixed(2)}</span></div>
-                  <div>xA/90: <span className="font-medium text-foreground">{player.xaPer90.toFixed(2)}</span></div>
-                </div>
-                
-                {player.reasoning && player.reasoning.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {player.reasoning.slice(0, 3).map((reason, i) => (
-                      <Badge key={i} variant="secondary" className="text-xs">
-                        {reason}
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+          <div className="flex justify-between items-start mb-2">
+            <div>
+              <p className="font-semibold text-foreground">{player.name}</p>
+              <p className="text-xs text-muted-foreground">{player.teamName}</p>
+            </div>
+            <Badge 
+              variant="outline" 
+              style={{ 
+                backgroundColor: CLUSTER_COLORS[player.cluster] + '20',
+                borderColor: CLUSTER_COLORS[player.cluster]
+              }}
+            >
+              {player.confidenceScore}%
+            </Badge>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-2">
+            <div>Form: <span className="font-medium text-foreground">{player.form.toFixed(1)}</span></div>
+            <div>Own: <span className="font-medium text-foreground">{player.ownership.toFixed(1)}%</span></div>
+            <div>xG/90: <span className="font-medium text-foreground">{player.xgPer90.toFixed(2)}</span></div>
+            <div>xA/90: <span className="font-medium text-foreground">{player.xaPer90.toFixed(2)}</span></div>
+          </div>
+          
+          {player.reasoning && player.reasoning.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {player.reasoning.slice(0, 3).map((reason, i) => (
+                <Badge key={i} variant="secondary" className="text-xs">
+                  {reason}
+                </Badge>
+              ))}
+            </div>
+          )}
               </div>
             ))
           )}

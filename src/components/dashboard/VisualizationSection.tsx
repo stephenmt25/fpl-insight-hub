@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "../u
 import { useContext } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
 import { ThumbsDown, ThumbsUp } from "lucide-react";
+import { useState } from "react";
 
 interface VisualizationSectionProps {
   mostCaptPlayerData: any;
@@ -27,14 +28,28 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
   }
 
   let formattedTransfers = new Intl.NumberFormat('en-US').format(Number(selectedGameweekData?.transfers_made));
+  // local state to control the Differential Picks modal
+  const [showDifferentialModal, setShowDifferentialModalState] = useState(false);
+
+  // local state to control the Form Value modal
+  const [showFormValueModal, setShowFormValueModalState] = useState(false);
+
+  // expose a simple setter with the requested signature
+  function setShowDifferentialModal(open: boolean): void {
+    setShowDifferentialModalState(open);
+  }
+
+  function setShowFormValueModal(open: boolean): void {
+    setShowFormValueModalState(open);
+  }
   return (
     <div className="w-full lg:max-w-full">
       <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
       <div className="grid gap-4">
         <div className="grid gap-4 lg:grid-cols-3">
-          <div className="col-span-3 lg:col-span-1">
+          {/* <div className="col-span-3 lg:col-span-1">
             <CaptaincyPieChart />
-          </div>
+          </div> */}
           <div className="col-span-3 lg:col-span-1">
             <AveragePtsLineChart />
           </div>
@@ -153,6 +168,113 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
             }
           </div>
 
+          <div className="col-span-3 lg:col-span-1">
+            <div className="grid grid-cols-2 gap-4">
+              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowDifferentialModal(true)}>
+                <CardHeader>
+                  <CardDescription>Differential Picks</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </CardContent>
+              </Card>
+              {showDifferentialModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg max-h-xl mx-32">
+                    <button
+                      onClick={() => setShowDifferentialModal(false)}
+                      className="float-right p-2 text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                    <div className="p-4">
+                      <DifferentialPicks />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowFormValueModal(true)}>
+                <CardHeader>
+                  <CardDescription>Form Value</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </CardContent>
+              </Card>
+              {showFormValueModal && (
+                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="bg-white rounded-lg shadow-lg max-h-xl mx-32">
+                    <button
+                      onClick={() => setShowFormValueModal(false)}
+                      className="float-right p-2 text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                    <div className="p-4">
+                      <FormValueAnalysis />
+                    </div>
+                  </div>
+                </div>
+              )}
+              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
+                <CardHeader>
+                  <CardDescription>Link 3</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
+                <CardHeader>
+                  <CardDescription>Link 4</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
+                <CardHeader>
+                  <CardDescription>Link 5</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
+                <CardHeader>
+                  <CardDescription>Link 6</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex items-center justify-center h-12">
+                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                  </div>
+                </CardContent> 
+              </Card>
+            </div>
+          </div>
+
           {/* {liveGameweekData &&
             <div className="col-span-3">
               <Card>
@@ -164,12 +286,12 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                 </CardContent>
               </Card>
             </div>} */}
-          <div className="col-span-3">
+          {/* <div className="col-span-3">
             <DifferentialPicks />
           </div>
           <div className="col-span-3">
             <FormValueAnalysis />
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
