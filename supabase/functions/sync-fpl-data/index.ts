@@ -161,7 +161,7 @@ async function updateSupabaseGameweekData(supabase: any, event: FPLEvent) {
     return;
   }
 
-  const boolToString = (value: boolean) => value ? 'true' : 'false';
+  const boolToString = (value: boolean | null) => value === null ? null : value ? 'true' : 'false';
   const numberToString = (value: number | null) => value?.toString() || null;
 
   const { error: upsertError } = await supabase
@@ -341,7 +341,8 @@ Deno.serve(async (req) => {
     });
   } catch (error) {
     console.error('Error in sync-fpl-data function:', error);
-    return new Response(JSON.stringify({ error: error.message }), {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return new Response(JSON.stringify({ error: errorMessage }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 500,
     });

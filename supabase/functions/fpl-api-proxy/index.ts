@@ -152,9 +152,11 @@ serve(async (req) => {
 
   } catch (error) {
     // Log full error details server-side only for debugging
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorStack = error instanceof Error ? error.stack : undefined;
     console.error('Error in fpl-api-proxy:', {
-      message: error.message,
-      stack: error.stack,
+      message: errorMessage,
+      stack: errorStack,
       timestamp: new Date().toISOString()
     });
     

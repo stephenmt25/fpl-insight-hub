@@ -5,8 +5,9 @@ import { DifferentialPicks } from "../DifferentialPicks";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "../ui/card";
 import { useContext } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
-import { ThumbsDown, ThumbsUp } from "lucide-react";
+import { ThumbsDown, ThumbsUp, TrendingUp, DollarSign, Trophy, LineChart, Users, Target } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface VisualizationSectionProps {
   mostCaptPlayerData: any;
@@ -18,6 +19,8 @@ interface VisualizationSectionProps {
 
 export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture, selectedGameweekData, mostTransferredPlayerData, mostTransferredPlayerTeam }: VisualizationSectionProps) {
   const { liveGameweekData } = useContext(LiveGWContext)
+  const navigate = useNavigate();
+  
   const getPerformanceIcon = () => {
     if (mostCaptPlayerData) {
       return mostCaptPlayerData[1] < 4 ?
@@ -44,9 +47,9 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
   }
   return (
     <div className="w-full lg:max-w-full">
-      <h3 className="text-lg font-medium mb-4">Data Visualization</h3>
-      <div className="grid gap-4">
-        <div className="grid gap-4 lg:grid-cols-3">
+      <h3 className="text-lg font-medium mb-6">Data Visualization</h3>
+      <div className="grid gap-6">
+        <div className="grid gap-6 lg:grid-cols-3">
           {/* <div className="col-span-3 lg:col-span-1">
             <CaptaincyPieChart />
           </div> */}
@@ -170,15 +173,13 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
 
           <div className="col-span-3 lg:col-span-1">
             <div className="grid grid-cols-2 gap-4">
-              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowDifferentialModal(true)}>
-                <CardHeader>
-                  <CardDescription>Differential Picks</CardDescription>
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowDifferentialModal(true)}>
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-xs font-medium">Differential Picks</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-12">
-                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <TrendingUp className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
@@ -197,15 +198,13 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   </div>
                 </div>
               )}
-              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => setShowFormValueModal(true)}>
-                <CardHeader>
-                  <CardDescription>Form Value</CardDescription>
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowFormValueModal(true)}>
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-xs font-medium">Form Value</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-12">
-                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <DollarSign className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
@@ -224,51 +223,43 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   </div>
                 </div>
               )}
-              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
-                <CardHeader>
-                  <CardDescription>Link 3</CardDescription>
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/performance')}>
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-xs font-medium">Performance</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-12">
-                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <Trophy className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
-                <CardHeader>
-                  <CardDescription>Link 4</CardDescription>
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/insights')}>
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-xs font-medium">Insights</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-12">
-                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <LineChart className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
-                <CardHeader>
-                  <CardDescription>Link 5</CardDescription>
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/standings')}>
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-xs font-medium">Standings</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-12">
-                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <Users className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:bg-gray-50 transition-colors" onClick={() => { }}>
-                <CardHeader>
-                  <CardDescription>Link 6</CardDescription>
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/insights')}>
+                <CardHeader className="pb-3">
+                  <CardDescription className="text-xs font-medium">Transfers</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-center h-12">
-                    <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                    </svg>
+                    <Target className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent> 
               </Card>

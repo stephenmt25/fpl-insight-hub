@@ -164,6 +164,7 @@ export type Database = {
           chance_of_playing_this_round: string | null
           clean_sheets: string | null
           clean_sheets_per_90: string | null
+          clearances_blocks_interceptions: string | null
           code: number | null
           corners_and_indirect_freekicks_order: string | null
           corners_and_indirect_freekicks_text: string | null
@@ -174,6 +175,8 @@ export type Database = {
           creativity: string | null
           creativity_rank: number | null
           creativity_rank_type: number | null
+          defensive_contribution: string | null
+          defensive_contribution_per_90: string | null
           direct_freekicks_order: string | null
           direct_freekicks_text: string | null
           dreamteam_count: string | null
@@ -219,6 +222,7 @@ export type Database = {
           points_per_game: string | null
           points_per_game_rank: number | null
           points_per_game_rank_type: number | null
+          recoveries: string | null
           red_cards: string | null
           region: string | null
           removed: boolean | null
@@ -233,6 +237,7 @@ export type Database = {
           starts: string | null
           starts_per_90: string | null
           status: string | null
+          tackles: string | null
           team: number | null
           team_code: number | null
           team_join_date: string | null
@@ -257,6 +262,7 @@ export type Database = {
           chance_of_playing_this_round?: string | null
           clean_sheets?: string | null
           clean_sheets_per_90?: string | null
+          clearances_blocks_interceptions?: string | null
           code?: number | null
           corners_and_indirect_freekicks_order?: string | null
           corners_and_indirect_freekicks_text?: string | null
@@ -267,6 +273,8 @@ export type Database = {
           creativity?: string | null
           creativity_rank?: number | null
           creativity_rank_type?: number | null
+          defensive_contribution?: string | null
+          defensive_contribution_per_90?: string | null
           direct_freekicks_order?: string | null
           direct_freekicks_text?: string | null
           dreamteam_count?: string | null
@@ -312,6 +320,7 @@ export type Database = {
           points_per_game?: string | null
           points_per_game_rank?: number | null
           points_per_game_rank_type?: number | null
+          recoveries?: string | null
           red_cards?: string | null
           region?: string | null
           removed?: boolean | null
@@ -326,6 +335,7 @@ export type Database = {
           starts?: string | null
           starts_per_90?: string | null
           status?: string | null
+          tackles?: string | null
           team?: number | null
           team_code?: number | null
           team_join_date?: string | null
@@ -350,6 +360,7 @@ export type Database = {
           chance_of_playing_this_round?: string | null
           clean_sheets?: string | null
           clean_sheets_per_90?: string | null
+          clearances_blocks_interceptions?: string | null
           code?: number | null
           corners_and_indirect_freekicks_order?: string | null
           corners_and_indirect_freekicks_text?: string | null
@@ -360,6 +371,8 @@ export type Database = {
           creativity?: string | null
           creativity_rank?: number | null
           creativity_rank_type?: number | null
+          defensive_contribution?: string | null
+          defensive_contribution_per_90?: string | null
           direct_freekicks_order?: string | null
           direct_freekicks_text?: string | null
           dreamteam_count?: string | null
@@ -405,6 +418,7 @@ export type Database = {
           points_per_game?: string | null
           points_per_game_rank?: number | null
           points_per_game_rank_type?: number | null
+          recoveries?: string | null
           red_cards?: string | null
           region?: string | null
           removed?: boolean | null
@@ -419,6 +433,7 @@ export type Database = {
           starts?: string | null
           starts_per_90?: string | null
           status?: string | null
+          tackles?: string | null
           team?: number | null
           team_code?: number | null
           team_join_date?: string | null
