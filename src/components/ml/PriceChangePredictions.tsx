@@ -146,8 +146,8 @@ export function PriceChangePredictions() {
   }
 
   return (
-    <Card>
-      <CardHeader>
+    <Card className="max-h-[600px] flex flex-col">
+      <CardHeader className="flex-shrink-0">
         <div className="flex items-start justify-between">
           <div>
             <CardTitle className="flex items-center gap-2">
@@ -175,9 +175,9 @@ export function PriceChangePredictions() {
           </div>
         )}
       </CardHeader>
-      <CardContent>
-        <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-3 mb-4">
+      <CardContent className="flex-1 overflow-hidden flex flex-col">
+        <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)} className="flex flex-col h-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
             <TabsTrigger value="all">
               All ({predictions.length})
             </TabsTrigger>
@@ -191,38 +191,40 @@ export function PriceChangePredictions() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="all" className="space-y-3">
-            {predictions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No significant price change predictions at this time
-              </p>
-            ) : (
-              predictions.slice(0, 20).map(renderPredictionCard)
-            )}
-          </TabsContent>
+          <div className="flex-1 overflow-y-auto pr-2">
+            <TabsContent value="all" className="space-y-3 mt-0">
+              {predictions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No significant price change predictions at this time
+                </p>
+              ) : (
+                predictions.slice(0, 20).map(renderPredictionCard)
+              )}
+            </TabsContent>
 
-          <TabsContent value="rise" className="space-y-3">
-            {risePredictions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No price rise predictions at this time
-              </p>
-            ) : (
-              risePredictions.slice(0, 15).map(renderPredictionCard)
-            )}
-          </TabsContent>
+            <TabsContent value="rise" className="space-y-3 mt-0">
+              {risePredictions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No price rise predictions at this time
+                </p>
+              ) : (
+                risePredictions.slice(0, 15).map(renderPredictionCard)
+              )}
+            </TabsContent>
 
-          <TabsContent value="fall" className="space-y-3">
-            {fallPredictions.length === 0 ? (
-              <p className="text-center text-muted-foreground py-8">
-                No price fall predictions at this time
-              </p>
-            ) : (
-              fallPredictions.slice(0, 15).map(renderPredictionCard)
-            )}
-          </TabsContent>
+            <TabsContent value="fall" className="space-y-3 mt-0">
+              {fallPredictions.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No price fall predictions at this time
+                </p>
+              ) : (
+                fallPredictions.slice(0, 15).map(renderPredictionCard)
+              )}
+            </TabsContent>
+          </div>
         </Tabs>
 
-        <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground">
+        <div className="mt-4 p-3 bg-muted/50 rounded-lg text-xs text-muted-foreground flex-shrink-0">
           <p className="font-medium text-foreground mb-1">How it works:</p>
           <p>
             Predictions use net transfers, ownership %, form, and historical patterns to estimate 
