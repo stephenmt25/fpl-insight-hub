@@ -259,9 +259,9 @@ const Index = () => {
     '...';
 
   return (
-    <div className="space-y-6 pb-14 md:pb-0">
+    <div className="space-y-8 pb-14 md:pb-0">
       {isSignedIn ? (
-        <section className="space-y-4">
+        <section className="space-y-6">
           <WelcomeBanner />
         </section>
       ) : (

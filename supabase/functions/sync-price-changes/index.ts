@@ -139,10 +139,11 @@ Deno.serve(async (req) => {
 
   } catch (error) {
     console.error('Error syncing price changes:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return new Response(
       JSON.stringify({ 
         error: 'Failed to sync price changes',
-        message: error.message 
+        message: errorMessage 
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

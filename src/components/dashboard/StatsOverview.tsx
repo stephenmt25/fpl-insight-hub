@@ -21,7 +21,7 @@ export function StatsOverview({ currentGW, mostCaptPlayerData, highScorePlayerDa
   const highscoreStyle = highscoreDelta > 0 ? 'text-green-500 text-sm font-medium gap-2 justify-end' : highscoreDelta < 0 ? 'text-red-500 text-sm font-medium gap-2 justify-end' : 'text-black text-sm font-medium gap-2 justify-end'
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
       {currentGW ? (
         <StatsCard
           title="Highest GW Points"
