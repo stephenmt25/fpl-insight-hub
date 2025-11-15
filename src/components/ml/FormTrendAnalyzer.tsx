@@ -54,6 +54,11 @@ export function FormTrendAnalyzer() {
         <CardDescription>
           Time series predictions for next 3 gameweeks • {predictions.length} players analyzed
         </CardDescription>
+        {predictions.length > 0 && predictions[0]?.historicalForm?.length === 1 && (
+          <div className="mt-2 p-2 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded text-xs text-yellow-800 dark:text-yellow-200">
+            ⚠️ Limited historical data available. Predictions based on current gameweek only. More accurate predictions will be available as more gameweek data is collected.
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="rising" className="w-full">
