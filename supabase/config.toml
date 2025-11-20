@@ -1,5 +1,32 @@
 project_id = "lyqozlofyngahpslmwti"
 
+[functions.fpl-api-proxy]
+verify_jwt = false
+
+[functions.predict-price-changes]
+verify_jwt = false
+
+[functions.sync-fpl-data]
+verify_jwt = false
+
+[functions.sync-gameweek-history]
+verify_jwt = false
+
+[functions.predict-form-trends]
+verify_jwt = false
+
+[functions.sync-upcoming-fixtures]
+verify_jwt = false
+
+[functions.sync-price-changes]
+verify_jwt = false
+
+[functions.get-league-standings]
+verify_jwt = false
+
+[functions.generate-historical-form]
+verify_jwt = false
+
 [functions.sync-fpl-data]
 verify_jwt = false
 
