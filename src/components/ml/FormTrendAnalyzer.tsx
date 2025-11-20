@@ -117,19 +117,21 @@ function PlayerTrendCard({ player }: { player: FormTrendPrediction }) {
     }
   };
 
-  // Prepare chart data
+  // Prepare chart data sorted by gameweek number
   const chartData = [
     ...player.gameweeks.map((gw, i) => ({
       gameweek: `GW${gw}`,
+      gameweekNum: gw,
       actual: player.historicalForm[i],
       predicted: null,
     })),
     ...player.predictedForm.map(pred => ({
       gameweek: `GW${pred.gameweek}`,
+      gameweekNum: pred.gameweek,
       actual: null,
       predicted: pred.predictedPoints,
     }))
-  ];
+  ].sort((a, b) => a.gameweekNum - b.gameweekNum);
 
   return (
     <Card className="border-l-4" style={{

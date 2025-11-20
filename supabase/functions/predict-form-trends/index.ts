@@ -53,12 +53,24 @@ Deno.serve(async (req) => {
     const { data: gameweekData } = await supabase
       .from('fploveralldata')
       .select('id')
-      .eq('is_current', 'True')
+      .eq('is_current', true)
       .single();
 
-    const currentGameweek = gameweekData?.id || 1;
-    const minGameweek = Math.max(1, currentGameweek - 5);
+    let currentGameweek = gameweekData?.id || null;
 
+    // Fallback: detect current gameweek from max gameweek in player history
+    if (!currentGameweek) {
+      const { data: maxGwData } = await supabase
+        .from('player_gameweek_history')
+        .select('gameweek')
+        .order('gameweek', { ascending: false })
+        .limit(1)
+        .single();
+      
+      currentGameweek = maxGwData?.gameweek || 1;
+      console.log(`Using fallback: detected current gameweek as ${currentGameweek}`);
+    }
+    const minGameweek = Math.max(1, currentGameweek - 5);
     console.log(`Current gameweek: ${currentGameweek}, analyzing from GW${minGameweek}`);
 
     // Fetch player gameweek history with detailed stats
