@@ -2,8 +2,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PriceChangePredictions } from "@/components/ml/PriceChangePredictions";
 import { DifferentialPicks } from "@/components/DifferentialPicks";
 import { FormTrendAnalyzer } from "@/components/ml/FormTrendAnalyzer";
-import { Brain, TrendingUpDown, LineChart } from "lucide-react";
 import { CardHeader, CardTitle } from "@/components/ui/card";
+import { HistoricalFormGenerator } from "@/components/ml/HistoricalFormGenerator";
+import { ArrowRightLeft, CalendarRange, Lightbulb, TrendingUpDown, Brain, LineChart } from "lucide-react";
 
 export default function Insights() {
   return (

@@ -53,12 +53,24 @@ Deno.serve(async (req) => {
     const { data: gameweekData } = await supabase
       .from('fploveralldata')
       .select('id')
-      .eq('is_current', 'True')
+      .eq('is_current', true)
       .single();
 
-    const currentGameweek = gameweekData?.id || 1;
-    const minGameweek = Math.max(1, currentGameweek - 5);
+    let currentGameweek = gameweekData?.id || null;
 
+    // Fallback: detect current gameweek from max gameweek in player history
+    if (!currentGameweek) {
+      const { data: maxGwData } = await supabase
+        .from('player_gameweek_history')
+        .select('gameweek')
+        .order('gameweek', { ascending: false })
+        .limit(1)
+        .single();
+      
+      currentGameweek = maxGwData?.gameweek || 1;
+      console.log(`Using fallback: detected current gameweek as ${currentGameweek}`);
+    }
+    const minGameweek = Math.max(1, currentGameweek - 5);
     console.log(`Current gameweek: ${currentGameweek}, analyzing from GW${minGameweek}`);
 
     // Fetch player gameweek history with detailed stats
@@ -113,7 +125,8 @@ Deno.serve(async (req) => {
 
     for (const player of playerData || []) {
       const history = playerHistory.get(player.id);
-      if (!history || history.length < 3) continue;
+      // Require at least 1 gameweek of data instead of 3
+      if (!history || history.length < 1) continue;
 
       const result = analyzePlayerFormTrend(
         player.id,
@@ -163,6 +176,33 @@ function analyzePlayerFormTrend(
   const points = history.map(h => h.points);
   const gameweeks = history.map(h => h.gameweek);
   const n = points.length;
+
+  // For single gameweek, use simpler prediction
+  if (n === 1) {
+    const singlePoint = points[0];
+    const predicted = Math.max(0, Math.min(20, singlePoint));
+    
+    return {
+      playerId,
+      playerName,
+      teamName,
+      position,
+      currentForm,
+      historicalForm: points,
+      gameweeks,
+      predictedForm: [
+        { gameweek: currentGameweek + 1, predictedPoints: predicted, confidence: 0.3 },
+        { gameweek: currentGameweek + 2, predictedPoints: predicted, confidence: 0.2 },
+        { gameweek: currentGameweek + 3, predictedPoints: predicted, confidence: 0.1 }
+      ],
+      trend: 'stable',
+      trendStrength: 0,
+      volatility: 0,
+      momentum: singlePoint,
+      reasoning: ['⚠️ Limited data: Only 1 gameweek available', `Recent performance: ${singlePoint} points`],
+      overallConfidence: 'low'
+    };
+  }
 
   // Calculate trend using linear regression
   const meanX = gameweeks.reduce((a, b) => a + b, 0) / n;
