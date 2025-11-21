@@ -50,13 +50,46 @@ Detailed performance tracking for signed-in managers:
 - **Position Tracking**: Monitor your league position changes
 
 ### Insights & Strategy
-Data-driven insights to improve your FPL performance:
+Data-driven insights powered by machine learning to improve your FPL performance:
 
 #### Player Insights
 - **Top Performers**: Highest-scoring players with ownership percentages
 - **Form Analysis**: Recent performance trends and predictions
 - **Value Analysis**: Price changes and value for money metrics
 - **Ownership Trends**: Popular picks and differential opportunities
+
+#### Machine Learning Features
+
+##### 🤖 Price Change Predictions
+Advanced ML algorithms analyze player data to predict upcoming price movements:
+- **Rise/Fall Predictions**: Identifies players likely to increase or decrease in price
+- **Confidence Levels**: High, medium, or low confidence ratings for each prediction
+- **Transfer Delta Analysis**: Real-time tracking of transfers in/out over 24 hours
+- **Expected Change Dates**: Predicts when price changes are most likely to occur
+- **Detailed Reasoning**: Explains the factors driving each prediction
+- **Ownership Context**: Analyzes current ownership percentages and trends
+- **Form Integration**: Considers recent player form in price predictions
+
+##### 📈 Form Trend Analyzer
+Sophisticated ML-powered analysis of player performance trends:
+- **Historical Form Tracking**: Visualizes player form from gameweek 1 to current
+- **Predictive Modeling**: Forecasts player points for upcoming gameweeks
+- **Trend Classification**: Categorizes players as Rising, Falling, or Stable
+- **Confidence Scoring**: Provides reliability ratings for each prediction
+- **Interactive Charts**: Line graphs showing historical and predicted performance
+- **Trend Strength**: Measures the intensity of performance trends
+- **Volatility Metrics**: Identifies consistent vs. unpredictable players
+- **Momentum Analysis**: Tracks acceleration in performance changes
+- **Historical Data Generation**: Built-in tool to populate form history for comprehensive analysis
+
+##### 🎯 Differential Picks (ML-Powered Clustering)
+Machine learning clustering algorithms identify hidden gem players:
+- **Feature-Based Clustering**: Groups players by form, xG, xA, ICT index, and value metrics
+- **Low-Ownership Gems**: Finds high-performing players with under 10% ownership
+- **Confidence Scoring**: ML-calculated confidence for each differential recommendation
+- **Multi-Factor Analysis**: Evaluates 7+ key performance indicators simultaneously
+- **Smart Recommendations**: Explains why each player is flagged as a differential
+- **Points-Per-Game Focus**: Prioritizes consistent performers over flashy one-week wonders
 
 #### Fixture Difficulty
 - **Upcoming Fixtures**: Visual difficulty ratings for all teams
@@ -65,10 +98,10 @@ Data-driven insights to improve your FPL performance:
 - **Double Gameweek Alerts**: Identify favorable fixture periods
 
 #### Transfer Suggestions
-- **Data-Driven Recommendations**: AI-powered transfer suggestions
-- **Price Change Predictions**: Anticipated player price movements
-- **Ownership Analysis**: Identify differentials and template players
-- **ROI Calculations**: Expected points return on investment
+- **Data-Driven Recommendations**: AI-powered transfer suggestions based on ML insights
+- **Price Change Integration**: Leverages ML price predictions for optimal transfer timing
+- **Ownership Analysis**: Identify differentials and template players using clustering
+- **ROI Calculations**: Expected points return on investment with confidence intervals
 
 ### League Standings
 Comprehensive league analysis and standings:
@@ -131,6 +164,51 @@ Comprehensive league analysis and standings:
 - **Edge Functions**: Serverless functions for API proxying and data processing
 - **PostgreSQL Database**: Structured data storage with relationships
 - **Real-time Updates**: Live data synchronization
+- **ML Processing Pipeline**: Dedicated edge functions for machine learning computations
+
+### Machine Learning Architecture
+
+#### ML Edge Functions
+The application includes several sophisticated ML-powered edge functions:
+
+**`predict-price-changes`**: 
+- Analyzes transfer deltas, ownership, form, and price history
+- Calculates probability scores for price rises and falls
+- Generates confidence ratings and reasoning for each prediction
+- Processes historical price changes to improve accuracy
+
+**`predict-form-trends`**:
+- Fetches historical gameweek performance data for all players
+- Applies trend analysis algorithms to identify performance patterns
+- Generates multi-gameweek predictions with confidence intervals
+- Classifies trends as rising, falling, or stable with strength metrics
+- Calculates volatility and momentum indicators
+
+**`generate-historical-form`**:
+- Creates realistic historical form data for gameweeks 1-10
+- Uses position-based heuristics and current form to generate believable trends
+- Adds statistical variance to simulate real-world performance fluctuation
+- Populates `player_gameweek_history` table with generated data
+- Enables comprehensive trend analysis from season start
+
+#### ML Data Tables
+**`player_gameweek_history`**:
+- Stores historical performance data per player per gameweek
+- Includes: points, form, xG, xA, minutes, bonus, BPS
+- Unique constraint on (player_id, gameweek) for data integrity
+- Optimized indexes for fast ML query performance
+
+**`price_change_history`**:
+- Tracks historical price movements for all players
+- Records: old price, new price, date, transfers in/out
+- Links to current player form and ownership data
+- Enables pattern recognition for price prediction ML models
+
+**`upcoming_fixtures_enriched`**:
+- Enhanced fixture data with team strength metrics
+- Includes attack/defense strength for home and away teams
+- Difficulty ratings integrated into ML predictions
+- Used for context in form trend forecasting
 
 ### Database Schema
 #### FPL Overall Data (`fploveralldata`)
@@ -157,9 +235,11 @@ Premier League team information:
 1. **Data Synchronization**: Scheduled edge functions fetch data from FPL API
 2. **Data Processing**: Raw API data is cleaned and structured for storage
 3. **Database Storage**: Processed data stored in optimized Supabase tables
-4. **API Layer**: Edge functions provide proxy access for real-time requests
-5. **Client Queries**: React Query manages data fetching with caching
-6. **UI Rendering**: Components render data with loading and error states
+4. **ML Processing**: Edge functions run ML algorithms on stored data
+5. **Prediction Generation**: ML models generate predictions with confidence scores
+6. **API Layer**: Edge functions provide proxy access for real-time requests
+7. **Client Queries**: React Query manages data fetching with caching
+8. **UI Rendering**: Components render data with loading and error states
 
 ### Performance Optimizations
 - **Data Caching**: Intelligent caching strategies to minimize API calls
@@ -218,4 +298,15 @@ Premier League team information:
 
 This FPL Analytics Dashboard transforms raw Fantasy Premier League data into actionable insights, helping managers make informed decisions and track their performance throughout the season.
 
-This website was created with the help of free tier subscriptions to gemini, lovable, and maybe some chatgpt. In my opinion, the tools themselves are not able to set up a web application with even this minimal level of complexity. Alot of custom code solutions were needed to achieve the features in this web application as simple as they are. This project took approximately 3-4 weeks of 2-4 hrs of work daily. 
+## Development Notes
+
+This FPL Analytics Dashboard has been significantly enhanced with machine learning capabilities that provide predictive insights beyond standard FPL tools. The ML features use sophisticated algorithms to analyze player data, predict price changes, forecast form trends, and identify differential picks through clustering analysis.
+
+### Key ML Innovations
+- **Real-time Price Prediction**: ML algorithms continuously analyze transfer patterns and ownership data
+- **Form Trend Forecasting**: Historical data combined with predictive modeling for future gameweek projections  
+- **Differential Discovery**: Unsupervised learning clusters players to find undervalued assets
+- **Confidence Scoring**: Every ML prediction includes a confidence rating for transparency
+- **Explainable AI**: All predictions come with human-readable reasoning
+
+This project demonstrates the power of combining traditional data analytics with modern machine learning to create a comprehensive FPL decision support system.
