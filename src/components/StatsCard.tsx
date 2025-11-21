@@ -15,10 +15,10 @@ export function StatsCard({ title, value, description, style }: StatsCardProps) 
         <CardTitle className="text-sm font-medium"></CardTitle>
       </CardHeader>
       <CardContent className="flex justify-between pb-1">
-        <div className="text-2xl ">{title}</div>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className="text-lg md:text-2xl">{title}</div>
+        <div className="text-xl md:text-2xl font-bold">{value}</div>
       </CardContent>
-      <CardFooter  className={style ? style : "text-sm font-medium justify-end" }>
+      <CardFooter className={style ? style : "text-sm font-medium justify-end"}>
         {description && description} {style && <p className="text-black text-sm font-medium">from prev</p>}
       </CardFooter>
     </Card>

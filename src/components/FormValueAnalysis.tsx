@@ -39,7 +39,7 @@ export function FormValueAnalysis() {
           .filter(player => parseFloat(player.form || '0') >= 0) // Exclude players with form < 1
           .filter(player => parseFloat(player.selected_by_percent || '0') > 0) // Exclude players with 0% ownership
           .filter(player => player.element_type !== 5);
-          
+
         const teamIds = [...new Set(filteredPlayers.map(player => player.team))];
         const { data: teamData, error: teamError } = await supabase
           .from('plteams')
@@ -82,7 +82,7 @@ export function FormValueAnalysis() {
     .slice(0, 5);
 
   const badValuePlayers = processedData
-    .filter(player => player.form < averageForm && player.price > averagePrice && player.ownership > 2)
+    .filter(player => player.form < averageForm && player.form > 0 && player.price > averagePrice && player.ownership > 2)
     .sort((a, b) => (a.form) - (b.form))
     .slice(0, 5);
 
@@ -106,14 +106,14 @@ export function FormValueAnalysis() {
   const CustomDot = (props: any) => {
     const { cx, cy, payload } = props;
     const isHovered = hoveredPlayer && hoveredPlayer.name === payload.name;
-    
+
     const minOwnership = Math.min(...processedData.map(p => p.ownership));
     const maxOwnership = Math.max(...processedData.map(p => p.ownership));
     const ownershipRange = maxOwnership - minOwnership || 1;
-    
+
     const radius = 3 + ((payload.ownership - minOwnership) / ownershipRange) * 5;
     const hoverRadius = isHovered ? radius + 4 : radius;
-    
+
     return (
       <circle
         cx={cx}
@@ -128,7 +128,7 @@ export function FormValueAnalysis() {
 
   const getHoveredDotPosition = () => {
     if (!hoveredPlayer) return null;
-    
+
     const hoveredData = processedData.find(p => p.name === hoveredPlayer.name);
     if (!hoveredData) return null;
 
@@ -154,18 +154,18 @@ export function FormValueAnalysis() {
   const dotPosition = getHoveredDotPosition();
 
   return (
-    <div className="w-full lg:gap-20 gap-4 grid grid-cols-5">
-      <Card className="col-span-5 lg:col-span-2">
-        <CardHeader>
+    <div className="w-full lg:gap-5 gap-4 grid grid-cols-5">
+      <Card className="col-span-5 lg:col-span-2 border-none">
+        {/* <CardHeader>
           <CardTitle>Top/Bottom 5 Value Picks</CardTitle>
-        </CardHeader>
+        </CardHeader> */}
         <CardContent className="flex flex-col lg:flex-row gap-4 ">
-        <div className="w-full gap-2 grid grid-cols-2">
+          <div className="w-full gap-2 grid grid-cols-2">
             <div className="col-span-1">
               <h4 className="font-semibold mb-2">Good Value</h4>
               {goodValuePlayers.map((player, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="mb-2 p-2 flex justify-between bg-green-50 rounded relative cursor-pointer hover:bg-green-100 transition-colors"
                   onMouseEnter={() => setHoveredPlayer(player)}
                   onMouseLeave={() => setHoveredPlayer(null)}
@@ -188,8 +188,8 @@ export function FormValueAnalysis() {
             <div>
               <h4 className="font-semibold mb-2">Bad Value</h4>
               {badValuePlayers.map((player, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className="mb-2 p-2 bg-red-50 flex justify-between rounded relative cursor-pointer hover:bg-red-100 transition-colors"
                   onMouseEnter={() => setHoveredPlayer(player)}
                   onMouseLeave={() => setHoveredPlayer(null)}
@@ -213,12 +213,9 @@ export function FormValueAnalysis() {
         </CardContent>
       </Card>
 
-      <Card className="col-span-5 lg:col-span-3">
+      <Card className="col-span-5 lg:col-span-3 border-none">
         <CardHeader>
-          <CardTitle>Bargains</CardTitle>
-          <CardDescription>
-            Visualizing players based on their form, price, and ownership
-          </CardDescription>
+          <CardTitle>Form x Price x Ownership</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col lg:flex-row gap-4">
           <div className="w-full h-[300px] relative">
@@ -231,7 +228,7 @@ export function FormValueAnalysis() {
                   name="Price"
                   unit="m"
                   domain={['dataMin', 'dataMax']}
-                  label={{ value: 'Price', angle: 0, position: 'insideBottomRight', offset: -10}}
+                  label={{ value: 'Price', angle: 0, position: 'insideBottomRight', offset: -10 }}
                 />
                 <YAxis
                   type="number"
@@ -239,7 +236,7 @@ export function FormValueAnalysis() {
                   name="Form"
                   domain={[0, 'dataMax']}
                   width={15}
-                  label={{ value: 'Form', angle: 0, position: 'insideTopLeft', offset: -20}}
+                  label={{ value: 'Form', angle: 0, position: 'insideTopLeft', offset: -20 }}
                 />
                 <ZAxis
                   type="number"
@@ -251,8 +248,8 @@ export function FormValueAnalysis() {
                   cursor={{ strokeDasharray: '3 3' }}
                   content={<CustomTooltip />}
                 />
-                <ReferenceLine x={averagePrice} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Price: £${averagePrice.toFixed(1)}m`, angle: 90, position: "left", offset: -12}} />
-                <ReferenceLine y={averageForm} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Form: ${averageForm.toFixed(1)}`, position: "insideTop"}}/>
+                <ReferenceLine x={averagePrice} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Price: £${averagePrice.toFixed(1)}m`, angle: 90, position: "left", offset: -12 }} />
+                <ReferenceLine y={averageForm} stroke="#a6a6a6" strokeDasharray="3 3" label={{ value: `Average Form: ${averageForm.toFixed(1)}`, position: "insideTop" }} />
                 <Scatter
                   data={processedData}
                   fill="#8884d8"
@@ -262,7 +259,7 @@ export function FormValueAnalysis() {
               </ScatterChart>
             </ResponsiveContainer>
             {hoveredPlayer && dotPosition && (
-              <div 
+              <div
                 className="absolute bg-white p-2 border rounded shadow z-10 pointer-events-none"
                 style={{
                   left: `${dotPosition.cx + 75}px`,
@@ -276,7 +273,7 @@ export function FormValueAnalysis() {
               </div>
             )}
           </div>
-          
+
         </CardContent>
       </Card>
     </div>

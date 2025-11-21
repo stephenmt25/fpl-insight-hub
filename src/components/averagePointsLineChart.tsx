@@ -41,7 +41,7 @@ export function AveragePtsLineChart() {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Average Points</CardTitle>
+        <CardTitle>Overall Average GW Points</CardTitle>
         <CardDescription></CardDescription>
       </CardHeader>
       <CardContent>

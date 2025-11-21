@@ -78,10 +78,10 @@ export function DifferentialPicks() {
 
         // Apply K-means clustering
         const clusteredPlayers = kMeansClustering(playerFeatures, 4);
-        
+
         // Identify differentials
         const differentials = identifyDifferentials(clusteredPlayers, 35, 5.0);
-        
+
         // Get cluster statistics
         const stats = getClusterStats(clusteredPlayers);
         setClusterStats(stats);
@@ -112,7 +112,7 @@ export function DifferentialPicks() {
     fetchPlayersAndTeams();
   }, []);
 
-  const OWNERSHIP_THRESHOLD = 35;
+  const OWNERSHIP_THRESHOLD = 25;
   const averageForm = processedData.reduce((acc, curr) => acc + curr.form, 0) / (processedData.length || 1);
 
   const differentialPicks = processedData
@@ -131,13 +131,7 @@ export function DifferentialPicks() {
 
   return (
     <div className="w-full gap-4 grid grid-cols-5">
-      <Card className="col-span-5 lg:col-span-3">
-        <CardHeader>
-          <CardTitle>ML-Powered Differential Analysis</CardTitle>
-          <CardDescription>
-            K-means clustering identifies player groups based on form, ownership, xG/xA, and ICT index
-          </CardDescription>
-        </CardHeader>
+      <Card className="col-span-5 lg:col-span-3 border-none">
         <CardContent className="flex flex-col gap-4">
           <div className="w-full h-[400px]">
             <ResponsiveContainer width="100%" height="100%">
@@ -189,7 +183,7 @@ export function DifferentialPicks() {
                 />
                 <ReferenceLine x={OWNERSHIP_THRESHOLD} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" label={{ value: '35%', angle: 90, position: "insideTopLeft", offset: 5 }} />
                 <ReferenceLine y={averageForm} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" label={{ value: `Avg: ${averageForm.toFixed(1)}`, position: "insideTopRight" }} />
-                
+
                 {[0, 1, 2, 3].map(clusterIdx => (
                   <Scatter
                     key={clusterIdx}
@@ -203,11 +197,11 @@ export function DifferentialPicks() {
               </ScatterChart>
             </ResponsiveContainer>
           </div>
-          
+
           {clusterStats.length > 0 && (
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 text-xs">
               {clusterStats.map(stat => (
-                <div 
+                <div
                   key={stat.cluster}
                   className="p-2 rounded border border-border"
                   style={{ borderLeftWidth: '3px', borderLeftColor: CLUSTER_COLORS[stat.cluster] }}
@@ -225,7 +219,7 @@ export function DifferentialPicks() {
       {/* <div className="lg:col-span-1">
 
       </div> */}
-      <Card className="col-span-5 lg:col-span-2">
+      <Card className="col-span-5 lg:col-span-2 h-[500px] overflow-y-auto">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             Top Differentials
@@ -235,51 +229,50 @@ export function DifferentialPicks() {
             High-performing players with low ownership (&lt;35%), ranked by ML confidence
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-3 h-[500px] overflow-y-auto">
+        <CardContent className="flex flex-col gap-3 h-[400px] overflow-y-auto">
           {differentialPicks.length === 0 ? (
             <p className="text-sm text-muted-foreground">No differentials found matching criteria</p>
           ) : (
             differentialPicks.map((player, index) => (
               <div
-          key={index}
-          className={`p-3 rounded-lg border transition-all ${
-            index === 0 
-              ? 'bg-primary/5 border-primary shadow-sm' 
-              : 'bg-muted/30 border-border hover:bg-muted/50'
-          }`}
+                key={index}
+                className={`p-3 rounded-lg border transition-all ${index === 0
+                  ? 'bg-primary/5 border-primary shadow-sm'
+                  : 'bg-muted/30 border-border hover:bg-muted/50'
+                  }`}
               >
-          <div className="flex justify-between items-start mb-2">
-            <div>
-              <p className="font-semibold text-foreground">{player.name}</p>
-              <p className="text-xs text-muted-foreground">{player.teamName}</p>
-            </div>
-            <Badge 
-              variant="outline" 
-              style={{ 
-                backgroundColor: CLUSTER_COLORS[player.cluster] + '20',
-                borderColor: CLUSTER_COLORS[player.cluster]
-              }}
-            >
-              {player.confidenceScore}%
-            </Badge>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-2">
-            <div>Form: <span className="font-medium text-foreground">{player.form.toFixed(1)}</span></div>
-            <div>Own: <span className="font-medium text-foreground">{player.ownership.toFixed(1)}%</span></div>
-            <div>xG/90: <span className="font-medium text-foreground">{player.xgPer90.toFixed(2)}</span></div>
-            <div>xA/90: <span className="font-medium text-foreground">{player.xaPer90.toFixed(2)}</span></div>
-          </div>
-          
-          {player.reasoning && player.reasoning.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {player.reasoning.slice(0, 3).map((reason, i) => (
-                <Badge key={i} variant="secondary" className="text-xs">
-                  {reason}
-                </Badge>
-              ))}
-            </div>
-          )}
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-semibold text-foreground">{player.name}</p>
+                    <p className="text-xs text-muted-foreground">{player.teamName}</p>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    style={{
+                      backgroundColor: CLUSTER_COLORS[player.cluster] + '20',
+                      borderColor: CLUSTER_COLORS[player.cluster]
+                    }}
+                  >
+                    {player.confidenceScore}%
+                  </Badge>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground mb-2">
+                  <div>Form: <span className="font-medium text-foreground">{player.form.toFixed(1)}</span></div>
+                  <div>Own: <span className="font-medium text-foreground">{player.ownership.toFixed(1)}%</span></div>
+                  <div>xG/90: <span className="font-medium text-foreground">{player.xgPer90.toFixed(2)}</span></div>
+                  <div>xA/90: <span className="font-medium text-foreground">{player.xaPer90.toFixed(2)}</span></div>
+                </div>
+
+                {player.reasoning && player.reasoning.length > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {player.reasoning.slice(0, 3).map((reason, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {reason}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </div>
             ))
           )}

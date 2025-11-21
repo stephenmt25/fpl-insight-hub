@@ -2,7 +2,7 @@ import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
 import { CaptaincyPieChart } from "../captainsPieChart";
 import { FormValueAnalysis } from "../FormValueAnalysis";
 import { DifferentialPicks } from "../DifferentialPicks";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader } from "../ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { useContext } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
 import { ThumbsDown, ThumbsUp, TrendingUp, DollarSign, Trophy, LineChart, Users, Target } from "lucide-react";
@@ -20,7 +20,7 @@ interface VisualizationSectionProps {
 export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture, selectedGameweekData, mostTransferredPlayerData, mostTransferredPlayerTeam }: VisualizationSectionProps) {
   const { liveGameweekData } = useContext(LiveGWContext)
   const navigate = useNavigate();
-  
+
   const getPerformanceIcon = () => {
     if (mostCaptPlayerData) {
       return mostCaptPlayerData[1] < 4 ?
@@ -47,19 +47,17 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
   }
   return (
     <div className="w-full lg:max-w-full">
-      <h3 className="text-lg font-medium mb-6">Data Visualization</h3>
       <div className="grid gap-6">
         <div className="grid gap-6 lg:grid-cols-3">
           {/* <div className="col-span-3 lg:col-span-1">
             <CaptaincyPieChart />
           </div> */}
-          <div className="col-span-3 lg:col-span-1">
+          <div className="col-span-3 lg:col-span-1 order-2 lg:order-1">
             <AveragePtsLineChart />
           </div>
-          <div className="col-span-3 lg:col-span-1">
-
+          <div className="col-span-3 lg:col-span-1 order-1 lg:order-2">
             {mostCaptPlayerData && mostCaptPlayerData[1] ?
-              <Card className="lg:h-[48%] lg:w-4/5">
+              <Card className="lg:h-[54%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
                     GW Most Captained Points
@@ -89,7 +87,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                 </CardFooter>
               </Card>
               :
-              <Card className="lg:h-[48%] lg:w-4/5">
+              <Card className="lg:h-[54%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
                     GW Most Captained Points
@@ -114,7 +112,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
             <div className="h-3 lg:h-[4%] lg:w-5/5">
             </div>
             {mostTransferredPlayerTeam && mostTransferredPlayerData ?
-              <Card className="lg:h-[48%] lg:w-4/5 lg:float-right">
+              <Card className="lg:h-[43%] lg:w-4/5 lg:float-right">
                 <CardHeader>
                   <CardDescription>
                     Overall GW Transfer Info
@@ -173,12 +171,12 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
 
           <div className="col-span-3 lg:col-span-1">
             <div className="grid grid-cols-2 gap-4">
-              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowDifferentialModal(true)}>
+              <Card className="hidden lg:block cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowDifferentialModal(true)}>
                 <CardHeader className="pb-3">
                   <CardDescription className="text-xs font-medium">Differential Picks</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-12">
+                  <div className="flex items-center justify-center h-8">
                     <TrendingUp className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
@@ -193,17 +191,23 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                       ✕
                     </button>
                     <div className="p-4">
+                      <CardHeader>
+                        <CardTitle>ML-Powered Differential Analysis</CardTitle>
+                        <CardDescription>
+                          K-means clustering identifies player groups based on form, ownership, xG/xA, and ICT index
+                        </CardDescription>
+                      </CardHeader>
                       <DifferentialPicks />
                     </div>
                   </div>
                 </div>
               )}
-              <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowFormValueModal(true)}>
+              <Card className="hidden lg:block cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setShowFormValueModal(true)}>
                 <CardHeader className="pb-3">
                   <CardDescription className="text-xs font-medium">Form Value</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-12">
+                  <div className="flex items-center justify-center h-8">
                     <DollarSign className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
@@ -218,6 +222,12 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                       ✕
                     </button>
                     <div className="p-4">
+                      <CardHeader>
+                        <CardTitle>Form Value Analysis</CardTitle>
+                        <CardDescription>
+                          Visualizing players based on their form, price, and ownership
+                        </CardDescription>
+                      </CardHeader>
                       <FormValueAnalysis />
                     </div>
                   </div>
@@ -225,10 +235,10 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
               )}
               <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => navigate('/performance')}>
                 <CardHeader className="pb-3">
-                  <CardDescription className="text-xs font-medium">Performance</CardDescription>
+                  <CardDescription className="text-xs font-medium">Your Performance</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-12">
+                  <div className="flex items-center justify-center h-8">
                     <Trophy className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
@@ -238,7 +248,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   <CardDescription className="text-xs font-medium">Insights</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-12">
+                  <div className="flex items-center justify-center h-8">
                     <LineChart className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
@@ -248,7 +258,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   <CardDescription className="text-xs font-medium">Standings</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-12">
+                  <div className="flex items-center justify-center h-8">
                     <Users className="w-8 h-8 text-primary" />
                   </div>
                 </CardContent>
@@ -258,10 +268,10 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                   <CardDescription className="text-xs font-medium">Transfers</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center justify-center h-12">
+                  <div className="flex items-center justify-center h-8">
                     <Target className="w-8 h-8 text-primary" />
                   </div>
-                </CardContent> 
+                </CardContent>
               </Card>
             </div>
           </div>
