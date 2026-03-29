@@ -29,9 +29,6 @@ export function SignInModal({ isOpen, onOpenChange }: SignInModalProps) {
   const navigate = useNavigate();
 
   const {
-    data: manager,
-    error: managerError,
-    isLoading: isLoadingManager,
     refetch
   } = useQuery({
     queryKey: ['manager', fplId],

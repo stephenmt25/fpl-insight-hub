@@ -16,19 +16,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { GameweekPicks, ManagerTransfers } from "@/types/fpl";
 import { useTeamsContext } from "@/context/teams-context";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Database } from "@/integrations/supabase/types";
 
 interface PerformanceMetricsProps {
   gameweek: number;
   gameweekPicks: GameweekPicks;
   isLoading: boolean;
-  error: Object;
+  error: Error | null;
 }
 
-// Add this interface for type safety
 interface CaptainData {
-  playerData: any;
-  teamData: any;
-  opponentData: any;
+  playerData: Database['public']['Tables']['plplayerdata']['Row'];
+  teamData: Database['public']['Tables']['plteams']['Row'];
+  opponentData: Database['public']['Tables']['plteams']['Row'];
   captPoints: number;
 }
 
@@ -36,7 +36,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
 
   const { overallData } = useContext(LiveGWContext)
   const { managerHistory, currentManager } = useAuth();
-  const { data: teams, isLoading: teamsLoading } = useTeamsContext()
+  const { data: teams } = useTeamsContext()
   const currentGWData = Array.isArray(overallData) ? overallData.filter((gw) => gw.id === gameweek)[0] : undefined;
 
   const [managerTransfers, setManagerTransfers] = useState<Array<ManagerTransfers>>(null);
@@ -94,7 +94,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
       if (!teamData) throw new Error('Team not found');
 
       // Get current GW data
-      const gwData = summaryRes.history.find((h: any) => h.round === gameweek);
+      const gwData = summaryRes.history.find((h: { round: number }) => h.round === gameweek);
       if (!gwData) throw new Error('GW data not found');
 
       // Get opponent from pre-loaded teams
@@ -115,7 +115,6 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   const {
     data: managerTransfersData,
     isLoading: isLoadingTransfers,
-    error: transferFetchError,
   } = useQuery({
     queryKey: ['managerTransfers', currentManager?.id, gameweek],
     queryFn: () =>
@@ -142,7 +141,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
 
   useEffect(() => {
     if (!isLoadingTransfers) {
-      let filtered = managerTransfersData.filter((item) => item.event === gameweek);
+      const filtered = managerTransfersData.filter((item) => item.event === gameweek);
       setManagerTransfers(filtered);
     }
   }, [isLoadingTransfers])
@@ -173,7 +172,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   }
 
   if (error) {
-    console.error('Error fetching gameweek picks:', error);
+    if (import.meta.env.DEV) console.error('Error fetching gameweek picks:', error);
   }
 
   const getRankIcon = (current: number, previous: number) => {
@@ -193,7 +192,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   };
 
   const getCaptIcon = (captPoints: number) => {
-    let multipliedCaptPts = captPoints * 2
+    const multipliedCaptPts = captPoints * 2
     return multipliedCaptPts < 5 ? <Frown className="text-orange-500" /> :
       multipliedCaptPts < 10 ? <Meh className="text-gray-500" /> :
         multipliedCaptPts <= 20 ? <Smile className="text-green-500" /> :
@@ -201,7 +200,7 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
   };
 
   const getValueSymbol = (currValue: number, prevValue: number) => {
-    let change = ((currValue - prevValue) / 10).toFixed(1)
+    const change = ((currValue - prevValue) / 10).toFixed(1)
     return Number(change) > 0 ?
       <span className="text-green-500">
         +{change}m
@@ -376,11 +375,11 @@ export function PerformanceMetrics({ gameweek = 22, gameweekPicks, isLoading, er
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {managerTransfers.map((transfer, index) => {
+                      {managerTransfers.map((transfer, _index) => {
                         const playerIn = allPlayers?.find(p => p.id === transfer.element_in);
                         const playerOut = allPlayers?.find(p => p.id === transfer.element_out);
-                        const playerInPoints = gwPlayerStats?.elements?.find((e: any) => e.id === transfer.element_in)?.stats?.total_points || 0;
-                        const playerOutPoints = gwPlayerStats?.elements?.find((e: any) => e.id === transfer.element_out)?.stats?.total_points || 0;
+                        const playerInPoints = gwPlayerStats?.elements?.find((e: { id: number }) => e.id === transfer.element_in)?.stats?.total_points || 0;
+                        const playerOutPoints = gwPlayerStats?.elements?.find((e: { id: number }) => e.id === transfer.element_out)?.stats?.total_points || 0;
                         const pointsDelta = playerInPoints - playerOutPoints;
 
                         return (

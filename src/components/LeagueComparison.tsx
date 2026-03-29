@@ -2,17 +2,14 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ComparisonMetrics } from "@/components/ComparisonMetrics"
 import { HistoricalComparison } from "@/components/HistoricalComparison";
-import { useContext } from 'react';
-import { TabContext } from '../context/standings-tabs-context';
 import { useNavigate } from 'react-router-dom';
 import { useQuery } from "@tanstack/react-query";
 import { leagueService } from "@/services/fpl-api";
 import { LeagueTableSection } from "./league-comparison/LeagueTableSection";
 
 export function LeagueComparison() {
-  const [selectedManager, setSelectedManager] = useState<string | null>(null);
+  const [selectedManager, setSelectedManager] = useState<{ id: number; name: string } | null>(null);
   const navigate = useNavigate();
-  const { updateActiveTab } = useContext(TabContext);
 
   const overallLeagueId = "314"
   const [leagueId, setLeagueId] = useState(overallLeagueId)
@@ -20,7 +17,7 @@ export function LeagueComparison() {
 
   const {
     data: leagueData,
-    error: overallLeagueDataError,
+    error: _overallLeagueDataError,
     isLoading: isLoadingoverallLeagueData,
   } = useQuery({
     queryKey: ['leagueData', leagueId],
@@ -28,8 +25,7 @@ export function LeagueComparison() {
   });
 
   const handleClick = (tab: string) => {
-    updateActiveTab(tab);
-    navigate('/standings');
+    navigate(`/league?tab=${tab}`);
   };
 
   return (

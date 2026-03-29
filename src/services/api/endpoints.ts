@@ -23,6 +23,10 @@ export const ENDPOINTS = {
   overall: {
     info: () => `/bootstrap-static/`
   },
+  fixtures: {
+    all: () => `/fixtures/`,
+    byEvent: (eventId: string) => `/fixtures/?event=${eventId}`
+  },
   status: {
     info: () => `/event-status/`
   }

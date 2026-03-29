@@ -13,16 +13,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTeamsContext } from "@/context/teams-context";
 import { HistoricalTrends } from "@/components/HistoricalTrends";
 import { LeagueComparison } from "@/components/LeagueComparison";
-import { ArrowRightLeft, ArrowUp10, ChartNoAxesCombined, TrendingUpDown } from "lucide-react";
 import { TransfersTab } from "@/components/TransfersTab";
-
-interface GameweekTransfers {
-  gameweek: number;
-  transferCount: number;
-  transferCost: number;
-  totalImpact: number;
-}
-
+import { getPositionLabel } from "@/utils/player-utils";
 
 export default function Performance() {
   const [activeTab, setActiveTab] = useState("overview");
@@ -30,8 +22,6 @@ export default function Performance() {
   
   const [currentGameweek, setCurrentGameweek] = useState<number | null>(null);
   const { data: teams } = useTeamsContext();
-  const [selectedGWTransfers, setSelectedGWTransfers] = useState<number | null>(null);
-
   // Fetch gameweek picks
   const { data: gameweekPicks, isLoading, error } = useQuery({
     queryKey: ['gameweekPicks', currentManager?.id, currentGameweek],
@@ -82,22 +72,13 @@ export default function Performance() {
   });
 
   // Process live data for the table
-  const getPosition = (elementType: number) => {
-    switch (elementType) {
-      case 1: return 'GK';
-      case 2: return 'DEF';
-      case 3: return 'MID';
-      case 4: return 'FWD';
-      default: return '';
-    }
-  };
 
   const realPlayers = gameweekPicks?.picks
     ?.filter(pick => pick.position <= 11) // Starting 11 only
     .map(pick => {
       const player = allPlayers?.find(p => p.id === pick.element);
       const team = teams?.find(t => t.id === player?.team);
-      const playerStats = gameweekPlayerStats?.elements?.find((e: any) => e.id === pick.element);
+      const playerStats = gameweekPlayerStats?.elements?.find((e: { id: number }) => e.id === pick.element);
       const points = playerStats?.stats?.total_points || 0;
 
       let performance: 'exceptional' | 'average' | 'poor' = 'average';
@@ -107,37 +88,12 @@ export default function Performance() {
       return {
         name: player?.web_name || 'Unknown',
         team: team?.short_name || '',
-        position: player ? getPosition(player.element_type) : '',
+        position: player ? getPositionLabel(player.element_type) : '',
         points,
         performance,
       };
     }) || [];
 
-  const { data: managerTransfers } = useQuery({
-    queryKey: ['managerTransfers', currentManager?.id],
-    queryFn: () =>
-      currentManager?.id ?
-        managerService.getTransfers(currentManager.id.toString()) :
-        null,
-    enabled: !!currentManager?.id,
-  });
-
-  // Process transfers data
-  const gameweekTransfers = managerTransfers?.reduce((acc, transfer) => {
-    const existing = acc.find(item => item.gameweek === transfer.event);
-    if (existing) {
-      existing.transferCount++;
-      existing.transferCost += transfer.entry;
-    } else {
-      acc.push({
-        gameweek: transfer.event,
-        transferCount: 1,
-        transferCost: transfer.entry,
-        totalImpact: 0 // Will need to calculate this
-      });
-    }
-    return acc;
-  }, [] as GameweekTransfers[]) || [];
 
   if (!isSignedIn) {
     return (
@@ -162,27 +118,17 @@ export default function Performance() {
   }
 
   return (
-    <div className="space-y-4 pb-14 md:pb-0">
-      {/* Hero Section */}
+    <div className="space-y-4">
       <section className="space-y-4">
         <WelcomeBanner />
       </section>
       <Tabs defaultValue="overview" value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="fixed bottom-0 left-0 right-0 z-50 border-t md:hidden">
-          <TabsList className="w-full h-18 rounded-none bg-gray-900 justify-around">
-            <TabsTrigger value="overview" className="w-full h-full flex-col"><ChartNoAxesCombined />Stats</TabsTrigger>
-            <TabsTrigger value="historical" className="w-full h-full flex-col"><TrendingUpDown />Trends</TabsTrigger>
-            <TabsTrigger value="transfers" className="w-full h-full flex-col"><ArrowRightLeft />Transfers</TabsTrigger>
-            <TabsTrigger value="compare" className="w-full h-full flex-col"><ArrowUp10 />Standings</TabsTrigger>
-          </TabsList>
-        </div>
-
-        <div className="hidden md:block w-full overflow-x-auto no-scrollbar">
+        <div className="w-full overflow-x-auto no-scrollbar">
           <TabsList className="w-full justify-start inline-flex min-w-max">
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="historical">Historical Trends</TabsTrigger>
+            <TabsTrigger value="historical">Trends</TabsTrigger>
             <TabsTrigger value="transfers">Transfers</TabsTrigger>
-            <TabsTrigger value="compare">Mini-League Tables</TabsTrigger>
+            <TabsTrigger value="compare">League</TabsTrigger>
           </TabsList>
         </div>
         <TabsContent value="overview" className="space-y-4">

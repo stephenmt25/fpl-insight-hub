@@ -44,8 +44,8 @@ export function GameweekPaginator({
           <PaginationItem>
             {currentGameweekNumber > 1 && (
               <>
-              <PaginationPrevious className="hidden lg:flex" onClick={handlePrevious} />
-              <ChevronLeft className=" lg:hidden" onClick={handlePrevious} />
+              <PaginationPrevious className="hidden lg:flex" onClick={handlePrevious} aria-label="Previous gameweek" />
+              <ChevronLeft className=" lg:hidden" onClick={handlePrevious} aria-label="Previous gameweek" />
               </>
             )}
           </PaginationItem>
@@ -76,8 +76,8 @@ export function GameweekPaginator({
           <PaginationItem>
             {currentGameweekNumber < (liveGameweekData?.id || totalGameweeks) && (
               <>
-              <PaginationNext className="hidden lg:flex" onClick={handleNext} />
-              <ChevronRight className=" lg:hidden" onClick={handleNext} />
+              <PaginationNext className="hidden lg:flex" onClick={handleNext} aria-label="Next gameweek" />
+              <ChevronRight className=" lg:hidden" onClick={handleNext} aria-label="Next gameweek" />
               </>
             )}
           </PaginationItem>

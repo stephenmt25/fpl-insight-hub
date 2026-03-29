@@ -8,10 +8,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
-  Shield,
-  Shirt,
-  Star,
-  Flame,
   Check,
 } from "lucide-react";
 import {
@@ -24,6 +20,7 @@ import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { playerService, DreamTeamResponse } from "@/services/api/player.service";
 import { useQuery } from "@tanstack/react-query";
+import { getPositionLabel } from "@/utils/player-utils";
 
 interface DreamTeamPlayer {
   id: number;
@@ -67,7 +64,7 @@ interface LiveDataResponse {
   elements: Array<LiveStats & { id: number }>;
 }
 
-export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek: number, currentGameweek: any }) {
+export function DreamTeamTable({ liveGameweek: _liveGameweek, currentGameweek }: { liveGameweek: number, currentGameweek: number }) {
   const displayedWeek = currentGameweek.toString()
   const [players, setPlayers] = useState<DreamTeamPlayer[]>([]);
 
@@ -94,7 +91,7 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
         .in('id', playerIds);
 
       if (error) {
-        console.error('Error fetching player data:', error);
+        if (import.meta.env.DEV) console.error('Error fetching player data:', error);
         return;
       }
 
@@ -107,9 +104,7 @@ export function DreamTeamTable({ liveGameweek, currentGameweek }: { liveGameweek
         return {
           id: playerDetails.id,
           name: `${playerDetails.first_name} ${playerDetails.second_name}`,
-          position: playerDetails.element_type === 1 ? 'GK' : 
-                   playerDetails.element_type === 2 ? 'DEF' :
-                   playerDetails.element_type === 3 ? 'MID' : 'FWD',
+          position: getPositionLabel(playerDetails.element_type),
           club: playerDetails.team_code?.toString() || '',
           points: dreamTeamMember.points,
           selectedBy: playerDetails.selected_by_percent,

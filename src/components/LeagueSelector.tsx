@@ -34,7 +34,7 @@ export function LeagueSelector({ leagueId, updateSelectedLeague }: LeagueSelecto
         console.error("Error parsing managerData from localStorage:", error);
       }
     } else {
-      let classicLeagues = [
+      const classicLeagues = [
         { id: "314", name: "Overall" },
         { id: "321", name: "Second Chance" },
         { id: "276", name: "Gameweek 1" },

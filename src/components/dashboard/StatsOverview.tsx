@@ -1,13 +1,22 @@
 import { StatsCard } from "@/components/StatsCard";
 import { LiveGWContext } from "@/context/livegw-context";
 import { useContext } from "react";
+import { Database } from "@/integrations/supabase/types";
+
+type FplOverallDataRow = Database['public']['Tables']['fploveralldata']['Row'];
+type PlayerDataRow = Database['public']['Tables']['plplayerdata']['Row'];
+
+interface MostCaptainedData {
+  player: PlayerDataRow;
+  points: number;
+}
 
 interface StatsOverviewProps {
-  currentGW: any;
-  mostCaptPlayerData: any;
-  highScorePlayerData: any;
-  highScorePlayerFixture: any;
-  mostCaptPlayerFixture: any
+  currentGW: FplOverallDataRow | null;
+  mostCaptPlayerData: MostCaptainedData | null;
+  highScorePlayerData: PlayerDataRow[] | null;
+  highScorePlayerFixture: string;
+  mostCaptPlayerFixture: string;
 }
 
 export function StatsOverview({ currentGW, mostCaptPlayerData, highScorePlayerData, highScorePlayerFixture, mostCaptPlayerFixture }: StatsOverviewProps) {
@@ -50,10 +59,10 @@ export function StatsOverview({ currentGW, mostCaptPlayerData, highScorePlayerDa
           description="Loading..."
         />
       )}
-      {mostCaptPlayerData[0].status !== "loading" ? (
+      {mostCaptPlayerData?.player ? (
         <StatsCard
           title="Most Captained"
-          value={mostCaptPlayerData[0]?.web_name || "..."}
+          value={mostCaptPlayerData.player.web_name || "..."}
           description={mostCaptPlayerFixture}
         />
       ) : (

@@ -3,7 +3,6 @@ import { AreaChart, Area, BarChart, Bar, LineChart, Line, XAxis, YAxis, Cartesia
 import { useQuery } from "@tanstack/react-query";
 import { managerService } from "@/services/api/manager.service";
 import { useAuth } from "@/context/auth-context";
-import { GameweekHistory } from "@/types/fpl";
 import { Info } from "lucide-react";
 import {
   Tooltip as UITooltip,

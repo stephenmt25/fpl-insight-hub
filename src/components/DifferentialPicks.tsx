@@ -6,13 +6,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { kMeansClustering, identifyDifferentials, getClusterStats } from "@/lib/ml/differential-clustering";
 import { PlayerFeatures } from "@/lib/ml/types";
 
-interface PlayerData {
-  web_name: string;
-  form: string;
-  selected_by_percent: string;
-  team: number;
-}
-
 interface ProcessedPlayerData {
   name: string;
   form: number;

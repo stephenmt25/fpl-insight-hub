@@ -176,7 +176,7 @@ export function PriceChangePredictions() {
         )}
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden flex flex-col">
-        <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as any)} className="flex flex-col h-full">
+        <Tabs value={selectedTab} onValueChange={(v) => setSelectedTab(v as 'all' | 'rise' | 'fall')} className="flex flex-col h-full">
           <TabsList className="grid w-full grid-cols-3 mb-4 flex-shrink-0">
             <TabsTrigger value="all">
               All ({predictions.length})

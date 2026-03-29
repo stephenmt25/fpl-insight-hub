@@ -28,7 +28,7 @@ interface LeagueEntry {
 }
 
 interface LeagueTableProps {
-  onManagerSelect?: (manager: string) => void;
+  onManagerSelect?: (manager: { id: number; name: string }) => void;
   leagueData: LeagueEntry[];
   selectedLeague: string;
   pageNumber: string;
@@ -193,7 +193,7 @@ export function LeagueTable({
                 <TableRow
                   key={entry.id}
                   className="cursor-pointer hover:bg-gray-100"
-                  onClick={() => onManagerSelect?.(entry.player_name)}
+                  onClick={() => onManagerSelect?.({ id: entry.entry, name: entry.player_name })}
                 >
                   <TableCell>
                     <span className="flex justify-center">

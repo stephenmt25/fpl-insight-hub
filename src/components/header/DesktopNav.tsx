@@ -1,43 +1,35 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
-interface DesktopNavProps {
-  handleClick: (tab: string) => void;
-}
+const navLinks = [
+  { path: "/", label: "Dashboard" },
+  { path: "/my-team", label: "My Team" },
+  { path: "/explore", label: "Explore" },
+  { path: "/league", label: "League" },
+  { path: "/insights", label: "Insights" },
+];
 
-export function DesktopNav({ handleClick }: DesktopNavProps) {
+export function DesktopNav() {
+  const location = useLocation();
+
   return (
     <nav className="hidden md:flex items-center text-gray-300 gap-6">
-      <Link
-        to="/"
-        className="text-sm font-medium hover:text-white"
-      >
-        Dashboard
-      </Link>
-      <Link
-        to="/performance"
-        className="text-sm font-medium hover:text-white"
-      >
-        Performance
-      </Link>
-      <Link
-        onClick={() => handleClick('table')}
-        to="/standings"
-        className="text-sm font-medium hover:text-white"
-      >
-        League Standings
-      </Link>
-      <Link
-        to="/insights"
-        className="text-sm font-medium hover:text-white"
-      >
-        Insights
-      </Link>
-      <Link
-        to="/testing"
-        className="text-sm font-medium hover:text-white"
-      >
-        Testing
-      </Link>
+      {navLinks.map(({ path, label }) => {
+        const isActive = path === "/"
+          ? location.pathname === "/"
+          : location.pathname.startsWith(path);
+
+        return (
+          <Link
+            key={path}
+            to={path}
+            className={`text-sm font-medium transition-colors ${
+              isActive ? "text-white" : "hover:text-white"
+            }`}
+          >
+            {label}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

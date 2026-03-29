@@ -19,6 +19,9 @@ vi.mock("@/services/fpl-api", () => ({
     managerService: {
         getInfo: vi.fn().mockResolvedValue({}),
     },
+    overallService: {
+        getStatus: vi.fn().mockResolvedValue({ status: [], leagues: "" }),
+    },
 }));
 
 vi.mock("@/integrations/supabase/client", () => ({
@@ -30,6 +33,15 @@ vi.mock("@/integrations/supabase/client", () => ({
                 }),
             }),
         }),
+        functions: {
+            invoke: vi.fn().mockResolvedValue({ data: null, error: null }),
+        },
+    },
+}));
+
+vi.mock("@/services/api-client", () => ({
+    apiClient: {
+        get: vi.fn().mockResolvedValue({ events: [], chips: [], phases: [], elements: [], teams: [], element_types: [], game_config: { scoring: {} } }),
     },
 }));
 
@@ -58,16 +70,16 @@ const renderWithProviders = (component: React.ReactNode) => {
 };
 
 describe("Index Page", () => {
-    it("renders the welcome message or sign in options", () => {
+    it("renders the welcome message and sign in options", () => {
         renderWithProviders(<Index />);
-        // Check for sign in options since we are not authenticated by default
-        expect(screen.getByText(/Here's the FPL 2025 season at a glance/i)).toBeInTheDocument();
+        expect(screen.getByText(/FPL 2025 Season at a Glance/i)).toBeInTheDocument();
         expect(screen.getByText("Sign In with FPL ID")).toBeInTheDocument();
+        expect(screen.getByText("Try as Guest")).toBeInTheDocument();
     });
 
-    it("renders the tabs", () => {
+    it("renders the gameweek stats section", () => {
         renderWithProviders(<Index />);
-        expect(screen.getByText("FPL Stats")).toBeInTheDocument();
-        expect(screen.getByText("FPL Standings")).toBeInTheDocument();
+        // StatsOverview renders stat cards with loading states
+        expect(screen.getAllByText("Loading...").length).toBeGreaterThan(0);
     });
 });

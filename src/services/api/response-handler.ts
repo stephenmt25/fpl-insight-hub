@@ -1,4 +1,4 @@
-import { AxiosError, AxiosResponse } from 'axios';
+import { AxiosError } from 'axios';
 
 export class ApiError extends Error {
   constructor(
@@ -19,7 +19,7 @@ export class ApiError extends Error {
       url: error?.config?.url || 'unknown endpoint'
     };
 
-    console.error('API Error Details:', errorDetails);
+    if (import.meta.env.DEV) console.error('API Error Details:', errorDetails);
 
     if (!error?.response) {
       return new ApiError(
@@ -62,49 +62,30 @@ export class ApiError extends Error {
   }
 }
 
-export async function handleApiResponse<T>(promise: Promise<any>): Promise<T> {
+export async function handleApiResponse<T>(promise: Promise<unknown>): Promise<T> {
   try {
     const response = await promise;
     
     if (!response) {
-      console.error('No response received from API');
       throw new ApiError('No response received from API', 500, 'NO_RESPONSE');
     }
-    
+
     // Handle both direct data responses and responses with a data property
-    const data = response.data !== undefined ? response.data : response;
-    
+    const data = (response as { data?: unknown }).data !== undefined ? (response as { data: unknown }).data : response;
+
     if (data === undefined || data === null) {
-      console.error('No data in API response');
       throw new ApiError('No data received from API', 500, 'NO_DATA');
     }
 
-    // Add detailed logging for debugging
-    console.log('API Response:', {
-      endpoint: response.config?.url,
-      status: response.status,
-      dataType: typeof data,
-      hasData: !!data
-    });
-    
-    return data;
+    return data as T;
   } catch (error) {
-    console.error('API Error:', error);
-    
     if (error instanceof AxiosError) {
       throw ApiError.fromAxiosError(error);
     }
-    
+
     if (error instanceof ApiError) {
       throw error;
     }
-    
-    // Add more context to unexpected errors
-    console.error('Unexpected API error details:', {
-      error,
-      type: error?.constructor?.name,
-      message: error?.message
-    });
     
     throw new ApiError(
       'An unexpected error occurred while fetching data',

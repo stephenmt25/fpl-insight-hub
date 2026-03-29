@@ -1,20 +1,30 @@
 import { AveragePtsLineChart } from "@/components/averagePointsLineChart";
-import { CaptaincyPieChart } from "../captainsPieChart";
 import { FormValueAnalysis } from "../FormValueAnalysis";
 import { DifferentialPicks } from "../DifferentialPicks";
+import { DreamTeamTable } from "../DreamTeamTable";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "../ui/card";
 import { useContext } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
 import { ThumbsDown, ThumbsUp, TrendingUp, DollarSign, Trophy, LineChart, Users, Target } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Database } from "@/integrations/supabase/types";
+
+type PlayerDataRow = Database['public']['Tables']['plplayerdata']['Row'];
+type TeamDataRow = Database['public']['Tables']['plteams']['Row'];
+type FplOverallDataRow = Database['public']['Tables']['fploveralldata']['Row'];
+
+interface MostCaptainedData {
+  player: PlayerDataRow;
+  points: number;
+}
 
 interface VisualizationSectionProps {
-  mostCaptPlayerData: any;
-  mostCaptPlayerFixture: any;
-  selectedGameweekData: any;
-  mostTransferredPlayerData: any;
-  mostTransferredPlayerTeam: any;
+  mostCaptPlayerData: MostCaptainedData | null;
+  mostCaptPlayerFixture: string;
+  selectedGameweekData: FplOverallDataRow | null;
+  mostTransferredPlayerData: PlayerDataRow[] | null;
+  mostTransferredPlayerTeam: TeamDataRow | null;
 }
 
 export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture, selectedGameweekData, mostTransferredPlayerData, mostTransferredPlayerTeam }: VisualizationSectionProps) {
@@ -23,14 +33,14 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
 
   const getPerformanceIcon = () => {
     if (mostCaptPlayerData) {
-      return mostCaptPlayerData[1] < 4 ?
+      return mostCaptPlayerData.points < 4 ?
         <ThumbsDown />
         :
         <ThumbsUp />
     }
   }
 
-  let formattedTransfers = new Intl.NumberFormat('en-US').format(Number(selectedGameweekData?.transfers_made));
+  const formattedTransfers = new Intl.NumberFormat('en-US').format(Number(selectedGameweekData?.transfers_made));
   // local state to control the Differential Picks modal
   const [showDifferentialModal, setShowDifferentialModalState] = useState(false);
 
@@ -56,7 +66,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
             <AveragePtsLineChart />
           </div>
           <div className="col-span-3 lg:col-span-1 order-1 lg:order-2">
-            {mostCaptPlayerData && mostCaptPlayerData[1] ?
+            {mostCaptPlayerData && mostCaptPlayerData.points ?
               <Card className="lg:h-[54%] lg:w-4/5">
                 <CardHeader>
                   <CardDescription>
@@ -66,10 +76,10 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                 <CardContent className="flex flex-col lg:flex-row gap-4">
                   <div className="w-full flex justify-between rounded">
                     <div className="text-4xl">
-                      {mostCaptPlayerData[0]?.web_name}
+                      {mostCaptPlayerData.player?.web_name}
                     </div>
                     <div className="text-4xl text-right text-gray-600">
-                      {mostCaptPlayerData[1] * 2}({mostCaptPlayerData[1]}x2)
+                      {mostCaptPlayerData.points * 2}({mostCaptPlayerData.points}x2)
                     </div>
                   </div>
                 </CardContent>
@@ -78,7 +88,7 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                     <div className="text-sm text-gray-400">
                       {mostCaptPlayerFixture}
                       <br />
-                      Ownership: {mostCaptPlayerData[0]?.selected_by_percent}%
+                      Ownership: {mostCaptPlayerData.player?.selected_by_percent}%
                     </div>
                     <div>
                       {getPerformanceIcon()}
@@ -134,10 +144,10 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
                         Most Transferred In
                       </div>
                       <div className="text-xl text-right text-gray-600">
-                        {mostTransferredPlayerData[0]?.web_name}
+                        {mostTransferredPlayerData[0]?.web_name || 'Unknown'}
                         <br />
                         <div className="text-sm text-gray-400">
-                          {mostTransferredPlayerTeam[0]?.short_name}
+                          {mostTransferredPlayerTeam?.short_name}
                         </div>
                       </div>
                     </div>
@@ -276,17 +286,17 @@ export function VisualizationSection({ mostCaptPlayerData, mostCaptPlayerFixture
             </div>
           </div>
 
-          {/* {liveGameweekData &&
+          {liveGameweekData && selectedGameweekData &&
             <div className="col-span-3">
               <Card>
                 <CardHeader>
                   <CardDescription>Dream Team Performance</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <DreamTeamTable liveGameweek={liveGameweekData.id} currentGameweek={currentGameweek} />
+                  <DreamTeamTable liveGameweek={liveGameweekData.id} currentGameweek={selectedGameweekData.id} />
                 </CardContent>
               </Card>
-            </div>} */}
+            </div>}
           {/* <div className="col-span-3">
             <DifferentialPicks />
           </div>

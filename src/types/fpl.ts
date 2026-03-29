@@ -11,7 +11,7 @@ export interface Manager {
   leagues: {
     classic: League[];
     h2h: League[];
-    cup: any;
+    cup: Record<string, unknown>;
   };
 }
 
@@ -70,7 +70,7 @@ export interface ManagerLeagues {
   leagues: {
     classic: League[];
     h2h: League[];
-    cup: any;
+    cup: Record<string, unknown>;
   };
 }
 
@@ -194,7 +194,7 @@ export interface GameweekPlayerStats {
   elements: {
     id: number;
     stats: PlayerStats;
-    explain: any[];
+    explain: { fixture: number; stats: { identifier: string; points: number; value: number }[] }[];
   }[];
 }
 
@@ -218,7 +218,7 @@ export interface Pick {
 
 export interface GameweekPicks {
   active_chip: string | null;
-  automatic_subs: any[];
+  automatic_subs: { entry: number; element_in: number; element_out: number; event: number }[];
   entry_history: {
     event: number;
     points: number;

@@ -1,6 +1,6 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { ScatterChart, Scatter, XAxis, YAxis, CartesianGrid, Tooltip, ReferenceLine, ResponsiveContainer, ZAxis, Dot, Legend } from 'recharts';
-import { useState, useEffect, FC } from 'react';
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScatterChart, Scatter, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer, ZAxis } from 'recharts';
+import { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 
 interface PlayerData {
@@ -20,7 +20,6 @@ interface ProcessedPlayerData {
 }
 
 export function FormValueAnalysis() {
-  const [playerData, setPlayerData] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState(true);
   const [processedData, setProcessedData] = useState<ProcessedPlayerData[]>([]);
   const [hoveredPlayer, setHoveredPlayer] = useState<ProcessedPlayerData | null>(null);

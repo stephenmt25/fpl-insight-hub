@@ -4,10 +4,10 @@ import { createContext, useContext, useState, ReactNode } from "react";
 interface AuthContextType {
   isSignedIn: boolean;
   fplId: string | null;
-  signIn: (id: string, manager: Object) => void;
+  signIn: (id: string, manager: Manager) => void;
   signOut: () => void;
   updateManagerHistory: (history: ManagerHistory) => void;
-  currentManager: any;
+  currentManager: Manager | null;
   managerHistory: ManagerHistory
 }
 
@@ -16,10 +16,10 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [isSignedIn, setIsSignedIn] = useState(false);
   const [fplId, setFplId] = useState<string | null>(null);
-  const [ currentManager, setCurrentManager ] = useState<any | null>(null);
+  const [ currentManager, setCurrentManager ] = useState<Manager | null>(null);
   const [ managerHistory, setManagerHistory ] = useState<ManagerHistory>(null);
 
-  const signIn = (id: string, manager: Object) => {
+  const signIn = (id: string, manager: Manager) => {
     setFplId(id);
     setCurrentManager(manager)
     localStorage.setItem("managerData", JSON.stringify(manager) )

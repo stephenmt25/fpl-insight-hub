@@ -6,7 +6,7 @@ import type { OverallInfo, Status } from '@/types/fpl';
 export const overallService = {
   getInfo: async (): Promise<OverallInfo> => {
     return handleApiResponse(
-      apiClient.get(ENDPOINTS.player.dreamTeam('1'))
+      apiClient.get(ENDPOINTS.overall.info())
     );
   },
   getStatus: async (): Promise<Status> => {

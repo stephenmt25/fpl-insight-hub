@@ -2,13 +2,15 @@ import { LeagueTable } from "@/components/LeagueTable";
 import { StatsCard } from "@/components/StatsCard";
 import { useContext, useState } from "react";
 import { LiveGWContext } from "@/context/livegw-context";
+import { resolveLeagueName } from "@/utils/league-utils";
+import { LeagueDetails } from "@/types/fpl";
 
 interface LeagueTableSectionProps {
   isLoadingoverallLeagueData: boolean;
-  leagueData: any;
+  leagueData: LeagueDetails;
   pageNumber: string;
   setPageNumber: (value: string) => void;
-  onManagerSelect: (manager: string) => void;
+  onManagerSelect: (manager: { id: number; name: string }) => void;
   setLeagueId: (id: string) => void;
 }
 
@@ -27,32 +29,9 @@ export function LeagueTableSection({
   const [id, setId] = useState("314")
 
   const updateSelectedLeague = (leagueId: string) => {
-    const managerData = localStorage.getItem("managerData");
-    if (managerData) {
-      const parsedData = JSON.parse(managerData);
-      const classicLeagues = parsedData?.leagues?.classic || [];
-      const leagueName = classicLeagues.find((league: any) => league.id === leagueId)?.name || 'Unknown League'
-      setLeagueId(leagueId)
-      setId(leagueId)
-      setSelectedLeague(leagueName)
-    } else {
-      setLeagueId(leagueId);
-      setId(leagueId)
-      switch (leagueId) {
-        case "314":
-          setSelectedLeague("Overall");
-          break;
-        case "321":
-          setSelectedLeague("Second Chance");
-          break;
-        case "276":
-          setSelectedLeague("Gameweek 1");
-          break;
-        default:
-          setSelectedLeague("Overall");
-          break;
-      }
-    }
+    setLeagueId(leagueId);
+    setId(leagueId);
+    setSelectedLeague(resolveLeagueName(leagueId));
   }
 
   return (

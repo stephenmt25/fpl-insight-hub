@@ -43,8 +43,8 @@ export function WelcomeBanner({ }: WelcomeBannerProps) {
     fetchManagerHistory()
   }, [])
 
-  let formattedPoints = new Intl.NumberFormat('en-US').format(Number(currentManager?.summary_overall_points));
-  let formattedOR = new Intl.NumberFormat('en-US').format(Number(currentManager?.summary_overall_rank));
+  const formattedPoints = new Intl.NumberFormat('en-US').format(Number(currentManager?.summary_overall_points));
+  const formattedOR = new Intl.NumberFormat('en-US').format(Number(currentManager?.summary_overall_rank));
 
 
   const totalPointsSum = managerHistory?.past.reduce((sum: number, season: any) => sum + season.total_points, 0);

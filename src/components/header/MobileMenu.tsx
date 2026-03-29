@@ -29,8 +29,8 @@ export function MobileMenu({ isMobileMenuOpen, setIsMobileMenuOpen }: MobileMenu
         </Button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent 
-        align="end" 
+      <DropdownMenuContent
+        align="end"
         className="w-48 md:hidden bg-white"
         sideOffset={8}
       >
@@ -38,10 +38,13 @@ export function MobileMenu({ isMobileMenuOpen, setIsMobileMenuOpen }: MobileMenu
           <Link to="/" className="w-full">Dashboard</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link to="/performance" className="w-full">Performance</Link>
+          <Link to="/my-team" className="w-full">My Team</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
-          <Link to="/standings" className="w-full">League Standings</Link>
+          <Link to="/explore" className="w-full">Explore Players</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link to="/league" className="w-full">League</Link>
         </DropdownMenuItem>
         <DropdownMenuItem>
           <Link to="/insights" className="w-full">Insights</Link>
