@@ -61,7 +61,7 @@ export default function Launcher() {
         <div className="pointer-events-none mx-auto -mb-4 h-36 w-full max-w-md sm:h-44">
           <HeroScene />
         </div>
-        <h1 className="chrome-text text-3xl uppercase tracking-[0.2em] sm:text-4xl">Insight Hub</h1>
+        <h1 className="text-title text-3xl uppercase tracking-[0.2em] sm:text-4xl">Insight Hub</h1>
         <p className="eyebrow">
           {fpl ? <>{fpl.current?.name ?? "Pre-season"} · {compact(fpl.bootstrap.total_players)} managers</> : "Loading the season…"}
           {next && c && !c.done && (

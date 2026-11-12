@@ -36,7 +36,7 @@ function SignInGate({ app }: { app: AppDef }) {
   return (
     <div className="panel mx-auto flex max-w-lg flex-col items-center gap-4 p-8 text-center">
       <BallScene />
-      <h2 className="chrome-text text-3xl">{app.name} needs your team</h2>
+      <h2 className="text-title text-3xl">{app.name} needs your team</h2>
       <p className="text-sm text-muted-foreground">Enter your FPL ID to open this app. Only public data is read; there is no password.</p>
       <div className="flex flex-wrap justify-center gap-3">
         <Button className="btn-chrome" onClick={() => setDialogOpen(true)}>Sign in with FPL ID</Button>
@@ -64,7 +64,7 @@ function AppFrame({ app }: { app: AppDef }) {
             <Link to="/" className="inline-flex items-center hover:text-foreground"><ChevronLeft className="h-3 w-3" />Apps</Link>
             {" / "}{category.name}{app.needsManager && manager ? ` / ${manager.name}` : ""}
           </p>
-          <h1 className="chrome-text truncate text-3xl leading-tight sm:text-4xl">{app.name}</h1>
+          <h1 className="text-title truncate text-3xl leading-tight sm:text-4xl">{app.name}</h1>
           <p className="truncate text-sm text-muted-foreground">{app.tagline}</p>
         </div>
       </header>

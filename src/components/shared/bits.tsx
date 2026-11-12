@@ -79,7 +79,7 @@ export function GameweekPicker({ value, onChange, max, min = 1, live }: {
         <ChevronLeft />
       </Button>
       <div className="min-w-40 text-center">
-        <p className="h-display chrome-text text-3xl">Gameweek {value}</p>
+        <p className="h-display text-title text-3xl">Gameweek {value}</p>
         <p className="eyebrow mt-1">
           {value === live ? <span className="text-blood">● current</span> : live && value < live ? "finished" : "upcoming"}
         </p>

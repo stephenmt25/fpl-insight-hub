@@ -48,7 +48,7 @@ function PlayerDialog({ player, fpl, onClose }: { player: Player | null; fpl: Fp
         {player && (
           <>
             <DialogHeader>
-              <DialogTitle className="h-display chrome-text text-3xl">{fullName(player)}</DialogTitle>
+              <DialogTitle className="h-display text-title text-3xl">{fullName(player)}</DialogTitle>
               <DialogDescription>
                 {fpl.teamById.get(player.team)?.name} · {positionLabel(player.element_type)} · {price(player.now_cost)}
                 {player.news && <span className="mt-1 block text-warn">{player.news}</span>}

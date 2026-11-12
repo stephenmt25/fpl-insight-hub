@@ -33,7 +33,7 @@ function SignInDialog() {
     <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
       <DialogContent className="max-w-md border-border bg-popover">
         <DialogHeader>
-          <DialogTitle className="chrome-text text-3xl font-normal">Enter the Hub</DialogTitle>
+          <DialogTitle className="text-title text-3xl font-normal">Enter the Hub</DialogTitle>
           <DialogDescription>Your FPL ID loads your public team data. No password is asked for or stored.</DialogDescription>
         </DialogHeader>
         <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); void submit(id); }}>
@@ -169,7 +169,7 @@ export function Layout() {
         <div className="container flex h-14 items-center gap-3">
           <Link to="/" className="flex shrink-0 items-center gap-2 text-chrome" aria-label="FPL Insight Hub home">
             <Sigil className="h-7 w-7" />
-            {!home && <span className="chrome-sheen hidden text-xl uppercase leading-none tracking-[0.18em] sm:block">Insight Hub</span>}
+            {!home && <span className="text-title hidden text-xl uppercase leading-none tracking-[0.18em] sm:block">Insight Hub</span>}
           </Link>
           {!home && (
             <button onClick={() => setSpotlight(true)}

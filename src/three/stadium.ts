@@ -16,6 +16,8 @@ const ROW_RISE = 1.25;
 const STAND_START = 9;
 const WALL_OFFSET = STAND_START + ROWS * ROW_DEPTH + 1.5;
 const WALL_HEIGHT = 42;
+/** Rows left empty for the walkway that splits the lower and upper tiers. */
+const TIER_GAP = [11.2, 13.4] as const;
 const SHAPE_N = 3; // superellipse exponent: between an ellipse (2) and a rectangle (∞)
 
 const sgnPow = (v: number, e: number) => Math.sign(v) * Math.abs(v) ** e;
@@ -56,6 +58,40 @@ function outwardNormal(theta: number, offset: number) {
 }
 
 /* ---------- Architecture ---------- */
+
+/** Flat gothic cross with flared, pointed arms; the foot of the stem sits at the origin. */
+function crossGeometry(size: number) {
+  const arm = (len: number): [number, number][] => [
+    [-0.09, 0.09], [-0.07, len * 0.55], [-0.2, len * 0.82], [0, len], [0.2, len * 0.82], [0.07, len * 0.55], [0.09, 0.09],
+  ];
+  const turn = ([x, y]: [number, number], quarter: number): [number, number] =>
+    quarter === 0 ? [x, y] : quarter === 1 ? [y, -x] : quarter === 2 ? [-x, -y] : [-y, x];
+  // Up, right, down (the long stem), left
+  const outline = [0.75, 0.55, 1.15, 0.55].flatMap((len, quarter) => arm(len).map((pt) => turn(pt, quarter)));
+  const shape = new THREE.Shape(outline.map(([x, y]) => new THREE.Vector2(x * size, y * size)));
+  const geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.14 * size, bevelEnabled: false });
+  geometry.translate(0, 1.15 * size, -0.07 * size);
+  return geometry;
+}
+
+function roseWindow(radius: number, glow: THREE.Material, chrome: THREE.Material, petals = 12) {
+  const rose = new THREE.Group();
+  rose.add(new THREE.Mesh(new THREE.CircleGeometry(radius, 40), glow));
+  rose.add(new THREE.Mesh(new THREE.TorusGeometry(radius, radius * 0.07, 6, 48), chrome));
+  rose.add(new THREE.Mesh(new THREE.TorusGeometry(radius * 0.36, radius * 0.045, 6, 32), chrome));
+  for (let i = 0; i < petals; i++) {
+    const angle = (i / petals) * Math.PI * 2;
+    const spoke = new THREE.Mesh(new THREE.BoxGeometry(radius * 0.64, radius * 0.045, radius * 0.06), chrome);
+    spoke.position.set(Math.cos(angle) * radius * 0.68, Math.sin(angle) * radius * 0.68, 0);
+    spoke.rotation.z = angle;
+    // A small circle between each pair of spokes makes the petal ring
+    const petal = new THREE.Mesh(new THREE.TorusGeometry(radius * 0.13, radius * 0.03, 5, 16), chrome);
+    const mid = angle + Math.PI / petals;
+    petal.position.set(Math.cos(mid) * radius * 0.8, Math.sin(mid) * radius * 0.8, 0);
+    rose.add(spoke, petal);
+  }
+  return rose;
+}
 
 function lancet(width: number, height: number) {
   const spring = height * 0.58;
@@ -107,7 +143,8 @@ function buildBowl(group: THREE.Group) {
   group.add(new THREE.Mesh(wallGeometry, new THREE.MeshStandardMaterial({ color: 0x14141b, metalness: 0.5, roughness: 0.6, side: THREE.DoubleSide })));
 
   // Chrome parapet along the top of the wall and the pitch-side rail
-  for (const [offset, y, radius] of [[WALL_OFFSET, WALL_HEIGHT, 0.5], [STAND_START - 0.6, 1.2, 0.18]] as const) {
+  const concourse = STAND_START + TIER_GAP[0] * ROW_DEPTH;
+  for (const [offset, y, radius] of [[WALL_OFFSET, WALL_HEIGHT, 0.5], [STAND_START - 0.6, 1.2, 0.18], [concourse, 1.4 + TIER_GAP[0] * ROW_RISE, 0.22]] as const) {
     const curve = new THREE.CatmullRomCurve3(Array.from({ length: 120 }, (_, i) => ring((i / 120) * Math.PI * 2, offset, y)), true);
     group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 360, radius, 6, true), CHROME()));
   }
@@ -131,11 +168,34 @@ function buildArcade(group: THREE.Group) {
   const m = new THREE.Matrix4();
   const q = new THREE.Quaternion();
   const up = new THREE.Vector3(0, 1, 0);
-  const place = (theta: number, out: number, y: number, scale: number) => {
+  const tiltQ = new THREE.Quaternion();
+  const xAxis = new THREE.Vector3(1, 0, 0);
+  /** Matrix for something on the wall at `theta`: `out` metres outside it, facing outward, optionally tilted. */
+  const place = (theta: number, out: number, y: number, scale: number, tilt = 0) => {
     const n = outwardNormal(theta, WALL_OFFSET);
     q.setFromAxisAngle(up, Math.atan2(n.x, n.z));
+    if (tilt) q.multiply(tiltQ.setFromAxisAngle(xAxis, tilt));
     return m.compose(ring(theta, WALL_OFFSET, y).addScaledVector(n, out), q, new THREE.Vector3(scale, scale, scale));
   };
+
+  // Window tracery: a mullion and an oculus in the head of each tall window
+  const mullions = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 14, 0.5), CHROME(), bays);
+  const oculi = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.2, 6, 20), CHROME(), bays);
+
+  // Flying buttresses: a free-standing pier outside the wall, tied back to it by a sloping flyer
+  const stone = new THREE.MeshStandardMaterial({ color: 0x1b1b24, metalness: 0.7, roughness: 0.45 });
+  const FLY_OUT = 12;
+  const outerPiers = new THREE.InstancedMesh(new THREE.BoxGeometry(1.7, 30, 2.6), stone, bays);
+  const outerPinnacles = new THREE.InstancedMesh(new THREE.ConeGeometry(1.5, 9, 4), CHROME(), bays);
+  const flyerRun = FLY_OUT - 1.4;
+  const flyerRise = 11;
+  const flyers = new THREE.InstancedMesh(new THREE.BoxGeometry(0.8, 1.1, Math.hypot(flyerRun, flyerRise)), stone, bays);
+  const crosses = new THREE.InstancedMesh(crossGeometry(3.2), CHROME(), bays / 2);
+
+  // Rib vault: chrome ribs arching from the wall head in over the upper tier
+  const ribCurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, 10, -2), new THREE.Vector3(0, 9, -12));
+  const ribs = new THREE.InstancedMesh(new THREE.TubeGeometry(ribCurve, 12, 0.24, 5), CHROME(), bays);
+  const ribTips: THREE.Vector3[] = [];
   const step = (Math.PI * 2) / bays;
   thetas.forEach((theta, i) => {
     // Tall clerestory window above a smaller arcade arch
@@ -143,15 +203,28 @@ function buildArcade(group: THREE.Group) {
     panes.setMatrixAt(i * 2, place(theta, 0.3, 16.4, 1));
     frames.setMatrixAt(i * 2 + 1, place(theta, 0.1, 1, 0.55));
     panes.setMatrixAt(i * 2 + 1, place(theta, 0.3, 1.2, 0.55));
+    mullions.setMatrixAt(i, place(theta, 0.5, 16.8 + 7, 1));
+    oculi.setMatrixAt(i, place(theta, 0.5, 16 + 16.2, 1));
     const between = theta + step / 2;
     piers.setMatrixAt(i, place(between, 1.4, (WALL_HEIGHT + 4) / 2, 1));
     pinnacles.setMatrixAt(i, place(between, 1.4, WALL_HEIGHT + 9.5, 1));
+
+    outerPiers.setMatrixAt(i, place(between, FLY_OUT, 15, 1));
+    outerPinnacles.setMatrixAt(i, place(between, FLY_OUT, 34.5, 1));
+    flyers.setMatrixAt(i, place(between, 1.4 + flyerRun / 2, 27 + flyerRise / 2, 1, Math.atan2(flyerRise, flyerRun)));
+    if (i % 2 === 0) crosses.setMatrixAt(i / 2, place(between, FLY_OUT, 38.6, 1));
+
+    ribs.setMatrixAt(i, place(between, 0, WALL_HEIGHT, 1));
+    ribTips.push(ring(between, WALL_OFFSET, WALL_HEIGHT + 9).addScaledVector(outwardNormal(between, WALL_OFFSET), -12));
   });
-  group.add(frames, panes, piers, pinnacles);
+  // The ring beam the ribs meet at
+  group.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(ribTips, true), 400, 0.3, 6, true), CHROME()));
+  group.add(frames, panes, piers, pinnacles, mullions, oculi, outerPiers, outerPinnacles, flyers, crosses, ribs);
   return paneMaterial;
 }
 
-function buildTowers(group: THREE.Group) {
+function buildTowers(group: THREE.Group): THREE.Vector3[] {
+  const tops: THREE.Vector3[] = [];
   const stone = new THREE.MeshStandardMaterial({ color: 0x15151d, metalness: 0.6, roughness: 0.5 });
   const chrome = CHROME();
   const glow = new THREE.MeshBasicMaterial({ color: BLOOD, transparent: true, opacity: 0.75, side: THREE.DoubleSide });
@@ -172,6 +245,24 @@ function buildTowers(group: THREE.Group) {
     spire.rotation.y = Math.PI / 8;
     tower.add(shaft, spire);
 
+    const cross = new THREE.Mesh(crossGeometry(width * 0.75), chrome);
+    cross.position.y = height * 1.75 - 1;
+    tower.add(cross);
+    for (const level of [0.3, 0.62, 1]) {
+      const belt = new THREE.Mesh(new THREE.BoxGeometry(width + 1.2, 1.1, width + 1.2), chrome);
+      belt.position.y = height * level;
+      tower.add(belt);
+    }
+    // Gargoyle spikes jutting from the corners under the spire
+    for (let corner = 0; corner < 4; corner++) {
+      const spike = new THREE.Mesh(new THREE.ConeGeometry(0.55, width * 0.55, 4), chrome);
+      const angle = Math.PI / 4 + (corner * Math.PI) / 2;
+      spike.position.set(Math.cos(angle) * width * 0.9, height * 0.97, Math.sin(angle) * width * 0.9);
+      spike.rotation.set(0, -angle, -Math.PI / 2);
+      tower.add(spike);
+    }
+    if (tall) tops.push(tower.position.clone().setY(height * 0.95));
+
     for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
       const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(width * 0.14, height * 0.26, 4), chrome);
       pinnacle.position.set((dx * width) / 2, height + height * 0.13, (dz * width) / 2);
@@ -186,19 +277,82 @@ function buildTowers(group: THREE.Group) {
       tower.add(slit);
     }
     if (tall) {
-      const rose = new THREE.Group();
-      rose.add(new THREE.Mesh(new THREE.CircleGeometry(width * 0.3, 24), glow));
-      rose.add(new THREE.Mesh(new THREE.TorusGeometry(width * 0.3, 0.3, 6, 32), chrome));
-      for (let s = 0; s < 6; s++) {
-        const spoke = new THREE.Mesh(new THREE.BoxGeometry(width * 0.6, 0.22, 0.22), chrome);
-        spoke.rotation.z = (s * Math.PI) / 6;
-        rose.add(spoke);
-      }
+      const rose = roseWindow(width * 0.32, glow, chrome, 8);
       rose.position.set(0, height * 0.48, width / 2 + 0.2);
       tower.add(rose);
     }
     group.add(tower);
   });
+  return tops;
+}
+
+/** Four gabled portals on the axes: a great rose window over a glowing door, twin turrets, a cross on the gable. */
+function buildPortals(group: THREE.Group) {
+  const stone = new THREE.MeshStandardMaterial({ color: 0x15151d, metalness: 0.6, roughness: 0.5 });
+  const chrome = CHROME();
+  const glow = new THREE.MeshBasicMaterial({ color: BLOOD, transparent: true, opacity: 0.8, side: THREE.DoubleSide });
+  const gable = new THREE.Shape();
+  gable.moveTo(-17, 0); gable.lineTo(17, 0); gable.lineTo(17, 46); gable.lineTo(0, 70); gable.lineTo(-17, 46); gable.closePath();
+  const gableGeometry = new THREE.ExtrudeGeometry(gable, { depth: 4, bevelEnabled: false });
+  const doorFrame = lancet(11, 24);
+  doorFrame.holes.push(new THREE.Path(lancet(8.6, 22).getPoints(12)));
+  const doorFrameGeometry = new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 });
+
+  for (const theta of [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]) {
+    const n = outwardNormal(theta, WALL_OFFSET);
+    const portal = new THREE.Group();
+    portal.position.copy(ring(theta, WALL_OFFSET).addScaledVector(n, 13));
+    portal.rotation.y = Math.atan2(n.x, n.z);
+
+    portal.add(new THREE.Mesh(gableGeometry, stone));
+    // Chrome coping along the gable's rake
+    for (const side of [-1, 1]) {
+      const rake = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(17, 24) + 1, 0.9, 4.8), chrome);
+      rake.position.set(side * 8.5, 58, 2);
+      rake.rotation.z = -side * Math.atan2(24, 17);
+      portal.add(rake);
+    }
+    const rose = roseWindow(8.5, glow, chrome, 12);
+    rose.position.set(0, 40, 4.15);
+    portal.add(rose);
+
+    const door = new THREE.Mesh(new THREE.ShapeGeometry(lancet(8.8, 22.4), 10), glow);
+    door.position.set(0, 0.2, 4.1);
+    const frame = new THREE.Mesh(doorFrameGeometry, chrome);
+    frame.position.z = 4;
+    portal.add(door, frame);
+    for (const side of [-1, 1]) {
+      const niche = new THREE.Mesh(new THREE.ShapeGeometry(lancet(3, 12), 8), glow);
+      niche.position.set(side * 11.5, 6, 4.1);
+      portal.add(niche);
+      const turret = new THREE.Mesh(new THREE.BoxGeometry(5, 60, 5), stone);
+      turret.position.set(side * 19.5, 30, 2);
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(3.9, 22, 8), chrome);
+      cap.position.set(side * 19.5, 71, 2);
+      const finial = new THREE.Mesh(crossGeometry(3.4), chrome);
+      finial.position.set(side * 19.5, 81, 2);
+      portal.add(turret, cap, finial);
+    }
+    const cross = new THREE.Mesh(crossGeometry(8), chrome);
+    cross.position.set(0, 69, 2);
+    portal.add(cross);
+    group.add(portal);
+  }
+}
+
+/** Soft shafts of light from the tall towers down onto the pitch. */
+function buildLightBeams(group: THREE.Group, origins: THREE.Vector3[]) {
+  const material = new THREE.MeshBasicMaterial({ color: 0xcdd6ff, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide });
+  const upAxis = new THREE.Vector3(0, 1, 0);
+  for (const origin of origins) {
+    const target = new THREE.Vector3(Math.sign(origin.x) * 22, 0, Math.sign(origin.z) * 14);
+    const span = target.clone().sub(origin);
+    const beam = new THREE.Mesh(new THREE.CylinderGeometry(1.5, 24, span.length(), 20, 1, true), material);
+    beam.position.copy(origin).addScaledVector(span, 0.5);
+    beam.quaternion.setFromUnitVectors(upAxis, span.clone().negate().normalize());
+    group.add(beam);
+  }
+  return material;
 }
 
 function buildPitch(group: THREE.Group) {
@@ -219,6 +373,10 @@ function buildPitch(group: THREE.Group) {
   const lines = createPitchLines(HALF_LENGTH * 2, HALF_WIDTH * 2, 0xf2f4f8, 0.9);
   lines.position.y = 0.06;
   group.add(lines);
+
+  // LED boards around the touchline
+  const boards = new THREE.CatmullRomCurve3(Array.from({ length: 96 }, (_, i) => ring((i / 96) * Math.PI * 2, 6.4, 0.7)), true);
+  group.add(new THREE.Mesh(new THREE.TubeGeometry(boards, 300, 0.55, 4, true), new THREE.MeshBasicMaterial({ color: 0xb3123a })));
 
   // Goal frames
   const goal: number[] = [];
@@ -242,8 +400,12 @@ function buildCrowd(group: THREE.Group, count: number) {
   const phases = new Float32Array(count);
   const palette = [new THREE.Color(0x30333f), new THREE.Color(0x4a4e5c), new THREE.Color(0xc21a40), new THREE.Color(0xaeb3c2), new THREE.Color(0x23252e)];
   for (let i = 0; i < count; i++) {
-    const theta = thetas[Math.floor(Math.random() * thetas.length)] + (Math.random() - 0.5) * 0.004;
-    const row = Math.random() * (ROWS - 0.5);
+    // Leave radial stairways and the walkway between the tiers empty
+    let slot = 0;
+    do slot = Math.floor(Math.random() * thetas.length); while (slot % 45 < 2);
+    const theta = thetas[slot] + (Math.random() - 0.5) * 0.004;
+    let row = 0;
+    do row = Math.random() * (ROWS - 0.5); while (row > TIER_GAP[0] && row < TIER_GAP[1]);
     const p = ring(theta, STAND_START + 0.4 + row * ROW_DEPTH, 1.5 + row * ROW_RISE);
     positions.set([p.x, p.y, p.z], i * 3);
     // Home end leans crimson, away end silver, neutrals in between
@@ -494,7 +656,8 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   buildPitch(stadium);
   buildBowl(stadium);
   const panes = buildArcade(stadium);
-  buildTowers(stadium);
+  const beams = buildLightBeams(stadium, buildTowers(stadium));
+  buildPortals(stadium);
   const crowd = buildCrowd(stadium, small ? 9000 : 20000);
   const fireworks = buildFireworks(stadium, small ? 22 : 36, small ? 110 : 170);
   const playMatch = buildMatch(stadium);
@@ -513,6 +676,20 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   const plaza = new THREE.GridHelper(1600, 80, 0x23242e, 0x111219);
   plaza.position.y = -0.4;
   scene.add(plaza);
+
+  for (const radius of [150, 205, 270]) {
+    const paving = new THREE.Mesh(new THREE.RingGeometry(radius, radius + 1.4, 160), new THREE.MeshBasicMaterial({ color: 0x343642, side: THREE.DoubleSide }));
+    paving.rotation.x = -Math.PI / 2;
+    paving.position.y = -0.3;
+    scene.add(paving);
+  }
+  const moonDisc = new THREE.Mesh(new THREE.CircleGeometry(46, 48), new THREE.MeshBasicMaterial({ color: 0xe6e9f2, fog: false }));
+  moonDisc.position.set(-620, 300, -520);
+  moonDisc.lookAt(0, 60, 0);
+  const halo = new THREE.Mesh(new THREE.CircleGeometry(110, 48), new THREE.MeshBasicMaterial({ color: 0xaab4d6, transparent: true, opacity: 0.07, fog: false, depthWrite: false }));
+  halo.position.copy(moonDisc.position).multiplyScalar(1.01);
+  halo.lookAt(0, 60, 0);
+  scene.add(halo, moonDisc);
 
   scene.add(new THREE.HemisphereLight(0x9aa3c2, 0x0a0a10, 0.9));
   const moon = new THREE.DirectionalLight(0xdfe6ff, 1.6);
@@ -538,6 +715,7 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     fireworks.uniforms.uT.value = sinceGoal;
     fireworks.uniforms.uScale.value = pointScale;
     panes.opacity = 0.42 + excite * 0.5 + Math.sin(time * 1.3) * 0.05;
+    beams.opacity = 0.045 + excite * 0.07;
     flare.intensity = sinceGoal > 0 && sinceGoal < 8 ? 9000 * Math.exp(-sinceGoal * 0.5) * (0.7 + 0.3 * Math.sin(time * 23)) : 0;
 
     // The blimp: one slow lap every ~100 seconds

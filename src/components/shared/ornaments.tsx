@@ -30,7 +30,7 @@ export function PageHeader({ eyebrow, title, children }: { eyebrow: string; titl
   return (
     <header className="animate-rise space-y-3 pb-2 pt-2 text-center">
       <p className="eyebrow">{eyebrow}</p>
-      <h1 className="h-display chrome-text text-4xl sm:text-5xl">{title}</h1>
+      <h1 className="h-display text-title text-4xl sm:text-5xl">{title}</h1>
       {children && <p className="mx-auto max-w-xl text-sm text-muted-foreground">{children}</p>}
       <SigilDivider />
     </header>
