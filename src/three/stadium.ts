@@ -183,6 +183,8 @@ interface Kit {
   glass: THREE.ShaderMaterial;
   /** Red neon tubing. */
   neon: THREE.MeshBasicMaterial;
+  /** Black ironwork for window and door surrounds. */
+  iron: THREE.MeshStandardMaterial;
   glow: THREE.CanvasTexture;
 }
 
@@ -224,6 +226,7 @@ function makeKit(): Kit {
         }`,
     }),
     neon: new THREE.MeshBasicMaterial({ color: NEON_RED, fog: false }),
+    iron: new THREE.MeshStandardMaterial({ color: 0x060607, roughness: 0.55, metalness: 0.5, envMapIntensity: 0.25 }),
     glow: makeGlowTexture(),
   };
 }
@@ -313,7 +316,7 @@ function buildArcade(group: THREE.Group, kit: Kit) {
   const paneGeometry = glassPane(lancet(4.8, 21), 10);
 
   const pierStone = kit.stone(0.4, 5);
-  const frames = new THREE.InstancedMesh(frameGeometry, kit.neon, bays * 2);
+  const frames = new THREE.InstancedMesh(frameGeometry, kit.iron, bays * 2);
   const panes = new THREE.InstancedMesh(paneGeometry, kit.glass, bays * 2);
   const piers = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, WALL_HEIGHT + 4, 3), pierStone, bays);
   const pinnacles = new THREE.InstancedMesh(new THREE.ConeGeometry(1.5, 11, 4), kit.slate, bays);
@@ -332,8 +335,8 @@ function buildArcade(group: THREE.Group, kit: Kit) {
   };
 
   // Window tracery: a mullion and an oculus in the head of each tall window
-  const mullions = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 14, 0.5), kit.neon, bays);
-  const oculi = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.2, 6, 20), kit.neon, bays);
+  const mullions = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 14, 0.5), kit.iron, bays);
+  const oculi = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.2, 6, 20), kit.iron, bays);
 
   // Flying buttresses: a free-standing pier outside the wall, tied back to it by a sloping flyer
   const FLY_OUT = 12;
@@ -424,7 +427,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
     }
     tips.push(tower.position.clone().setY(height + spireHeight + 2));
     if (tall) {
-      const rose = roseWindow(width * 0.32, kit.glass, kit.neon, 8);
+      const rose = roseWindow(width * 0.32, kit.glass, kit.iron, 8);
       rose.position.set(0, height * 0.48, width / 2 + 0.2);
       tower.add(rose);
     }
@@ -445,13 +448,13 @@ function makePortal(kit: Kit) {
     rake.rotation.z = -side * Math.atan2(24, 17);
     portal.add(rake);
   }
-  const rose = roseWindow(8.5, kit.glass, kit.neon, 12);
+  const rose = roseWindow(8.5, kit.glass, kit.iron, 12);
   rose.position.set(0, 40, 4.15);
   portal.add(rose);
 
   const doorFrame = lancet(11, 24);
   doorFrame.holes.push(new THREE.Path(lancet(8.6, 22).getPoints(12)));
-  const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 }), kit.neon);
+  const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 }), kit.iron);
   frame.position.z = 4;
   const door = new THREE.Mesh(glassPane(lancet(8.8, 22.4), 10), kit.glass);
   door.position.set(0, 0.2, 4.1);
