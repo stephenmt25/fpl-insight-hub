@@ -72,7 +72,7 @@ export function HeroScene({ className }: { className?: string }) {
 
 /** Fixed full-page backdrop: the cathedral stadium, filmed from a circling blimp. */
 export function Backdrop() {
-  const ref = useStage((el) => mountStage(el, { fov: 42, far: 1400, reflections: true, setup: setupStadium }));
+  const ref = useStage((el) => mountStage(el, { fov: 48, far: 1400, reflections: true, setup: setupStadium }));
   return <div ref={ref} className="pointer-events-none fixed inset-0 z-0" aria-hidden />;
 }
 

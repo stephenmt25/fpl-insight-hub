@@ -1,7 +1,7 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { BLOOD, CHROME, type Stage } from "./stage";
-import { createPitchLines } from "./models";
+import { createCrown, createFootball, createPitchLines, createThornRing } from "./models";
 
 /**
  * A gothic cathedral stadium on a rainy night, seen from a circling blimp:
@@ -605,14 +605,79 @@ function makePortal(kit: Kit) {
 
 /** Spire height as a share of the tower beneath it. */
 const SPIRE_RATIO = 0.42;
+/**
+ * A crown steeple on the great tower: four flying ribs spring from the corner
+ * turrets and meet in a collar high above the roof. The chrome football from
+ * the landing page hangs in the cage they make, turning inside two thorn
+ * rings on a shaft of red light, and its crown is set on the apex.
+ */
+function buildCrownSteeple(tower: THREE.Group, kit: Kit, width: number) {
+  const roof = GREAT_TOWER_HEIGHT;
+  const half = width / 2;
+  const apex = roof + 30;
+  const heart = roof + 15;
+
+  for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+    const curve = new THREE.QuadraticBezierCurve3(
+      new THREE.Vector3(dx * half, roof + 5, dz * half),
+      new THREE.Vector3(dx * half * 0.8, roof + 26, dz * half * 0.8),
+      new THREE.Vector3(dx * 2.4, apex, dz * 2.4),
+    );
+    const rib = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.85, 4), kit.slate);
+    // A line of neon rides along the top of each rib
+    const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.2, 5), kit.neon);
+    tube.position.y = 0.95;
+    tower.add(rib, tube);
+  }
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.7, 6, 24), kit.iron);
+  collar.rotation.x = Math.PI / 2;
+  collar.position.y = apex;
+  const plinth = new THREE.Mesh(new THREE.CylinderGeometry(3.6, 4.6, 1.4, 8), kit.slate);
+  plinth.position.y = roof + 0.7;
+
+  const crown = createCrown(4);
+  crown.position.y = apex + 1.7;
+
+  const ball = createFootball(5.8);
+  ball.position.y = heart;
+  const rings = [createThornRing(7.4, 26), createThornRing(8.4, 30)];
+  rings[0].rotation.x = Math.PI / 2.4;
+  rings[1].rotation.set(Math.PI / 3, Math.PI / 5, 0);
+  rings.forEach((ring) => ring.position.y = heart);
+
+  // The ball floats on a shaft of red light rising from the plinth
+  const shaft = new THREE.Mesh(
+    new THREE.CylinderGeometry(1, 3.4, heart - roof - 6, 16, 1, true),
+    new THREE.MeshBasicMaterial({ color: BLOOD, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
+  );
+  shaft.position.y = roof + 1.4 + (heart - roof - 6) / 2;
+  const aura = glowSprite(kit, BLOOD, 44, 0.4);
+  aura.position.y = heart;
+  tower.add(collar, plinth, crown, ball, ...rings, shaft, aura);
+
+  let last = 0;
+  let spin = 0;
+  /** `joy` (0-1) is the home crowd's excitement: the ball spins up and its aura swells on a goal. */
+  return (time: number, joy: number) => {
+    spin += Math.max(0, time - last) * (0.4 + joy * 2.6);
+    last = time;
+    ball.rotation.set(Math.sin(time * 0.3) * 0.25, spin, 0);
+    ball.position.y = heart + Math.sin(time * 0.9) * 0.5;
+    rings[0].rotation.z = spin * 0.6;
+    rings[1].rotation.z = -spin * 0.45;
+    crown.rotation.y = -time * 0.3;
+    (aura.material as THREE.SpriteMaterial).opacity = 0.32 + joy * 0.45;
+  };
+}
+
 const NAVE_LENGTH = 58;
-const GREAT_TOWER_HEIGHT = 132;
+const GREAT_TOWER_HEIGHT = 112;
 
 /**
  * The cathedral proper, grown out of the north stand: a nave with aisles and a
  * slate roof, a west front, and one great square tower crowned with pinnacles.
  */
-function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
+function buildCathedral(group: THREE.Group, kit: Kit) {
   const theta = Math.PI / 2;
   const n = outwardNormal(theta, WALL_OFFSET);
   const cathedral = new THREE.Group();
@@ -692,10 +757,11 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
     // A pair of three-light belfry windows with louvres, a pair of two-light windows below,
     // and small pinnacles along the parapet
     for (const x of [-6.6, 6.6]) {
-      const belfry = traceriedWindow(kit, 7.6, 36, { lights: 3, transoms: 1, louvres: 9, hood: true });
-      belfry.position.set(x, GREAT_TOWER_HEIGHT * 0.64, width / 2 + 0.1);
-      const lower = traceriedWindow(kit, 5.6, 21, { lights: 2, transoms: 1, hood: true });
-      lower.position.set(x, GREAT_TOWER_HEIGHT * 0.435, width / 2 + 0.1);
+      // Heights are fractions of the tower so the windows always sit between its string courses
+      const belfry = traceriedWindow(kit, 7.2, GREAT_TOWER_HEIGHT * 0.27, { lights: 3, transoms: 1, louvres: 9, hood: true });
+      belfry.position.set(x, GREAT_TOWER_HEIGHT * 0.645, width / 2 + 0.1);
+      const lower = traceriedWindow(kit, 5.2, GREAT_TOWER_HEIGHT * 0.155, { lights: 2, transoms: 1, hood: true });
+      lower.position.set(x, GREAT_TOWER_HEIGHT * 0.44, width / 2 + 0.1);
       side.add(belfry, lower);
     }
     for (const x of [-8, 0, 8]) {
@@ -707,13 +773,15 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   }
   addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.62, kit.slate);
   addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.945, kit.slate);
+  const turnRelic = buildCrownSteeple(tower, kit, width);
   cathedral.add(tower);
   group.add(cathedral);
 
   // World positions of the four corner spirelets on the great tower
   cathedral.updateMatrixWorld(true);
-  return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) =>
+  const tips = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) =>
     tower.localToWorld(new THREE.Vector3((dx * width) / 2, GREAT_TOWER_HEIGHT + 24, (dz * width) / 2)));
+  return { tips, turnRelic };
 }
 
 function buildPortals(group: THREE.Group, kit: Kit) {
@@ -2156,7 +2224,8 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   buildArcade(stadium, kit);
   const spireTips = buildTowers(stadium, kit);
   buildPortals(stadium, kit);
-  spireTips.push(...buildCathedral(stadium, kit));
+  const cathedral = buildCathedral(stadium, kit);
+  spireTips.push(...cathedral.tips);
   const beams = buildFloodlights(stadium, kit);
   const crowd = buildCrowd(stadium, small ? 9000 : 20000);
   const fire = buildFire(stadium, spireTips, small ? 160 : 420);
@@ -2226,6 +2295,7 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2);
     flare.intensity = 2600 * burn * (0.75 + 0.25 * Math.sin(time * 19));
     pulseCity(time, homeJoy, pointScale);
+    cathedral.turnRelic(time, scorer === 1 && sinceGoal >= 0 ? excite : 0);
     mist.rotation.y = time * 0.006;
 
     // The blimp: one slow lap every ~100 seconds
@@ -2234,6 +2304,7 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     const lift = Math.max(0, Math.sin(angle)) ** 2;
     const radius = 315 + Math.sin(time * 0.05) * 16 + lift * 60;
     camera.position.set(Math.cos(angle) * radius + pointer.x * 8, 192 + Math.sin(time * 0.08) * 12 + pointer.y * 5 + lift * 80, Math.sin(angle) * radius * 0.86);
-    camera.lookAt(0, 6, 0);
+    // Aimed well above the pitch so the great tower and the relic on it stay in frame all the way round
+    camera.lookAt(0, 60, 0);
   };
 }
