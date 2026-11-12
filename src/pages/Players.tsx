@@ -326,7 +326,7 @@ export function ChartBuilder({ fpl }: AppProps) {
     : [];
 
   return (
-    <Section eyebrow="Up to 6 players, one measure" title="Chart Builder">
+    <Section eyebrow="Up to 6 players, one measure" title="Season on one chart">
       <div className="mb-4 grid gap-3 md:grid-cols-[1fr_16rem_auto]">
         <div className="relative">
           <Input aria-label="Add a player to the chart" placeholder={ids.length >= 6 ? "Remove a player to add another" : "Add a player…"} disabled={ids.length >= 6} value={query} onChange={(e) => setQuery(e.target.value)} />

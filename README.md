@@ -1,53 +1,87 @@
 # FPL Insight Hub
 
-Live Fantasy Premier League analytics with in-browser machine learning and a three.js front end.
+Analytics for Fantasy Premier League managers. The official app tells you what happened; this is for deciding what to do next: who is underowned, who is about to change price, and whether your last transfer actually paid off.
 
-![Launcher](docs/launcher.png)
+It runs on live FPL data and the models run in your browser. Sign in with a public FPL team ID (no password), or try it as a guest.
 
-## What it does
+## The tools
 
-The home screen is a Spotlight-style launcher: search apps and players (or type a team or league ID), with every feature as its own app. `Ctrl K` opens search anywhere, and a dock keeps your recent apps one click away.
+### Differentials: strong players few managers own
 
-| Category | Apps |
-|---|---|
-| **Matchday** | Gameweek, Fixture Planner, League Table |
-| **My Club** | Squad, Captain Picker, Chip Planner, Transfer Ledger, Season Trends |
-| **Scouting** | Player Explorer, Chart Builder, Differentials, Form Forecast, Price Watch |
-| **Rivals** | Mini-Leagues (standings, insights, title race) |
+K-means clustering sorts every player with regular minutes into four tiers on six stats (form, points per game, xGI per 90, ICT per 90, value, expected points). The picker then lists top-tier players under an ownership limit you set, and says why each one made the cut.
 
-Sign in with a public FPL ID (no password), or click **Try as guest**.
+![Differentials](docs/differentials.png)
 
-There is also a **Score** button. Each press is a goal; keep pressing and the celebrations escalate until the cathedral starts shedding masonry, repair crews run out to fix it, and eventually the great tower comes down and has to be rebuilt.
+### Head to Head: compare up to four players
 
-Behind every screen a stone cathedral stadium plays a looping match on a rainy night, filmed from a circling blimp, with parks, squares, a low-poly city and neon spires around it. The match cycles through four passages of play; home goals send fire roaring out of the spires.
+A radar scores each player against the best in the game on six measures, next to the raw numbers with the leader in each row highlighted.
 
-![Stadium](docs/stadium.png)
+![Head to head comparison](docs/compare.png)
 
-| Squad | Form Forecast |
-|---|---|
-| ![Squad](docs/my-team.png) | ![Form forecast](docs/insights.png) |
+### Chart Builder: any players, any measure
 
-![Fixture difficulty](docs/fixtures.png)
+Plot up to six players across the season on points, xG, xA, minutes, price, ownership and more, as a running total or gameweek by gameweek.
+
+![Chart builder](docs/chart-builder.png)
+
+### And the rest of the toolbox
+
+<table>
+  <tr>
+    <td width="50%" valign="top">
+      <img src="docs/form-forecast.png" alt="Form forecast"><br>
+      <b>Form Forecast</b><br>
+      Projects a player's next three gameweeks with a likely range, from recent scores, trend and upcoming fixtures.
+    </td>
+    <td width="50%" valign="top">
+      <img src="docs/price-watch.png" alt="Price watch"><br>
+      <b>Price Watch</b><br>
+      The chance each player rises or falls £0.1m tonight, from transfer pressure relative to ownership.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="docs/captain.png" alt="Captain picker"><br>
+      <b>Captain Picker</b><br>
+      Ranks your fifteen for the armband on expected points, form, fixture, venue and availability.
+    </td>
+    <td valign="top">
+      <img src="docs/transfer-ledger.png" alt="Transfer ledger"><br>
+      <b>Transfer Ledger</b><br>
+      Every transfer you made, scored: points from the player you bought against the one you sold.
+    </td>
+  </tr>
+  <tr>
+    <td valign="top">
+      <img src="docs/fixtures.png" alt="Fixture planner"><br>
+      <b>Fixture Planner</b><br>
+      All twenty clubs ordered by how easy their next four, six or eight fixtures are.
+    </td>
+    <td valign="top">
+      <img src="docs/title-race.png" alt="Title race"><br>
+      <b>Title Race</b><br>
+      Your mini-league as a race: how far each rival sat behind the leader after every gameweek.
+    </td>
+  </tr>
+</table>
+
+Also inside: a live gameweek dashboard, your squad on the pitch with live points, a chip planner, season trends, and a search launcher (`Ctrl K`) that finds any tool, player, team or league.
 
 ## How it's built
 
-- **React 18 + TypeScript (strict)**, Vite 8, Tailwind, TanStack Query, Recharts
-- **three.js** scenes written by hand, all procedural (no model files): a gothic stadium with instanced arches, buttresses and a great tower, canvas-drawn stone, a city of instanced blocks, rain, a 20,000-fan crowd and spire fire as shader-driven points, a scripted 22-player match loop, and a truncated-icosahedron football
-- **Models run client-side on live data**, each a small tested module in [`src/lib/ml`](src/lib/ml):
-  - *Differentials*: k-means clustering on six z-scored features, then low-ownership picks from the top clusters
-  - *Price changes*: transfer pressure relative to ownership, blended with FPL's progress-to-threshold figure
-  - *Form forecast*: exponentially weighted level plus a damped trend, adjusted for fixture difficulty
-  - *Captain ranking*: expected points weighted by fixture, venue, form and availability
-- **Resilient data layer**: the FPL API has no CORS headers, so requests go through a same-origin proxy and fall back to a Supabase edge function. A `/status` page tests every endpoint through both.
+- **React 18 + TypeScript (strict)**, Vite, Tailwind, TanStack Query, Recharts.
+- **The models are plain TypeScript, run client-side and unit-tested** ([`src/lib/ml`](src/lib/ml)): k-means clustering, an exponentially weighted forecast with a damped trend, a transfer-pressure price model and a captain score. There is no backend to host.
+- **Resilient data layer.** The FPL API sends no CORS headers, so requests go through a same-origin proxy and fall back to a Supabase edge function. A status page tests every endpoint through both routes.
+- **A 3D backdrop in hand-written three.js**: a procedurally generated stadium with a looping match behind every screen, built without model files.
 
-```
+```text
 src/
   lib/fpl/     API client, typed hooks, fixtures and league-table logic
   lib/ml/      clustering, price, form and captain models (+ tests)
-  apps.tsx     app registry: routes, categories, search keywords, suggestions
-  three/       WebGL stage, stadium and match loop, procedural models
-  pages/       the apps, plus the launcher
-  components/  layout (top bar, Spotlight, dock), shared UI, chart theme
+  apps.tsx     tool registry: routes, categories, search keywords
+  pages/       the tools, plus the launcher
+  components/  layout, search, shared UI, chart theme
+  three/       WebGL stage and stadium scene
 ```
 
 ## Run it
@@ -59,8 +93,8 @@ npm run dev        # http://localhost:8080
 
 No keys or database needed: the dev server proxies the public FPL API.
 
-| Command | |
-|---|---|
+| Command | What it does |
+| --- | --- |
 | `npm test` | Unit tests (Vitest) |
 | `npm run typecheck` | Strict TypeScript |
 | `npm run lint` | ESLint |
