@@ -159,13 +159,30 @@ function makeGlowTexture() {
   return new THREE.CanvasTexture(canvas);
 }
 
+const NEON_RED = 0xff1232;
+
+/** A flat pane whose UVs run 0-1 across its own bounds, so the glass shader can centre its glow on any window. */
+function glassPane(shape: THREE.Shape, segments: number) {
+  const geometry = new THREE.ShapeGeometry(shape, segments);
+  geometry.computeBoundingBox();
+  const { min, max } = geometry.boundingBox!;
+  const position = geometry.getAttribute("position");
+  const uv = geometry.getAttribute("uv");
+  for (let i = 0; i < position.count; i++) {
+    uv.setXY(i, (position.getX(i) - min.x) / (max.x - min.x), (position.getY(i) - min.y) / (max.y - min.y));
+  }
+  return geometry;
+}
+
 interface Kit {
   /** Stone with the block texture tiled `u` by `v` times across each face. */
   stone: (u: number, v: number, tint?: number) => THREE.MeshStandardMaterial;
   slate: THREE.MeshStandardMaterial;
   chrome: THREE.MeshStandardMaterial;
-  /** Stained glass, lit from inside. */
-  glass: THREE.MeshBasicMaterial;
+  /** Smoked black glass with a red glow burning behind it. `uGlow` sets how hot. */
+  glass: THREE.ShaderMaterial;
+  /** Red neon tubing. */
+  neon: THREE.MeshBasicMaterial;
   glow: THREE.CanvasTexture;
 }
 
@@ -180,7 +197,33 @@ function makeKit(): Kit {
     },
     slate: new THREE.MeshStandardMaterial({ color: 0x191c23, roughness: 0.78, metalness: 0.1, envMapIntensity: 0.25 }),
     chrome: CHROME(),
-    glass: new THREE.MeshBasicMaterial({ color: BLOOD, transparent: true, opacity: 0.6, side: THREE.DoubleSide }),
+    glass: new THREE.ShaderMaterial({
+      uniforms: { uGlow: { value: 0.8 } },
+      transparent: true,
+      side: THREE.DoubleSide,
+      vertexShader: /* glsl */ `
+        varying vec2 vUv;
+        void main() {
+          vUv = uv;
+          vec4 p = vec4(position, 1.0);
+          #ifdef USE_INSTANCING
+            p = instanceMatrix * p;
+          #endif
+          gl_Position = projectionMatrix * modelViewMatrix * p;
+        }`,
+      fragmentShader: /* glsl */ `
+        uniform float uGlow;
+        varying vec2 vUv;
+        void main() {
+          // Brightest low in the middle of the pane, falling to black glass at the edges
+          float d = length((vUv - vec2(0.5, 0.4)) * vec2(1.7, 1.0));
+          float core = smoothstep(0.62, 0.0, d);
+          vec3 color = mix(vec3(0.015, 0.0, 0.004), vec3(1.0, 0.05, 0.13), core * uGlow);
+          color += vec3(1.0, 0.4, 0.32) * pow(core, 5.0) * 0.45 * uGlow;
+          gl_FragColor = vec4(color, 0.78 + 0.22 * core);
+        }`,
+    }),
+    neon: new THREE.MeshBasicMaterial({ color: NEON_RED, fog: false }),
     glow: makeGlowTexture(),
   };
 }
@@ -247,15 +290,16 @@ function buildBowl(group: THREE.Group, kit: Kit) {
   group.add(new THREE.Mesh(canopy, new THREE.MeshStandardMaterial({ color: 0x0c0e13, transparent: true, opacity: 0.58, metalness: 0.85, roughness: 0.22, side: THREE.DoubleSide, depthWrite: false })));
 
   const concourse = STAND_START + TIER_GAP[0] * ROW_DEPTH;
-  const rails: [number, number, number][] = [
-    [WALL_OFFSET, WALL_HEIGHT, 0.5],
-    [WALL_OFFSET - CANOPY_REACH, WALL_HEIGHT + CANOPY_RISE, 0.35],
-    [STAND_START - 0.6, 1.2, 0.18],
-    [concourse, 1.4 + TIER_GAP[0] * ROW_RISE, 0.22],
+  // Pitch-side and concourse rails stay chrome; the trim along the top of the stadium is red neon
+  const rails: [number, number, number, THREE.Material][] = [
+    [WALL_OFFSET, WALL_HEIGHT, 0.5, kit.neon],
+    [WALL_OFFSET - CANOPY_REACH, WALL_HEIGHT + CANOPY_RISE, 0.35, kit.neon],
+    [STAND_START - 0.6, 1.2, 0.18, kit.chrome],
+    [concourse, 1.4 + TIER_GAP[0] * ROW_RISE, 0.22, kit.chrome],
   ];
-  for (const [offset, y, radius] of rails) {
+  for (const [offset, y, radius, material] of rails) {
     const curve = new THREE.CatmullRomCurve3(Array.from({ length: 120 }, (_, i) => ring((i / 120) * Math.PI * 2, offset, y)), true);
-    group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 360, radius, 6, true), kit.chrome));
+    group.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 360, radius, 6, true), material));
   }
 }
 
@@ -266,7 +310,7 @@ function buildArcade(group: THREE.Group, kit: Kit) {
   const hole = lancet(4.6, 20.4);
   windowShape.holes.push(new THREE.Path(hole.getPoints(12).map((p) => new THREE.Vector2(p.x, p.y + 0.8))));
   const frameGeometry = new THREE.ExtrudeGeometry(windowShape, { depth: 0.9, bevelEnabled: false, curveSegments: 10 });
-  const paneGeometry = new THREE.ShapeGeometry(lancet(4.8, 21), 10);
+  const paneGeometry = glassPane(lancet(4.8, 21), 10);
 
   const dressed = new THREE.MeshStandardMaterial({ color: 0x33363d, roughness: 0.85, metalness: 0.08, envMapIntensity: 0.2 });
   const pierStone = kit.stone(0.4, 5);
@@ -303,7 +347,7 @@ function buildArcade(group: THREE.Group, kit: Kit) {
 
   // Ribs carrying the canopy
   const ribCurve = new THREE.QuadraticBezierCurve3(new THREE.Vector3(0, 0, 0), new THREE.Vector3(0, CANOPY_RISE + 1, -2), new THREE.Vector3(0, CANOPY_RISE, -CANOPY_REACH));
-  const ribs = new THREE.InstancedMesh(new THREE.TubeGeometry(ribCurve, 12, 0.24, 5), kit.chrome, bays);
+  const ribs = new THREE.InstancedMesh(new THREE.TubeGeometry(ribCurve, 12, 0.24, 5), kit.neon, bays);
 
   const step = (Math.PI * 2) / bays;
   thetas.forEach((theta, i) => {
@@ -373,7 +417,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
       tower.add(pinnacle);
     }
     for (const face of [0, 1, 2, 3]) {
-      const slit = new THREE.Mesh(new THREE.ShapeGeometry(lancet(width * 0.22, height * 0.2), 8), kit.glass);
+      const slit = new THREE.Mesh(glassPane(lancet(width * 0.22, height * 0.2), 8), kit.glass);
       slit.position.y = height * 0.72;
       slit.rotation.y = (face * Math.PI) / 2;
       slit.translateZ(width / 2 + 0.05);
@@ -410,12 +454,12 @@ function makePortal(kit: Kit) {
   doorFrame.holes.push(new THREE.Path(lancet(8.6, 22).getPoints(12)));
   const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 }), kit.chrome);
   frame.position.z = 4;
-  const door = new THREE.Mesh(new THREE.ShapeGeometry(lancet(8.8, 22.4), 10), kit.glass);
+  const door = new THREE.Mesh(glassPane(lancet(8.8, 22.4), 10), kit.glass);
   door.position.set(0, 0.2, 4.1);
   portal.add(door, frame);
 
   for (const side of [-1, 1]) {
-    const niche = new THREE.Mesh(new THREE.ShapeGeometry(lancet(3, 12), 8), kit.glass);
+    const niche = new THREE.Mesh(glassPane(lancet(3, 12), 8), kit.glass);
     niche.position.set(side * 11.5, 6, 4.1);
     const turret = new THREE.Mesh(new THREE.BoxGeometry(5, 60, 5), kit.stone(0.5, 5.5));
     turret.position.set(side * 19.5, 30, 2);
@@ -470,10 +514,10 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
 
     for (let z = 5; z < NAVE_LENGTH; z += 9.5) {
       const x = side * (naveWidth / 2 + 13.1);
-      const aisleWindow = new THREE.Mesh(new THREE.ShapeGeometry(lancet(4.6, 18), 8), kit.glass);
+      const aisleWindow = new THREE.Mesh(glassPane(lancet(4.6, 18), 8), kit.glass);
       aisleWindow.position.set(x, 5, z);
       aisleWindow.rotation.y = (side * Math.PI) / 2;
-      const clerestory = new THREE.Mesh(new THREE.ShapeGeometry(lancet(3.6, 12), 8), kit.glass);
+      const clerestory = new THREE.Mesh(glassPane(lancet(3.6, 12), 8), kit.glass);
       clerestory.position.set(side * (naveWidth / 2 + 0.1), 37, z);
       clerestory.rotation.y = (side * Math.PI) / 2;
       const buttress = new THREE.Mesh(new THREE.BoxGeometry(3.4, 34, 1.8), buttressStone);
@@ -519,9 +563,9 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
     side.rotation.y = (face * Math.PI) / 2;
     // Paired belfry lancets, a lower pair below, and small pinnacles along the parapet
     for (const x of [-6, 6]) {
-      const belfry = new THREE.Mesh(new THREE.ShapeGeometry(lancet(6, 34), 10), kit.glass);
+      const belfry = new THREE.Mesh(glassPane(lancet(6, 34), 10), kit.glass);
       belfry.position.set(x, GREAT_TOWER_HEIGHT * 0.66, width / 2 + 0.1);
-      const lower = new THREE.Mesh(new THREE.ShapeGeometry(lancet(4.4, 20), 10), kit.glass);
+      const lower = new THREE.Mesh(glassPane(lancet(4.4, 20), 10), kit.glass);
       lower.position.set(x, GREAT_TOWER_HEIGHT * 0.44, width / 2 + 0.1);
       const mullion = new THREE.Mesh(new THREE.BoxGeometry(0.5, 30, 0.6), kit.slate);
       mullion.position.set(x, GREAT_TOWER_HEIGHT * 0.66 + 14, width / 2 + 0.3);
@@ -939,7 +983,7 @@ function weatherGround(ctx: CanvasRenderingContext2D, size: number, paved: (x: n
   }
 }
 
-const NEON = [0xff2bd6, 0x18e0ff, 0x7a3cff, 0x9dff3c].map((hex) => new THREE.Color(hex));
+const NEON = new THREE.Color(NEON_RED);
 
 interface NeonSpire {
   light: THREE.PointLight;
@@ -982,7 +1026,7 @@ function buildNeonSpire(scene: THREE.Scene, kit: Kit, base: THREE.Vector3, outwa
     fin.rotation.y = mid;
     const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(0.9, 7, 4), kit.slate);
     pinnacle.position.set(Math.sin(mid) * (radius + 3.6), drumHeight * 0.8 + 3.5, Math.cos(mid) * (radius + 3.6));
-    const slit = new THREE.Mesh(new THREE.ShapeGeometry(lancet(1.6, 9), 6), tubes);
+    const slit = new THREE.Mesh(glassPane(lancet(1.6, 9), 6), tubes);
     slit.position.set(Math.sin(angle) * (radius * 1.02), 7, Math.cos(angle) * (radius * 1.02));
     slit.rotation.y = angle;
     spire.add(fin, pinnacle, slit);
@@ -1327,9 +1371,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
     traffic.uniforms.uScale.value = pointScale;
     beaconMaterial.opacity = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * 2.2));
     for (const spire of neon) {
-      // Drift through the palette, each spire a quarter-turn apart
-      const position = Math.max(0, time * 0.035 + spire.phase) * NEON.length;
-      color.lerpColors(NEON[Math.floor(position) % NEON.length], NEON[(Math.floor(position) + 1) % NEON.length], smooth(position % 1));
+      color.copy(NEON);
       // A slow pulse (under 1 Hz, so it never strobes hard); the goal pushes it to full
       const level = Math.min(1, 0.55 + 0.45 * Math.sin(time * 4.4 + spire.phase * Math.PI * 2) + excite * 0.5);
       spire.light.color.copy(color);
@@ -1820,7 +1862,7 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
     fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
-    kit.glass.opacity = 0.5 + homeJoy * 0.45 + Math.sin(time * 1.3) * 0.05;
+    kit.glass.uniforms.uGlow.value = 0.72 + homeJoy * 0.55 + Math.sin(time * 1.3) * 0.06;
     beams.opacity = 0.055 + homeJoy * 0.06;
     (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + homeJoy * 0.3;
     for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2);
