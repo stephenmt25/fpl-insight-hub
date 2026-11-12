@@ -88,7 +88,7 @@ export default function App() {
       <AuthProvider>
         <TooltipProvider delayDuration={150}>
           <Toaster />
-          <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+          <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")} future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
             <Routes>
               <Route element={<Layout />}>
                 <Route path="/" element={<ErrorBoundary><Launcher /></ErrorBoundary>} />

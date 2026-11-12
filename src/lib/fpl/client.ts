@@ -18,7 +18,8 @@ export class FplError extends Error {
   }
 }
 
-let active: Transport | null = null;
+// A host known to have no `/fpl-api` rewrite (GitHub Pages) says so at build time, which skips the doomed first attempt
+let active: Transport | null = import.meta.env.VITE_FPL_TRANSPORT === "edge" ? "edge" : null;
 export const getTransport = () => active;
 
 async function viaLocal(path: string): Promise<unknown> {

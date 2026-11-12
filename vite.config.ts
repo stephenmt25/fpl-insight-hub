@@ -15,6 +15,8 @@ const fplProxy = {
 };
 
 export default defineConfig({
+  // GitHub Pages serves the site from /<repo>/; everywhere else it lives at the root
+  base: process.env.BASE_PATH ?? "/",
   server: { host: "::", port: 8080, proxy: fplProxy },
   preview: { port: 8080, proxy: fplProxy },
   plugins: [react()],

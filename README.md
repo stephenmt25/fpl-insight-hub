@@ -2,6 +2,8 @@
 
 Analytics for Fantasy Premier League managers. The official app tells you what happened; this is for deciding what to do next: who is underowned, who is about to change price, and whether your last transfer actually paid off.
 
+**[Open the live app](https://stephenmt25.github.io/fpl-insight-hub/)** (no sign-up: click *Try as guest*)
+
 It runs on live FPL data and the models run in your browser. Sign in with a public FPL team ID (no password), or try it as a guest.
 
 ## The tools
@@ -72,7 +74,7 @@ Also inside: a live gameweek dashboard, your squad on the pitch with live points
 - **React 18 + TypeScript (strict)**, Vite, Tailwind, TanStack Query, Recharts.
 - **The models are plain TypeScript, run client-side and unit-tested** ([`src/lib/ml`](src/lib/ml)): k-means clustering, an exponentially weighted forecast with a damped trend, a transfer-pressure price model and a captain score. There is no backend to host.
 - **Resilient data layer.** The FPL API sends no CORS headers, so requests go through a same-origin proxy and fall back to a Supabase edge function. A status page tests every endpoint through both routes.
-- **A 3D backdrop in hand-written three.js**: a procedurally generated stadium with a looping match behind every screen, built without model files.
+- **A 3D backdrop in hand-written three.js**: a procedurally generated stadium with a looping match behind every screen, built without model files. Static geometry is merged down to about 260 draw calls, and the resolution adapts to the viewer's GPU.
 
 ```text
 src/
@@ -101,7 +103,7 @@ No keys or database needed: the dev server proxies the public FPL API.
 | `npm run build` | Production build |
 | `npm run check:api` | Smoke-test every FPL endpoint the app uses |
 
-**Deploying to a static host:** copy `.env.example` to `.env` and deploy `supabase/functions/fpl-api-proxy`, or add a host rewrite from `/fpl-api/*` to `https://fantasy.premierleague.com/api/*`.
+**Deploying:** every push to `main` publishes to GitHub Pages through [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml). Pages cannot proxy the FPL API, so that build sends requests to the Supabase function in `supabase/functions/fpl-api-proxy`. On a host with rewrites (Vercel, Netlify), point `/fpl-api/*` at `https://fantasy.premierleague.com/api/*` instead and no function is needed.
 
 ---
 
