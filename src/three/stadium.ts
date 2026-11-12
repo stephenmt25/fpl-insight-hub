@@ -2018,7 +2018,9 @@ interface Spout {
 /**
  * Jets of flame roaring out of the spouts when a goal goes in: straight up
  * from the spire tips, sideways from the great tower's corners. Each jet is a
- * looping fountain of point sprites; `uPower` fades the whole lot in and out.
+ * looping fountain of point sprites, shown only where it was emitted while the
+ * spouts were fed (`uFed`), so jets grow from the nozzle and burn out from the
+ * base. `uPower` sets how fierce they are.
  */
 function buildFire(group: THREE.Group, spouts: Spout[], perJet: number) {
   const count = spouts.length * perJet;
@@ -2041,14 +2043,19 @@ function buildFire(group: THREE.Group, spouts: Spout[], perJet: number) {
   geometry.setAttribute("aMount", new THREE.BufferAttribute(mounts, 2));
   geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 4));
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 600 }, uTower: { value: 1 } },
+    // uFed: ages (seconds ago) between which the spouts were fed, for the current and the previous burn
+    uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 600 }, uTower: { value: 1 }, uFed: { value: new THREE.Vector4(100, 100, 100, 100) } },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
-      uniform float uTime; uniform float uPower; uniform float uScale; uniform float uTower;
+      uniform float uTime; uniform float uPower; uniform float uScale; uniform float uTower; uniform vec4 uFed;
       attribute vec4 aSeed; attribute vec3 aDir; attribute vec2 aMount;
       varying float vLife; varying float vAlpha;
+      // 1 for a spark that left the nozzle while the spout was being fed: between youngest and oldest seconds ago
+      float burning(float age, float youngest, float oldest) {
+        return smoothstep(youngest - 0.02, youngest + 0.1, age) * (1.0 - smoothstep(oldest - 0.14, oldest, age));
+      }
       void main() {
         float life = 1.5 + aSeed.x * 0.9;
         float age = mod(uTime + aSeed.y * life, life);
@@ -2064,7 +2071,9 @@ function buildFire(group: THREE.Group, spouts: Spout[], perJet: number) {
         // Hot gas rises: a sideways jet curls upward as it slows
         p.y += (1.0 - abs(aDir.y)) * 15.0 * aMount.x * u * u;
         vLife = u;
-        vAlpha = uPower * smoothstep(0.0, 0.06, u) * (1.0 - u) * mix(1.0, uTower, aMount.y);
+        // A jet grows out of its nozzle after ignition, and its base lets go when the feed stops
+        float lit = min(1.0, burning(age, uFed.x, uFed.y) + burning(age, uFed.z, uFed.w));
+        vAlpha = uPower * lit * smoothstep(0.0, 0.06, u) * (1.0 - u) * mix(1.0, uTower, aMount.y);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = step(0.002, uPower) * uScale * (2.6 + 4.2 * u) / -mv.z;
@@ -2484,6 +2493,10 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   flare.position.set(0, 120, 0);
   scene.add(flare);
 
+  // When the fire spouts were last fed, and the burn before that (seconds on the scene clock)
+  const feed = { on: false, from: -100, to: -100, lastFrom: -100, lastTo: -100 };
+  let firelight = 0;
+
   return (time: number, delta: number) => {
     const { t, scorer } = playMatch(time, delta);
 
@@ -2515,12 +2528,22 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     party.uniforms.uHeat.value = chaos.heat;
     party.uniforms.uScale.value = pointScale;
 
-    // The spires catch fire at a home goal, burn hard for a few seconds, then gutter out;
-    // nobody lights the cathedral for the visitors. Pressed goals relight it, bigger each time.
-    const matchBurn = sinceGoal < 0 || scorer !== 1 ? 0 : Math.min(1, sinceGoal * 3) * Math.exp(-Math.max(0, sinceGoal - 4.5) * 0.9);
-    const burn = Math.max(matchBurn, Math.min(1, chaos.burst * 1.6)) * (1 + chaos.heat * 0.9);
+    // The spouts are fed for a few seconds after a home goal (nobody lights the cathedral for
+    // the visitors) and for a moment after each pressed one. Flame only exists where it left
+    // the nozzle while fed, so a jet climbs to full length rather than appearing whole, and
+    // when the feed stops its base lets go and the rest burns away.
+    const fed = (scorer === 1 && sinceGoal >= 0 && sinceGoal < 6) || chaos.burst > 0.1;
+    if (fed && !feed.on) {
+      feed.lastFrom = feed.from;
+      feed.lastTo = feed.to;
+      feed.from = time;
+    }
+    feed.on = fed;
+    if (fed) feed.to = time;
+    const alight = time - feed.to < 2.6; // the longest a spark lives
     fire.uniforms.uTime.value = time;
-    fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
+    fire.uniforms.uFed.value.set(time - feed.to, time - feed.from, time - feed.lastTo, time - feed.lastFrom);
+    fire.uniforms.uPower.value = alight ? 1 + chaos.heat * 0.9 : 0;
     fire.uniforms.uTower.value = chaos.towerUp ? 1 : 0;
     fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
@@ -2529,7 +2552,9 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     beams.opacity = 0.055 + homeJoy * 0.06;
     (bowlGlow.material as THREE.SpriteMaterial).opacity = Math.min(0.8, 0.26 + homeJoy * 0.3 + chaos.heat * 0.2);
     for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2 + chaos.heat);
-    flare.intensity = 2600 * Math.min(1.6, burn) * (0.75 + 0.25 * Math.sin(time * 19));
+    // Firelight on the stone swells and dies with the jets
+    firelight += ((fed ? 1 + chaos.heat * 0.6 : 0) - firelight) * Math.min(1, delta * 2.5);
+    flare.intensity = 2600 * firelight * (0.75 + 0.25 * Math.sin(time * 19));
     pulseCity(time, homeJoy, pointScale);
     cathedral.turnRelic(time, homeGoal + chaos.heat * 1.5);
     mist.rotation.y = time * 0.006;
