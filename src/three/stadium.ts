@@ -215,12 +215,12 @@ function makeKit(): Kit {
         uniform float uGlow;
         varying vec2 vUv;
         void main() {
-          // Brightest low in the middle of the pane, falling to black glass at the edges
-          float d = length((vUv - vec2(0.5, 0.4)) * vec2(1.7, 1.0));
-          float core = smoothstep(0.62, 0.0, d);
-          vec3 color = mix(vec3(0.015, 0.0, 0.004), vec3(1.0, 0.05, 0.13), core * uGlow);
-          color += vec3(1.0, 0.4, 0.32) * pow(core, 5.0) * 0.45 * uGlow;
-          gl_FragColor = vec4(color, 0.78 + 0.22 * core);
+          // A solid, bright neon-red light filling the window, with a rim of black glass around it
+          float sides = smoothstep(0.5, 0.34, abs(vUv.x - 0.5));
+          float ends = smoothstep(0.0, 0.07, vUv.y) * smoothstep(1.0, 0.86, vUv.y);
+          float core = sides * ends;
+          vec3 neon = vec3(1.0, 0.07, 0.2) * (0.6 + 0.4 * uGlow);
+          gl_FragColor = vec4(mix(vec3(0.012, 0.0, 0.004), neon, core), 0.86 + 0.14 * core);
         }`,
     }),
     neon: new THREE.MeshBasicMaterial({ color: NEON_RED, fog: false }),
@@ -312,9 +312,8 @@ function buildArcade(group: THREE.Group, kit: Kit) {
   const frameGeometry = new THREE.ExtrudeGeometry(windowShape, { depth: 0.9, bevelEnabled: false, curveSegments: 10 });
   const paneGeometry = glassPane(lancet(4.8, 21), 10);
 
-  const dressed = new THREE.MeshStandardMaterial({ color: 0x33363d, roughness: 0.85, metalness: 0.08, envMapIntensity: 0.2 });
   const pierStone = kit.stone(0.4, 5);
-  const frames = new THREE.InstancedMesh(frameGeometry, dressed, bays * 2);
+  const frames = new THREE.InstancedMesh(frameGeometry, kit.neon, bays * 2);
   const panes = new THREE.InstancedMesh(paneGeometry, kit.glass, bays * 2);
   const piers = new THREE.InstancedMesh(new THREE.BoxGeometry(1.5, WALL_HEIGHT + 4, 3), pierStone, bays);
   const pinnacles = new THREE.InstancedMesh(new THREE.ConeGeometry(1.5, 11, 4), kit.slate, bays);
@@ -333,8 +332,8 @@ function buildArcade(group: THREE.Group, kit: Kit) {
   };
 
   // Window tracery: a mullion and an oculus in the head of each tall window
-  const mullions = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 14, 0.5), dressed, bays);
-  const oculi = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.2, 6, 20), dressed, bays);
+  const mullions = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 14, 0.5), kit.neon, bays);
+  const oculi = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.2, 6, 20), kit.neon, bays);
 
   // Flying buttresses: a free-standing pier outside the wall, tied back to it by a sloping flyer
   const FLY_OUT = 12;
@@ -425,7 +424,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
     }
     tips.push(tower.position.clone().setY(height + spireHeight + 2));
     if (tall) {
-      const rose = roseWindow(width * 0.32, kit.glass, kit.chrome, 8);
+      const rose = roseWindow(width * 0.32, kit.glass, kit.neon, 8);
       rose.position.set(0, height * 0.48, width / 2 + 0.2);
       tower.add(rose);
     }
@@ -446,13 +445,13 @@ function makePortal(kit: Kit) {
     rake.rotation.z = -side * Math.atan2(24, 17);
     portal.add(rake);
   }
-  const rose = roseWindow(8.5, kit.glass, kit.chrome, 12);
+  const rose = roseWindow(8.5, kit.glass, kit.neon, 12);
   rose.position.set(0, 40, 4.15);
   portal.add(rose);
 
   const doorFrame = lancet(11, 24);
   doorFrame.holes.push(new THREE.Path(lancet(8.6, 22).getPoints(12)));
-  const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 }), kit.chrome);
+  const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 }), kit.neon);
   frame.position.z = 4;
   const door = new THREE.Mesh(glassPane(lancet(8.8, 22.4), 10), kit.glass);
   door.position.set(0, 0.2, 4.1);
@@ -1862,7 +1861,8 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
     fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
-    kit.glass.uniforms.uGlow.value = 0.72 + homeJoy * 0.55 + Math.sin(time * 1.3) * 0.06;
+    // Same slow pulse as the outer spires; a home goal pushes it to full
+    kit.glass.uniforms.uGlow.value = Math.min(1, 0.55 + 0.45 * Math.sin(time * 4.4) + homeJoy * 0.5);
     beams.opacity = 0.055 + homeJoy * 0.06;
     (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + homeJoy * 0.3;
     for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2);
