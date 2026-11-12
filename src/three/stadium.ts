@@ -1,12 +1,13 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { mayhem } from "@/lib/mayhem";
+import { bake } from "./merge";
 import { BLOOD, CHROME, type Stage } from "./stage";
 import { createCrown, createFootball, createPitchLines, createThornRing } from "./models";
 import { Wreck, wobble } from "./wreck";
 
 /**
- * A gothic cathedral stadium on a rainy night, seen from a circling blimp:
+ * A gothic cathedral stadium on a misty night, seen from a circling blimp:
  * a stone bowl with a lancet arcade and flying buttresses, a nave and great
  * tower grown out of one stand, a low-resolution city with neon corners, a
  * crowd of point sprites, and a match played as 28-second passages: home
@@ -309,7 +310,7 @@ function traceriedWindow(kit: Kit, width: number, height: number, options: Trace
 }
 
 interface Kit {
-  /** Stone with the block texture tiled `u` by `v` times across each face. */
+  /** Stone with the block texture tiled `u` by `v` times across each face. Shared: clone it before changing it. */
   stone: (u: number, v: number, tint?: number) => THREE.MeshStandardMaterial;
   slate: THREE.MeshStandardMaterial;
   chrome: THREE.MeshStandardMaterial;
@@ -329,12 +330,20 @@ interface Kit {
 function makeKit(scene: THREE.Scene): Kit {
   const base = makeStoneTexture();
   const glow = makeGlowTexture();
+  // One material per finish: parts that share a material can be merged into a single draw call
+  const stones = new Map<string, THREE.MeshStandardMaterial>();
   return {
     stone: (u, v, tint = 0xffffff) => {
-      const map = base.clone();
-      map.repeat.set(u, v);
-      map.needsUpdate = true;
-      return new THREE.MeshStandardMaterial({ map, color: tint, roughness: 0.92, metalness: 0.04, envMapIntensity: 0.18 });
+      const key = `${u}|${v}|${tint}`;
+      let stone = stones.get(key);
+      if (!stone) {
+        const map = base.clone();
+        map.repeat.set(u, v);
+        map.needsUpdate = true;
+        stone = new THREE.MeshStandardMaterial({ map, color: tint, roughness: 0.92, metalness: 0.04, envMapIntensity: 0.18 });
+        stones.set(key, stone);
+      }
+      return stone;
     },
     slate: new THREE.MeshStandardMaterial({ color: 0x191c23, roughness: 0.78, metalness: 0.1, envMapIntensity: 0.25 }),
     chrome: CHROME(),
@@ -426,7 +435,7 @@ function buildBowl(group: THREE.Group, kit: Kit) {
 
   // Outer wall in stone, and a dark glazed canopy over the back rows
   const wall = ringStrip((t) => ring(t, WALL_OFFSET, 0), (t) => ring(t, WALL_OFFSET, WALL_HEIGHT), 46);
-  const wallMaterial = kit.stone(1, 3.5);
+  const wallMaterial = kit.stone(1, 3.5).clone();
   wallMaterial.side = THREE.DoubleSide;
   group.add(new THREE.Mesh(wall, wallMaterial));
 
@@ -523,6 +532,8 @@ function addGargoyles(tower: THREE.Group, width: number, y: number, material: TH
   }
 }
 
+const CORNERS = [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const;
+
 /** Returns the tip of every spire, where the fire comes out. */
 function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   const tips: THREE.Vector3[] = [];
@@ -554,12 +565,10 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
       tower.add(belt);
     }
     addGargoyles(tower, width, height * 0.97, kit.slate);
-    for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(width * 0.14, height * 0.26, 4), kit.slate);
-      pinnacle.position.set((dx * width) / 2, height + height * 0.13, (dz * width) / 2);
-      tower.add(pinnacle);
-      kit.wreck.object(pinnacle, 2, { rest: 1 });
-    }
+    const pinnacles = new THREE.InstancedMesh(new THREE.ConeGeometry(width * 0.14, height * 0.26, 4), kit.slate, 4);
+    CORNERS.forEach(([dx, dz], k) => pinnacles.setMatrixAt(k, new THREE.Matrix4().makeTranslation((dx * width) / 2, height + height * 0.13, (dz * width) / 2)));
+    tower.add(pinnacles);
+    kit.wreck.instances(pinnacles, 2, 1);
     for (const face of [0, 1, 2, 3]) {
       const slit = traceriedWindow(kit, width * 0.22, height * 0.2, { lights: 1, transoms: 2 });
       slit.position.y = height * 0.72;
@@ -573,6 +582,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
       rose.position.set(0, height * 0.48, width / 2 + 0.2);
       tower.add(rose);
     }
+    bake(tower, kit.wreck.owns);
     group.add(tower);
   });
   return tips;
@@ -602,23 +612,25 @@ function makePortal(kit: Kit) {
   door.position.set(0, 0.2, 4.1);
   portal.add(door, frame);
 
-  for (const side of [-1, 1]) {
+  const caps = new THREE.InstancedMesh(new THREE.ConeGeometry(3.9, 22, 8), kit.slate, 2);
+  const finials = new THREE.InstancedMesh(crossGeometry(3.4), kit.chrome, 2);
+  [-1, 1].forEach((side, k) => {
     const niche = traceriedWindow(kit, 3, 12, { lights: 1, transoms: 1 });
     niche.position.set(side * 11.5, 6, 4.1);
     const turret = new THREE.Mesh(new THREE.BoxGeometry(5, 60, 5), kit.stone(0.5, 5.5));
     turret.position.set(side * 19.5, 30, 2);
-    const cap = new THREE.Mesh(new THREE.ConeGeometry(3.9, 22, 8), kit.slate);
-    cap.position.set(side * 19.5, 71, 2);
-    const finial = new THREE.Mesh(crossGeometry(3.4), kit.chrome);
-    finial.position.set(side * 19.5, 81, 2);
-    portal.add(niche, turret, cap, finial);
-    kit.wreck.object(finial, 2, { rest: 0.4 });
-    kit.wreck.object(cap, 3, { rest: 3 });
-  }
+    caps.setMatrixAt(k, new THREE.Matrix4().makeTranslation(side * 19.5, 71, 2));
+    finials.setMatrixAt(k, new THREE.Matrix4().makeTranslation(side * 19.5, 81, 2));
+    portal.add(niche, turret);
+  });
+  portal.add(caps, finials);
+  kit.wreck.instances(finials, 2, 0.4);
+  kit.wreck.instances(caps, 3, 3);
   const cross = new THREE.Mesh(crossGeometry(8), kit.chrome);
   cross.position.set(0, 69, 2);
   portal.add(cross);
   kit.wreck.object(cross, 2, { rest: 0.6 });
+  bake(portal, kit.wreck.owns);
   return portal;
 }
 
@@ -672,6 +684,7 @@ function buildCrownSteeple(tower: THREE.Group, kit: Kit, width: number) {
     new THREE.MeshBasicMaterial({ color: BLOOD, transparent: true, opacity: 0.2, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
   );
   shaft.position.y = roof + 1.4 + (heart - roof - 6) / 2;
+  shaft.userData.live = true;
   const aura = glowSprite(kit, BLOOD, 44, 0.4);
   aura.position.y = heart;
   tower.add(collar, plinth, crown, ball, ...rings, shaft, aura);
@@ -709,6 +722,9 @@ function buildCrownSteeple(tower: THREE.Group, kit: Kit, width: number) {
 }
 
 const NAVE_LENGTH = 58;
+const Z_AXIS = new THREE.Vector3(0, 0, 1);
+const Y_AXIS = new THREE.Vector3(0, 1, 0);
+const UNIT = new THREE.Vector3(1, 1, 1);
 const GREAT_TOWER_HEIGHT = 112;
 
 /**
@@ -734,6 +750,13 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
 
   const aisleStone = kit.stone(5, 2.5);
   const buttressStone = kit.stone(0.3, 3.5);
+  const bayZ: number[] = [];
+  for (let z = 5; z < NAVE_LENGTH; z += 9.5) bayZ.push(z);
+  // The parts that can be shaken off are instances, so the wreck can move each one and the rest can be baked
+  const pinnacles = new THREE.InstancedMesh(new THREE.ConeGeometry(1.4, 9, 4), kit.slate, bayZ.length * 2);
+  const flyers = new THREE.InstancedMesh(new THREE.BoxGeometry(15, 0.9, 0.9), buttressStone, bayZ.length * 2);
+  const lean = new THREE.Quaternion();
+  let bay = 0;
   for (const side of [-1, 1]) {
     const aisle = new THREE.Mesh(new THREE.BoxGeometry(13, 28, NAVE_LENGTH), aisleStone);
     aisle.position.set(side * (naveWidth / 2 + 6.5), 14, NAVE_LENGTH / 2);
@@ -743,7 +766,7 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
     leanTo.rotation.z = -side * 0.42;
     cathedral.add(aisle, leanTo);
 
-    for (let z = 5; z < NAVE_LENGTH; z += 9.5) {
+    for (const z of bayZ) {
       const x = side * (naveWidth / 2 + 13.1);
       const aisleWindow = traceriedWindow(kit, 4.6, 18, { lights: 2, hood: true });
       aisleWindow.position.set(x, 5, z);
@@ -753,17 +776,17 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
       clerestory.rotation.y = (side * Math.PI) / 2;
       const buttress = new THREE.Mesh(new THREE.BoxGeometry(3.4, 34, 1.8), buttressStone);
       buttress.position.set(x + side * 1.4, 17, z + 4.75);
-      const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(1.4, 9, 4), kit.slate);
-      pinnacle.position.set(x + side * 1.4, 38.5, z + 4.75);
+      pinnacles.setMatrixAt(bay, new THREE.Matrix4().makeTranslation(x + side * 1.4, 38.5, z + 4.75));
       // A flyer from each buttress up to the nave wall
-      const flyer = new THREE.Mesh(new THREE.BoxGeometry(15, 0.9, 0.9), buttressStone);
-      flyer.position.set(side * (naveWidth / 2 + 7), 40, z + 4.75);
-      flyer.rotation.z = -side * 0.5;
-      cathedral.add(aisleWindow, clerestory, buttress, pinnacle, flyer);
-      kit.wreck.object(pinnacle, 1, { rest: 1.2 });
-      kit.wreck.object(flyer, 3, { rest: 0.6 });
+      lean.setFromAxisAngle(Z_AXIS, -side * 0.5);
+      flyers.setMatrixAt(bay, new THREE.Matrix4().compose(new THREE.Vector3(side * (naveWidth / 2 + 7), 40, z + 4.75), lean, UNIT));
+      bay++;
+      cathedral.add(aisleWindow, clerestory, buttress);
     }
   }
+  cathedral.add(pinnacles, flyers);
+  kit.wreck.instances(pinnacles, 1, 1.2);
+  kit.wreck.instances(flyers, 3, 0.6);
 
   const front = makePortal(kit);
   front.position.z = NAVE_LENGTH;
@@ -782,17 +805,20 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
     tower.add(course);
   }
   const turretStone = kit.stone(1, 13);
-  for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
+  const spirelets = new THREE.InstancedMesh(new THREE.ConeGeometry(3.2, 17, 8), kit.slate, 4);
+  const finials = new THREE.InstancedMesh(crossGeometry(4.5), kit.chrome, 4);
+  const merlons = new THREE.InstancedMesh(new THREE.ConeGeometry(1.3, 13, 4), kit.slate, 12);
+  CORNERS.forEach(([dx, dz], k) => {
     const turret = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3, GREAT_TOWER_HEIGHT + 6, 8), turretStone);
     turret.position.set((dx * width) / 2, (GREAT_TOWER_HEIGHT + 6) / 2, (dz * width) / 2);
-    const spirelet = new THREE.Mesh(new THREE.ConeGeometry(3.2, 17, 8), kit.slate);
-    spirelet.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 14.5, (dz * width) / 2);
-    const finial = new THREE.Mesh(crossGeometry(4.5), kit.chrome);
-    finial.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 22, (dz * width) / 2);
-    tower.add(turret, spirelet, finial);
-    kit.wreck.object(finial, 2, { rest: 0.5 });
-    kit.wreck.object(spirelet, 3, { rest: 2.6 });
-  }
+    spirelets.setMatrixAt(k, new THREE.Matrix4().makeTranslation((dx * width) / 2, GREAT_TOWER_HEIGHT + 14.5, (dz * width) / 2));
+    finials.setMatrixAt(k, new THREE.Matrix4().makeTranslation((dx * width) / 2, GREAT_TOWER_HEIGHT + 22, (dz * width) / 2));
+    tower.add(turret);
+  });
+  tower.add(spirelets, finials, merlons);
+  kit.wreck.instances(finials, 2, 0.5);
+  kit.wreck.instances(spirelets, 3, 2.6);
+  kit.wreck.instances(merlons, 2, 1.2);
   for (let face = 0; face < 4; face++) {
     const side = new THREE.Group();
     side.rotation.y = (face * Math.PI) / 2;
@@ -806,12 +832,11 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
       lower.position.set(x, GREAT_TOWER_HEIGHT * 0.44, width / 2 + 0.1);
       side.add(belfry, lower);
     }
-    for (const x of [-8, 0, 8]) {
-      const merlon = new THREE.Mesh(new THREE.ConeGeometry(1.3, 13, 4), kit.slate);
-      merlon.position.set(x, GREAT_TOWER_HEIGHT + 6.5, width / 2);
-      side.add(merlon);
-      kit.wreck.object(merlon, 2, { rest: 1.2 });
-    }
+    [-8, 0, 8].forEach((x, k) => {
+      const turn = (face * Math.PI) / 2;
+      const at = new THREE.Vector3(x, GREAT_TOWER_HEIGHT + 6.5, width / 2).applyAxisAngle(Y_AXIS, turn);
+      merlons.setMatrixAt(face * 3 + k, new THREE.Matrix4().makeRotationY(turn).setPosition(at));
+    });
     tower.add(side);
   }
   addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.62, kit.slate);
@@ -820,6 +845,9 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
   cathedral.add(tower);
   group.add(cathedral);
   kit.wreck.tower(tower, GREAT_TOWER_HEIGHT, width);
+  // The tower falls as one piece, so it is baked on its own and the rest of the cathedral around it
+  bake(tower, kit.wreck.owns);
+  bake(cathedral, (object) => object === tower || kit.wreck.owns(object));
 
   // Fire spouts on the great tower: one at each corner where the steeple springs,
   // pointing level and straight out along the diagonal, away from the middle of the tower
@@ -1380,12 +1408,13 @@ function makeRoadPieces() {
 function makeLamps(scene: THREE.Scene, kit: Kit) {
   const iron = new THREE.MeshLambertMaterial({ color: 0x08080a });
   const parts = {
-    base: new Batch(new THREE.CylinderGeometry(0.45, 0.75, 1, 6), iron),
-    post: new Batch(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), iron),
-    collar: new Batch(new THREE.CylinderGeometry(0.34, 0.2, 1, 6), iron),
-    lantern: new Batch(new THREE.CylinderGeometry(0.62, 0.42, 1, 6), new THREE.MeshBasicMaterial({ color: 0xd9a03c })),
-    cap: new Batch(new THREE.ConeGeometry(0.85, 1, 6), iron),
-    finial: new Batch(new THREE.ConeGeometry(0.12, 1, 4), iron),
+    // Thousands of lamps, each a few pixels tall from the blimp: five sides, and no end caps where one part hides them
+    base: new Batch(new THREE.CylinderGeometry(0.45, 0.75, 1, 5), iron),
+    post: new Batch(new THREE.CylinderGeometry(0.14, 0.22, 1, 5, 1, true), iron),
+    collar: new Batch(new THREE.CylinderGeometry(0.34, 0.2, 1, 5, 1, true), iron),
+    lantern: new Batch(new THREE.CylinderGeometry(0.62, 0.42, 1, 5, 1, true), new THREE.MeshBasicMaterial({ color: 0xd9a03c })),
+    cap: new Batch(new THREE.ConeGeometry(0.85, 1, 5, 1, true), iron),
+    finial: new Batch(new THREE.ConeGeometry(0.12, 1, 3, 1, true), iron),
   };
   const halos: number[] = [];
   const spots: XZ[] = [];
@@ -1471,6 +1500,7 @@ function buildNeonSpire(scene: THREE.Scene, kit: Kit, base: THREE.Vector3, outwa
   const cross = new THREE.Mesh(crossGeometry(4), kit.chrome);
   cross.position.copy(tip).setY(tip.y - 0.5);
   spire.add(cross);
+  bake(spire);
   scene.add(spire);
 
   const halo = glowSprite(kit, 0xffffff, 95, 0.5);
@@ -1512,7 +1542,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
 
   const slateRoof = lambert(0x15181e);
   const metal = lambert(0x1b1e24);
-  const blob = new THREE.IcosahedronGeometry(0.5, 1);
+  const blob = new THREE.IcosahedronGeometry(0.5, 0);
   const batch = {
     brick: new Batch(unitBox, makeFacade("brick")),
     flats: new Batch(unitBox, makeFacade("flats")),
@@ -1522,7 +1552,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
     roofs: new Batch(unitRoof, slateRoof),
     drums: new Batch(new THREE.CylinderGeometry(0.5, 0.5, 1, 20), metal),
     spires: new Batch(new THREE.ConeGeometry(0.5, 1, 6), slateRoof),
-    trunks: new Batch(new THREE.CylinderGeometry(0.35, 0.5, 1, 5), lambert(0x241a14)),
+    trunks: new Batch(new THREE.CylinderGeometry(0.35, 0.5, 1, 4, 1, true), lambert(0x241a14)),
     leavesA: new Batch(blob, lambert(0x0f2a1c, true)),
     leavesB: new Batch(blob, lambert(0x0b2117, true)),
     conifers: new Batch(new THREE.ConeGeometry(0.5, 1, 6), lambert(0x091c15, true)),
@@ -1863,53 +1893,65 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   };
 }
 
-/** Banks of low mist drifting through the streets, on top of the distance fog. */
+/**
+ * Banks of low mist drifting through the streets, on top of the distance fog.
+ * All of them are one mesh: each bank is a quad turned to face the camera in
+ * the vertex shader, so the whole lot costs a single draw call.
+ */
 function buildMist(scene: THREE.Scene, kit: Kit, count: number) {
-  const mist = new THREE.Group();
+  const centres = new Float32Array(count * 12);
+  const corners = new Float32Array(count * 8);
+  const sizes = new Float32Array(count * 8);
+  const alphas = new Float32Array(count * 4);
+  const index: number[] = [];
   for (let i = 0; i < count; i++) {
-    const bank = new THREE.Sprite(new THREE.SpriteMaterial({ map: kit.glow, color: 0x39414f, transparent: true, opacity: 0.018 + Math.random() * 0.026, depthWrite: false, fog: false }));
     const angle = Math.random() * Math.PI * 2;
     const radius = 210 + Math.random() * 500;
-    bank.position.set(Math.cos(angle) * radius * PLAZA_STRETCH, 14 + Math.random() * 50, Math.sin(angle) * radius);
-    bank.scale.set(260 + Math.random() * 300, 70 + Math.random() * 80, 1);
-    mist.add(bank);
-  }
-  scene.add(mist);
-  return mist;
-}
-
-/** Rain as short streaks falling through a box around the stadium, wrapped in the vertex shader. */
-function buildRain(scene: THREE.Scene, count: number) {
-  const positions = new Float32Array(count * 6);
-  const tails = new Float32Array(count * 2);
-  for (let i = 0; i < count; i++) {
-    const x = (Math.random() - 0.5) * 900;
-    const y = Math.random() * 300;
-    const z = (Math.random() - 0.5) * 900;
-    positions.set([x, y, z, x, y, z], i * 6);
-    tails[i * 2 + 1] = 1;
+    const centre = [Math.cos(angle) * radius * PLAZA_STRETCH, 14 + Math.random() * 50, Math.sin(angle) * radius];
+    const size = [260 + Math.random() * 300, 70 + Math.random() * 80];
+    const alpha = 0.05 + Math.random() * 0.07;
+    [[0, 0], [1, 0], [1, 1], [0, 1]].forEach((corner, k) => {
+      centres.set(centre, (i * 4 + k) * 3);
+      corners.set(corner, (i * 4 + k) * 2);
+      sizes.set(size, (i * 4 + k) * 2);
+      alphas[i * 4 + k] = alpha;
+    });
+    index.push(i * 4, i * 4 + 1, i * 4 + 2, i * 4, i * 4 + 2, i * 4 + 3);
   }
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-  geometry.setAttribute("aTail", new THREE.BufferAttribute(tails, 1));
+  geometry.setAttribute("position", new THREE.BufferAttribute(centres, 3));
+  geometry.setAttribute("uv", new THREE.BufferAttribute(corners, 2));
+  geometry.setAttribute("aSize", new THREE.BufferAttribute(sizes, 2));
+  geometry.setAttribute("aAlpha", new THREE.BufferAttribute(alphas, 1));
+  geometry.setIndex(index);
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 } },
+    uniforms: { uMap: { value: kit.glow }, uColor: { value: new THREE.Color(0x39414f) } },
     transparent: true,
     depthWrite: false,
     vertexShader: /* glsl */ `
-      uniform float uTime; attribute float aTail;
+      attribute vec2 aSize; attribute float aAlpha;
+      varying vec2 vUv; varying float vAlpha;
       void main() {
-        vec3 p = position;
-        p.y = mod(p.y - uTime * 150.0, 300.0) + aTail * 5.0;
-        p.x += aTail * 0.9; // a little wind
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(p, 1.0);
+        vUv = uv;
+        vAlpha = aAlpha;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        mv.xy += (uv - 0.5) * aSize;
+        gl_Position = projectionMatrix * mv;
       }`,
-    fragmentShader: /* glsl */ `void main() { gl_FragColor = vec4(0.75, 0.82, 0.95, 0.16); }`,
+    fragmentShader: /* glsl */ `
+      uniform sampler2D uMap; uniform vec3 uColor;
+      varying vec2 vUv; varying float vAlpha;
+      void main() {
+        gl_FragColor = vec4(uColor, texture2D(uMap, vUv).a * vAlpha);
+        #include <tonemapping_fragment>
+        #include <colorspace_fragment>
+      }`,
   });
-  const rain = new THREE.LineSegments(geometry, material);
-  rain.frustumCulled = false;
-  scene.add(rain);
-  return material;
+  const mist = new THREE.Mesh(geometry, material);
+  mist.frustumCulled = false;
+  mist.renderOrder = 1; // over everything else that is see-through
+  scene.add(mist);
+  return mist;
 }
 
 function buildPitch(group: THREE.Group) {
@@ -2461,8 +2503,7 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   }
   kit.wreck.seal(doors);
   const pulseCity = buildCity(scene, kit, small);
-  const rain = buildRain(scene, small ? 2500 : 7000);
-  const mist = buildMist(scene, kit, small ? 24 : 60);
+  const mist = buildMist(scene, kit, small ? 10 : 22);
 
   // The bowl glows red from within, and the glow hangs in the mist above it
   const bowlGlow = glowSprite(kit, BLOOD, 330, 0.3);
@@ -2546,7 +2587,6 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     fire.uniforms.uPower.value = alight ? 1 + chaos.heat * 0.9 : 0;
     fire.uniforms.uTower.value = chaos.towerUp ? 1 : 0;
     fire.uniforms.uScale.value = pointScale;
-    rain.uniforms.uTime.value = time;
     // Steady light in the cathedral windows; they only flare for a home goal
     kit.glass.uniforms.uGlow.value = 0.45 + 0.55 * Math.min(1, homeGoal);
     beams.opacity = 0.055 + homeJoy * 0.06;

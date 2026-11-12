@@ -103,6 +103,8 @@ export class Wreck {
   private active = new Set<Piece>();
   private dirty = new Set<THREE.InstancedMesh>();
   private pending: (() => void)[] = [];
+  /** Objects registered to break off, which therefore have to stay separate objects. */
+  private loose = new Set<THREE.Object3D>();
 
   private workers: Worker[] = [];
   private bodies!: THREE.InstancedMesh;
@@ -161,6 +163,7 @@ export class Wreck {
 
   /** A single mesh or group can break off its parent. */
   object(object: THREE.Object3D, tier: number, { rest = 1, bounce = 0, recentre = false, onChange }: PieceOptions = {}) {
+    this.loose.add(object);
     this.pending.push(() => {
       if (recentre && object instanceof THREE.Mesh) {
         const centre = new THREE.Box3().setFromBufferAttribute(object.geometry.getAttribute("position") as THREE.BufferAttribute).getCenter(new THREE.Vector3());
@@ -177,6 +180,9 @@ export class Wreck {
       piece.onChange = onChange;
     });
   }
+
+  /** True for anything registered with `object`. */
+  owns = (object: THREE.Object3D) => this.loose.has(object);
 
   /** The great tower: the last thing to go, and the thing whose fall forces a rebuild. */
   tower(group: THREE.Group, height: number, width: number) {

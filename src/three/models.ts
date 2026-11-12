@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { bake } from "./merge";
 import { BLOOD, CHROME } from "./stage";
 
 /**
@@ -88,6 +89,7 @@ export function createThornRing(radius: number, thorns = 28): THREE.Group {
     thorn.rotation.z = angle - (dir * Math.PI) / 2;
     group.add(thorn);
   }
+  bake(group); // one draw call instead of one per thorn
   return group;
 }
 
@@ -120,6 +122,7 @@ export function createCrown(radius = 1): THREE.Group {
       group.add(gem);
     }
   }
+  bake(group); // the chrome in one mesh, the jewels in another
   return group;
 }
 
