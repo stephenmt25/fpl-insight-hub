@@ -1,312 +1,66 @@
+# FPL Insight Hub
 
-# FPL Analytics Dashboard
+Live Fantasy Premier League analytics with in-browser machine learning and a three.js front end.
 
-A comprehensive Fantasy Premier League analytics application that helps managers make data-driven decisions for their FPL teams.
+![Dashboard](docs/dashboard.png)
 
-![FPL Analytics Dashboard](public/screencapture-preview-fpl-insight-hub-lovable-app-2025-05-12-23_29_03.png)
+## What it does
 
-## Features Overview
+| | |
+|---|---|
+| **Dashboard** | Deadline countdown, gameweek stats, team of the week, results, season charts |
+| **My Team** | Live points on the pitch, captain optimiser, chip planner, transfer impact, rank trends |
+| **Players** | Sort and filter all 670+ players, compare four head to head, build your own charts |
+| **Leagues** | Any classic league: standings, gameweek insights, and a title-race chart |
+| **Insights** | Differential finder, price-change predictions, form forecasts, fixture difficulty, league table |
 
-### Dashboard Home
-The main dashboard provides a comprehensive overview of the current FPL season:
+Sign in with a public FPL ID (no password), or click **Try as guest**.
 
-- **Live Gameweek Information**: Displays current gameweek number, deadline times, and status
-- **Season Statistics**: Key metrics including highest gameweek score, average points, and most captained players
-- **Interactive Gameweek Navigation**: Browse through all 38 gameweeks with pagination controls
-- **Data Visualizations**: 
-  - Average points trend line chart across all gameweeks
-  - Captain distribution pie charts showing popular choices
-  - Transfer activity and performance metrics
-- **League Standings Preview**: Quick access to major FPL leagues (Overall, Second Chance, GW1 starters)
+| My Team | Form forecast |
+|---|---|
+| ![My Team](docs/my-team.png) | ![Form forecast](docs/insights.png) |
 
-### Performance Analytics
-Detailed performance tracking for signed-in managers:
+![Fixture difficulty](docs/fixtures.png)
 
-#### Manager Statistics Cards
-- **Gameweek Points**: Your points vs. overall average with performance indicators
-- **Overall Rank**: Current rank with gameweek-specific ranking
-- **Captain Performance**: Shows your captain choice, points scored, and opponent fixture
-- **Transfer Activity**: Number of transfers made and their point cost
-- **Team Value**: Current squad value with weekly changes
-- **Bench Points**: Points left on the bench with auto-substitution info
-- **Transfer Impact**: Detailed breakdown of transfers in/out with point differentials
+## How it's built
 
-#### Player Performance Table
-- **Starting XI Overview**: Shows all 11 starting players
-- **Performance Indicators**: Visual icons for exceptional (👍), average (➖), or poor (👎) performances
-- **Team Information**: Player names with club abbreviations
-- **Position Details**: GK, DEF, MID, FWD classifications
-- **Live Points**: Real-time gameweek points for each player
+- **React 18 + TypeScript (strict)**, Vite 8, Tailwind, TanStack Query, Recharts
+- **three.js** scenes written by hand: a truncated-icosahedron football, thorn rings, crown and a wireframe pitch, all procedural (no model files)
+- **Models run client-side on live data**, each a small tested module in [`src/lib/ml`](src/lib/ml):
+  - *Differentials*: k-means clustering on six z-scored features, then low-ownership picks from the top clusters
+  - *Price changes*: transfer pressure relative to ownership, blended with FPL's progress-to-threshold figure
+  - *Form forecast*: exponentially weighted level plus a damped trend, adjusted for fixture difficulty
+  - *Captain ranking*: expected points weighted by fixture, venue, form and availability
+- **Resilient data layer**: the FPL API has no CORS headers, so requests go through a same-origin proxy and fall back to a Supabase edge function. A `/status` page tests every endpoint through both.
 
-#### Historical Trends
-- **Season Performance Graph**: Track your points across all gameweeks
-- **Rank Progression**: Visualize your overall rank changes
-- **Transfer History**: Complete transfer activity with success rates
-- **Captaincy Analysis**: Historical captain choices and their effectiveness
+```
+src/
+  lib/fpl/     API client, typed hooks, fixtures and league-table logic
+  lib/ml/      clustering, price, form and captain models (+ tests)
+  three/       WebGL stage, procedural models, scenes
+  pages/       Dashboard, MyTeam, Players, Leagues, Insights, Status
+  components/  layout, shared UI, chart theme
+```
 
-#### League Comparisons
-- **Mini-League Tables**: View all your private league standings
-- **Performance Comparison**: Compare against league rivals
-- **Position Tracking**: Monitor your league position changes
+## Run it
 
-### Insights & Strategy
-Data-driven insights powered by machine learning to improve your FPL performance:
+```bash
+npm install
+npm run dev        # http://localhost:8080
+```
 
-#### Player Insights
-- **Top Performers**: Highest-scoring players with ownership percentages
-- **Form Analysis**: Recent performance trends and predictions
-- **Value Analysis**: Price changes and value for money metrics
-- **Ownership Trends**: Popular picks and differential opportunities
+No keys or database needed: the dev server proxies the public FPL API.
 
-#### Machine Learning Features
+| Command | |
+|---|---|
+| `npm test` | Unit tests (Vitest) |
+| `npm run typecheck` | Strict TypeScript |
+| `npm run lint` | ESLint |
+| `npm run build` | Production build |
+| `npm run check:api` | Smoke-test every FPL endpoint the app uses |
 
-##### 🤖 Price Change Predictions
-Advanced ML algorithms analyze player data to predict upcoming price movements:
-- **Rise/Fall Predictions**: Identifies players likely to increase or decrease in price
-- **Confidence Levels**: High, medium, or low confidence ratings for each prediction
-- **Transfer Delta Analysis**: Real-time tracking of transfers in/out over 24 hours
-- **Expected Change Dates**: Predicts when price changes are most likely to occur
-- **Detailed Reasoning**: Explains the factors driving each prediction
-- **Ownership Context**: Analyzes current ownership percentages and trends
-- **Form Integration**: Considers recent player form in price predictions
+**Deploying to a static host:** copy `.env.example` to `.env` and deploy `supabase/functions/fpl-api-proxy`, or add a host rewrite from `/fpl-api/*` to `https://fantasy.premierleague.com/api/*`.
 
-##### 📈 Form Trend Analyzer
-Sophisticated ML-powered analysis of player performance trends:
-- **Historical Form Tracking**: Visualizes player form from gameweek 1 to current
-- **Predictive Modeling**: Forecasts player points for upcoming gameweeks
-- **Trend Classification**: Categorizes players as Rising, Falling, or Stable
-- **Confidence Scoring**: Provides reliability ratings for each prediction
-- **Interactive Charts**: Line graphs showing historical and predicted performance
-- **Trend Strength**: Measures the intensity of performance trends
-- **Volatility Metrics**: Identifies consistent vs. unpredictable players
-- **Momentum Analysis**: Tracks acceleration in performance changes
-- **Historical Data Generation**: Built-in tool to populate form history for comprehensive analysis
+---
 
-##### 🎯 Differential Picks (ML-Powered Clustering)
-Machine learning clustering algorithms identify hidden gem players:
-- **Feature-Based Clustering**: Groups players by form, xG, xA, ICT index, and value metrics
-- **Low-Ownership Gems**: Finds high-performing players with under 10% ownership
-- **Confidence Scoring**: ML-calculated confidence for each differential recommendation
-- **Multi-Factor Analysis**: Evaluates 7+ key performance indicators simultaneously
-- **Smart Recommendations**: Explains why each player is flagged as a differential
-- **Points-Per-Game Focus**: Prioritizes consistent performers over flashy one-week wonders
-
-#### Fixture Difficulty
-- **Upcoming Fixtures**: Visual difficulty ratings for all teams
-- **Rotation Planning**: Plan transfers based on fixture runs
-- **Home/Away Analysis**: Performance splits by venue
-- **Double Gameweek Alerts**: Identify favorable fixture periods
-
-#### Transfer Suggestions
-- **Data-Driven Recommendations**: AI-powered transfer suggestions based on ML insights
-- **Price Change Integration**: Leverages ML price predictions for optimal transfer timing
-- **Ownership Analysis**: Identify differentials and template players using clustering
-- **ROI Calculations**: Expected points return on investment with confidence intervals
-
-### League Standings
-Comprehensive league analysis and standings:
-
-#### League Tables
-- **Multiple League Support**: View any league you're part of
-- **Detailed Rankings**: Points, gameweek performance, and trends
-- **Manager Information**: Team names, total points, and recent form
-- **Pagination**: Navigate through large leagues efficiently
-
-#### League Insights
-- **Statistical Breakdown**: Average scores, top performers, transfer activity
-- **League Trends**: Historical performance patterns
-- **Competitive Analysis**: Compare against league averages
-- **Achievement Tracking**: Milestone and record tracking
-
-## Authentication & Personalization
-
-### FPL ID Integration
-- **Secure Sign-In**: Use your official FPL ID for authentication
-- **Data Privacy**: Only accesses public FPL data, never your login credentials
-- **Guest Mode**: Try the app with demo data using the "Try as Guest" feature
-- **Persistent Sessions**: Your FPL ID is securely stored for future visits
-
-### Finding Your FPL ID
-1. Visit the [Fantasy Premier League website](https://fantasy.premierleague.com/)
-2. Log into your account
-3. Navigate to the "Points" tab
-4. Your FPL ID is the number in the URL after "/entry/" (e.g., 1234567)
-5. Mobile users: Enable "Request Desktop Site" to see the full URL
-
-## Responsive Design
-
-### Desktop Experience
-- **Full Dashboard Layout**: Comprehensive view with multiple data panels
-- **Advanced Visualizations**: Detailed charts and interactive elements
-- **Tabbed Navigation**: Easy access to all features via horizontal tabs
-- **Multi-Column Layouts**: Efficient use of screen real estate
-
-### Mobile Experience
-- **Touch-Optimized Interface**: Finger-friendly navigation and controls
-- **Bottom Tab Navigation**: Easy thumb access to main sections
-- **Swipe Gestures**: Intuitive navigation between gameweeks
-- **Responsive Charts**: Optimized visualizations for smaller screens
-- **Collapsible Sections**: Expandable content to maximize screen usage
-
-## Technical Architecture
-
-### Frontend Technology Stack
-- **React 18**: Modern React with hooks and functional components
-- **TypeScript**: Full type safety throughout the application
-- **Tailwind CSS**: Utility-first styling with responsive design
-- **shadcn/ui**: Consistent, accessible UI components
-- **Recharts**: Interactive data visualization library
-- **React Query**: Efficient data fetching and caching
-- **React Router**: Client-side routing and navigation
-
-### Backend Integration
-- **Supabase Platform**: Backend-as-a-Service for data and authentication
-- **Edge Functions**: Serverless functions for API proxying and data processing
-- **PostgreSQL Database**: Structured data storage with relationships
-- **Real-time Updates**: Live data synchronization
-- **ML Processing Pipeline**: Dedicated edge functions for machine learning computations
-
-### Machine Learning Architecture
-
-#### ML Edge Functions
-The application includes several sophisticated ML-powered edge functions:
-
-**`predict-price-changes`**: 
-- Analyzes transfer deltas, ownership, form, and price history
-- Calculates probability scores for price rises and falls
-- Generates confidence ratings and reasoning for each prediction
-- Processes historical price changes to improve accuracy
-
-**`predict-form-trends`**:
-- Fetches historical gameweek performance data for all players
-- Applies trend analysis algorithms to identify performance patterns
-- Generates multi-gameweek predictions with confidence intervals
-- Classifies trends as rising, falling, or stable with strength metrics
-- Calculates volatility and momentum indicators
-
-**`generate-historical-form`**:
-- Creates realistic historical form data for gameweeks 1-10
-- Uses position-based heuristics and current form to generate believable trends
-- Adds statistical variance to simulate real-world performance fluctuation
-- Populates `player_gameweek_history` table with generated data
-- Enables comprehensive trend analysis from season start
-
-#### ML Data Tables
-**`player_gameweek_history`**:
-- Stores historical performance data per player per gameweek
-- Includes: points, form, xG, xA, minutes, bonus, BPS
-- Unique constraint on (player_id, gameweek) for data integrity
-- Optimized indexes for fast ML query performance
-
-**`price_change_history`**:
-- Tracks historical price movements for all players
-- Records: old price, new price, date, transfers in/out
-- Links to current player form and ownership data
-- Enables pattern recognition for price prediction ML models
-
-**`upcoming_fixtures_enriched`**:
-- Enhanced fixture data with team strength metrics
-- Includes attack/defense strength for home and away teams
-- Difficulty ratings integrated into ML predictions
-- Used for context in form trend forecasting
-
-### Database Schema
-#### FPL Overall Data (`fploveralldata`)
-Stores gameweek-level statistics:
-- Gameweek information (id, name, deadlines)
-- Scoring statistics (average points, highest score)
-- Popular choices (most captained, most transferred)
-- Meta information (finished status, current gameweek)
-
-#### Player Data (`plplayerdata`)
-Comprehensive player statistics:
-- Basic information (name, team, position, price)
-- Performance metrics (points, form, minutes played)
-- Ownership data (selected by percentage, transfers)
-- Advanced statistics (ICT index, expected goals, creativity)
-
-#### Team Data (`plteams`)
-Premier League team information:
-- Team details (name, short name, strength ratings)
-- Current season statistics (position, points, form)
-- Fixture difficulty ratings (home/away strengths)
-
-### Data Flow Architecture
-1. **Data Synchronization**: Scheduled edge functions fetch data from FPL API
-2. **Data Processing**: Raw API data is cleaned and structured for storage
-3. **Database Storage**: Processed data stored in optimized Supabase tables
-4. **ML Processing**: Edge functions run ML algorithms on stored data
-5. **Prediction Generation**: ML models generate predictions with confidence scores
-6. **API Layer**: Edge functions provide proxy access for real-time requests
-7. **Client Queries**: React Query manages data fetching with caching
-8. **UI Rendering**: Components render data with loading and error states
-
-### Performance Optimizations
-- **Data Caching**: Intelligent caching strategies to minimize API calls
-- **Lazy Loading**: Components and data loaded on demand
-- **Image Optimization**: Optimized assets for faster loading
-- **Code Splitting**: Reduced initial bundle size
-- **Responsive Images**: Appropriate image sizes for different devices
-
-## Getting Started
-
-### For Users
-1. **Visit the Application**: Navigate to the deployed URL
-2. **Sign In**: Click "Sign In with FPL ID" and enter your FPL ID
-3. **Explore**: Use the navigation tabs to explore different features
-4. **Analyze**: Review your performance and get insights
-5. **Strategize**: Use the data to make informed FPL decisions
-
-### Guest Experience
-- **Try as Guest**: Use the "Try as Guest" button for a demo experience
-- **Sample Data**: Explore all features with example FPL manager data
-- **No Registration**: Test the application without providing your FPL ID
-
-## Data Sources & Updates
-
-### Official FPL API
-- **Real-time Data**: Live gameweek scores and player statistics
-- **Historical Data**: Complete season history and trends
-- **Manager Data**: Personal team information and league standings
-- **Update Frequency**: Data refreshed multiple times per gameweek
-
-### Data Privacy & Security
-- **Public Data Only**: Only accesses publicly available FPL information
-- **No Credentials Stored**: Never requests or stores FPL login information
-- **Secure Storage**: FPL IDs encrypted and securely stored
-- **Privacy First**: No personal data beyond what's publicly available on FPL
-
-## Design Philosophy
-
-### User Experience
-- **Data-First Design**: Information hierarchy based on relevance and importance
-- **Progressive Disclosure**: Complex data revealed through user interaction
-- **Consistent Patterns**: Repeatable UI patterns across all features
-- **Accessibility**: Keyboard navigation and screen reader support
-
-### Visual Design
-- **Clean Interface**: Minimal clutter with focus on data clarity
-- **Color Coding**: Consistent color scheme for performance indicators
-- **Typography**: Clear hierarchy with readable font sizes
-- **Responsive Grid**: Flexible layouts that work on all screen sizes
-
-### Performance Indicators
-- **Visual Feedback**: Icons and colors indicate performance levels
-- **Contextual Information**: Relevant comparisons and benchmarks
-- **Trend Indicators**: Arrows and charts show direction of change
-- **Status Badges**: Clear indication of current state and changes
-
-This FPL Analytics Dashboard transforms raw Fantasy Premier League data into actionable insights, helping managers make informed decisions and track their performance throughout the season.
-
-## Development Notes
-
-This FPL Analytics Dashboard has been significantly enhanced with machine learning capabilities that provide predictive insights beyond standard FPL tools. The ML features use sophisticated algorithms to analyze player data, predict price changes, forecast form trends, and identify differential picks through clustering analysis.
-
-### Key ML Innovations
-- **Real-time Price Prediction**: ML algorithms continuously analyze transfer patterns and ownership data
-- **Form Trend Forecasting**: Historical data combined with predictive modeling for future gameweek projections  
-- **Differential Discovery**: Unsupervised learning clusters players to find undervalued assets
-- **Confidence Scoring**: Every ML prediction includes a confidence rating for transparency
-- **Explainable AI**: All predictions come with human-readable reasoning
-
-This project demonstrates the power of combining traditional data analytics with modern machine learning to create a comprehensive FPL decision support system.
+Unofficial project. Data from the public Fantasy Premier League API; not affiliated with the Premier League.

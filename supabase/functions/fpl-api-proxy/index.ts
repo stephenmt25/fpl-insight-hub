@@ -51,6 +51,7 @@ serve(async (req) => {
     // Validate endpoint format (must start with expected FPL API paths)
     const validPaths = [
       '/bootstrap-static/',
+      '/fixtures/',
       '/entry/',
       '/leagues-classic/',
       '/event/',
