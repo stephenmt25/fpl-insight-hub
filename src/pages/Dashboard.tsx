@@ -1,85 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
-import { Button } from "@/components/ui/button";
-import { ErrorBlock, GameweekPicker, LoadingBlock, Section, Stat } from "@/components/shared/bits";
+import type { AppProps } from "@/apps";
+import { GameweekPicker, LoadingBlock, Section, Stat } from "@/components/shared/bits";
 import { AXIS, ChartFrame, ChartTooltip, GRID, Legend, REFERENCE, SERIES } from "@/components/shared/charts";
-import { SigilDivider } from "@/components/shared/ornaments";
 import { Pitch } from "@/components/shared/Pitch";
-import { GUEST_ID, useAuth } from "@/lib/auth";
-import { chipLabel, compact, countdown, int, kickoff } from "@/lib/fpl/format";
-import { useDreamTeam, useFixtures, useFpl, type Fpl } from "@/lib/fpl/hooks";
-import { HeroScene } from "@/three/lazy";
-
-function Countdown({ to }: { to: string }) {
-  const [now, setNow] = useState(Date.now());
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
-  }, []);
-  const c = countdown(to, now);
-  const cells: [string, number][] = [["days", c.days], ["hrs", c.hours], ["min", c.minutes], ["sec", c.seconds]];
-  return (
-    <div className="flex gap-2" role="timer" aria-label="Time until the next deadline">
-      {cells.map(([label, value]) => (
-        <div key={label} className="panel min-w-14 px-2 py-2 text-center">
-          <p className="num text-2xl font-semibold text-foreground">{String(value).padStart(2, "0")}</p>
-          <p className="eyebrow">{label}</p>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function Hero({ fpl }: { fpl: Fpl }) {
-  const { manager, managerId, setDialogOpen, signIn } = useAuth();
-  const startYear = new Date(fpl.events[0]?.deadline_time ?? Date.now()).getFullYear();
-  const season = `${startYear}/${String((startYear + 1) % 100).padStart(2, "0")}`;
-
-  return (
-    <section className="relative grid items-center gap-2 lg:grid-cols-[1.05fr_1fr]">
-      <div className="relative z-10 animate-rise space-y-5 py-4 text-center lg:text-left">
-        <p className="eyebrow">Season {season} · {fpl.current ? fpl.current.name : "Pre-season"} · {compact(fpl.bootstrap.total_players)} managers</p>
-        <h1 className="font-fraktur text-6xl leading-[0.9] sm:text-7xl xl:text-8xl">
-          <span className="chrome-text block">Rule the</span>
-          <span className="block text-blood glow-blood">Gameweek</span>
-        </h1>
-        <p className="mx-auto max-w-md text-sm text-muted-foreground lg:mx-0">
-          Live Fantasy Premier League intelligence: your squad, your leagues, price and form predictions, straight from the official data feed.
-        </p>
-
-        {fpl.next && (
-          <div className="flex flex-col items-center gap-2 lg:items-start">
-            <p className="eyebrow">{fpl.next.name} deadline · {kickoff(fpl.next.deadline_time)}</p>
-            <Countdown to={fpl.next.deadline_time} />
-          </div>
-        )}
-
-        {managerId ? (
-          <div className="flex flex-wrap items-center justify-center gap-3 lg:justify-start">
-            <div className="text-left">
-              <p className="eyebrow">Signed in as</p>
-              <p className="h-gothic text-2xl">{manager?.name ?? "…"}</p>
-            </div>
-            <div className="num border-l border-border pl-3 text-sm text-muted-foreground">
-              <p><span className="text-foreground">{int(manager?.summary_overall_points)}</span> pts</p>
-              <p>rank <span className="text-foreground">{int(manager?.summary_overall_rank)}</span></p>
-            </div>
-            <Button asChild className="btn-chrome"><Link to="/my-team">Open my team</Link></Button>
-          </div>
-        ) : (
-          <div className="flex flex-wrap justify-center gap-3 lg:justify-start">
-            <Button className="btn-chrome" size="lg" onClick={() => setDialogOpen(true)}>Sign in with FPL ID</Button>
-            <Button variant="outline" size="lg" onClick={() => void signIn(GUEST_ID)}>Try as guest</Button>
-          </div>
-        )}
-      </div>
-      <div className="pointer-events-none absolute inset-0 opacity-30 lg:pointer-events-auto lg:relative lg:h-[30rem] lg:opacity-100">
-        <HeroScene />
-      </div>
-    </section>
-  );
-}
+import { chipLabel, compact, kickoff } from "@/lib/fpl/format";
+import { useDreamTeam, useFixtures, type Fpl } from "@/lib/fpl/hooks";
 
 const CHIPS = ["wildcard", "freehit", "bboost", "3xc"] as const;
 
@@ -182,13 +108,8 @@ function Results({ fpl, gw }: { fpl: Fpl; gw: number }) {
   );
 }
 
-export default function Dashboard() {
-  const { fpl, isLoading, error, refetch } = useFpl();
+export function Gameweek({ fpl }: AppProps) {
   const [picked, setPicked] = useState<number | null>(null);
-
-  if (isLoading) return <LoadingBlock className="h-[32rem]" />;
-  if (error || !fpl) return <ErrorBlock onRetry={() => void refetch()} />;
-
   const gw = picked ?? fpl.gw;
   const event = fpl.events.find((e) => e.id === gw);
   const who = (id: number | null | undefined) => (id ? fpl.playerById.get(id) : undefined);
@@ -200,8 +121,6 @@ export default function Dashboard() {
 
   return (
     <>
-      <Hero fpl={fpl} />
-      <SigilDivider />
       <GameweekPicker value={gw} onChange={setPicked} max={lastGw} live={fpl.current?.id} />
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-3 xl:grid-cols-6">

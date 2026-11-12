@@ -8,10 +8,7 @@ export default {
     container: { center: true, padding: "1rem", screens: { "2xl": "1320px" } },
     extend: {
       fontFamily: {
-        sans: ['"Chakra Petch"', "system-ui", "sans-serif"],
-        gothic: ['"Grenze Gotisch"', "serif"],
-        fraktur: ['"UnifrakturCook"', '"Grenze Gotisch"', "serif"],
-        mono: ['"JetBrains Mono"', "ui-monospace", "monospace"],
+        sans: ["Abel", "system-ui", "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

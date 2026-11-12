@@ -1,10 +1,8 @@
 import { Section } from "@/components/shared/bits";
-import { PageHeader } from "@/components/shared/ornaments";
 
 export default function About() {
   return (
     <>
-      <PageHeader eyebrow="About, privacy and credits" title="The Fine Print" />
       <div className="mx-auto grid max-w-3xl gap-5 text-sm leading-relaxed text-muted-foreground">
         <Section title="What this is">
           <p>

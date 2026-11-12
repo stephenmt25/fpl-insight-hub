@@ -1,14 +1,13 @@
 import { useMemo, useState } from "react";
 import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, Scatter, ScatterChart, Tooltip, XAxis, YAxis, ZAxis } from "recharts";
 import { TrendingDown, TrendingUp, Minus } from "lucide-react";
+import type { AppProps } from "@/apps";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Empty, ErrorBlock, FdrChip, LoadingBlock, PositionTag, Section, Stat } from "@/components/shared/bits";
 import { AXIS, ChartFrame, ChartTooltip, GRID, Legend, REFERENCE, SERIES } from "@/components/shared/charts";
-import { PageHeader } from "@/components/shared/ornaments";
 import { leagueTable, runDifficulty, upcomingByTeam } from "@/lib/fpl/fixtures";
 import { fullName, num, price, signed } from "@/lib/fpl/format";
 import { useFixtures, useFpl, usePlayerSummaries, type Fpl } from "@/lib/fpl/hooks";
@@ -20,7 +19,7 @@ import { cn } from "@/lib/utils";
 
 /* ---------- Differentials ---------- */
 
-function Differentials({ fpl }: { fpl: Fpl }) {
+export function Differentials({ fpl }: AppProps) {
   const [maxOwnership, setMaxOwnership] = useState(10);
   const { picks, clusters, clustered } = useMemo(() => findDifferentials(fpl.players, { maxOwnership }), [fpl, maxOwnership]);
   const team = (id: number) => fpl.teamById.get(id)?.short_name ?? "";
@@ -33,7 +32,7 @@ function Differentials({ fpl }: { fpl: Fpl }) {
         {clusters.map((c, i) => (
           <div key={c.id} className="panel p-4">
             <p className="eyebrow flex items-center gap-2"><span className="h-2 w-2" style={{ background: SERIES[i] }} />Cluster {i + 1}</p>
-            <p className="h-gothic mt-2 text-2xl">{c.label}</p>
+            <p className="h-display mt-2 text-2xl">{c.label}</p>
             <p className="num mt-1 text-xs text-muted-foreground">{c.size} players · {c.meanOwnership.toFixed(1)}% avg owned</p>
           </div>
         ))}
@@ -127,7 +126,7 @@ function PriceList({ title, list, fpl }: { title: string; list: PricePrediction[
   );
 }
 
-function PriceWatch({ fpl }: { fpl: Fpl }) {
+export function PriceWatch({ fpl }: AppProps) {
   const { risers, fallers } = useMemo(() => predictPriceChanges(fpl.players, fpl.bootstrap.total_players, 10), [fpl]);
   return (
     <div className="space-y-4">
@@ -154,7 +153,7 @@ function toForecast(summary: PlayerSummary): FormForecast {
 const TREND_ICON = { rising: TrendingUp, falling: TrendingDown, stable: Minus };
 const TREND_TONE = { rising: "text-good", falling: "text-bad", stable: "text-muted-foreground" };
 
-function FormForecastTab({ fpl }: { fpl: Fpl }) {
+export function FormForecastTab({ fpl }: AppProps) {
   const watch = useMemo(
     () => fpl.players.filter((p) => p.minutes >= 270 && p.status === "a").sort((a, b) => num(b.form) - num(a.form)).slice(0, 12),
     [fpl],
@@ -263,7 +262,7 @@ function FormForecastTab({ fpl }: { fpl: Fpl }) {
 
 /* ---------- Fixtures & table ---------- */
 
-function FixtureTicker({ fpl }: { fpl: Fpl }) {
+export function FixtureTicker({ fpl }: AppProps) {
   const { data: fixtures, isLoading, error } = useFixtures();
   const [span, setSpan] = useState(6);
   const from = fpl.next?.id ?? fpl.gw;
@@ -283,7 +282,7 @@ function FixtureTicker({ fpl }: { fpl: Fpl }) {
       <div className="overflow-x-auto">
         <table className="w-full border-separate border-spacing-1 text-sm">
           <thead>
-            <tr className="font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
               <th className="text-left font-normal">Team</th>
               {gws.map((gw) => <th key={gw} className="font-normal">GW{gw}</th>)}
               <th className="text-right font-normal" title="Mean difficulty; blanks count as 5">Avg</th>
@@ -315,7 +314,7 @@ function FixtureTicker({ fpl }: { fpl: Fpl }) {
 
 const FORM_CLASS = { W: "bg-good text-black", D: "bg-zinc-500 text-black", L: "bg-bad text-white" };
 
-function LeagueTable({ fpl }: { fpl: Fpl }) {
+export function LeagueTable({ fpl }: AppProps) {
   const { data: fixtures, isLoading, error } = useFixtures();
   const table = useMemo(() => (fixtures ? leagueTable(fixtures, fpl.teams.map((t) => t.id)) : []), [fixtures, fpl]);
   if (isLoading) return <LoadingBlock className="h-96" />;
@@ -326,7 +325,7 @@ function LeagueTable({ fpl }: { fpl: Fpl }) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-border font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+            <tr className="border-b border-border text-[10px] uppercase tracking-widest text-muted-foreground">
               {["#", "Club", "P", "W", "D", "L", "GF", "GA", "GD", "Pts", "Form"].map((h, i) => (
                 <th key={h} className={cn("p-2 font-normal", i === 1 ? "text-left" : i === 10 ? "text-right" : "text-center", [3, 4, 5, 6, 7].includes(i) && "hidden sm:table-cell")}>{h}</th>
               ))}
@@ -353,34 +352,5 @@ function LeagueTable({ fpl }: { fpl: Fpl }) {
       </div>
       <p className="mt-3 text-xs text-muted-foreground">Lines mark the Champions League places and the relegation zone.</p>
     </Section>
-  );
-}
-
-export default function Insights() {
-  const { fpl, isLoading, error, refetch } = useFpl();
-  if (isLoading) return <LoadingBlock className="h-96" />;
-  if (error || !fpl) return <ErrorBlock onRetry={() => void refetch()} />;
-  return (
-    <>
-      <PageHeader eyebrow="Models run in your browser on live data" title="The Oracle">
-        Clustering to find differentials, price-change probabilities, form forecasts and the fixture calendar.
-      </PageHeader>
-      <Tabs defaultValue="differentials" className="space-y-5">
-        <div className="overflow-x-auto no-scrollbar">
-          <TabsList>
-            <TabsTrigger value="differentials">Differentials</TabsTrigger>
-            <TabsTrigger value="prices">Price Watch</TabsTrigger>
-            <TabsTrigger value="form">Form Forecast</TabsTrigger>
-            <TabsTrigger value="fixtures">Fixtures</TabsTrigger>
-            <TabsTrigger value="table">PL Table</TabsTrigger>
-          </TabsList>
-        </div>
-        <TabsContent value="differentials"><Differentials fpl={fpl} /></TabsContent>
-        <TabsContent value="prices"><PriceWatch fpl={fpl} /></TabsContent>
-        <TabsContent value="form"><FormForecastTab fpl={fpl} /></TabsContent>
-        <TabsContent value="fixtures"><FixtureTicker fpl={fpl} /></TabsContent>
-        <TabsContent value="table"><LeagueTable fpl={fpl} /></TabsContent>
-      </Tabs>
-    </>
   );
 }

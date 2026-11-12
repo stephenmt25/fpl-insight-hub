@@ -16,13 +16,13 @@ function Token({ p }: { p: PitchPlayer }) {
   return (
     <div className={cn("relative flex w-[4.6rem] flex-col items-center text-center sm:w-24", p.dim && "opacity-50")} title={p.flag}>
       <div
-        className="relative flex h-10 w-10 items-center justify-center border border-chrome/60 bg-gradient-to-b from-zinc-200 to-zinc-500 font-mono text-[10px] font-semibold text-black sm:h-12 sm:w-12 sm:text-[11px]"
+        className="relative flex h-10 w-10 items-center justify-center border border-chrome/60 bg-gradient-to-b from-zinc-200 to-zinc-500 text-[10px] font-semibold text-black sm:h-12 sm:w-12 sm:text-[11px]"
         style={{ clipPath: "polygon(50% 0, 100% 22%, 100% 70%, 50% 100%, 0 70%, 0 22%)" }}
       >
         {p.team}
       </div>
       {p.badge && (
-        <span className="absolute -top-1 right-2 flex h-4 min-w-4 items-center justify-center bg-blood px-0.5 font-mono text-[9px] font-bold text-white sm:right-5">
+        <span className="absolute -top-1 right-2 flex h-4 min-w-4 items-center justify-center bg-blood px-0.5 text-[9px] font-bold text-white sm:right-5">
           {p.badge}
         </span>
       )}

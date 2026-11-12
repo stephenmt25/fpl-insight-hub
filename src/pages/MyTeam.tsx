@@ -1,40 +1,19 @@
 import { useMemo, useState } from "react";
 import { Area, AreaChart, CartesianGrid, Line, LineChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowRight } from "lucide-react";
+import type { AppProps } from "@/apps";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Empty, ErrorBlock, FdrChip, GameweekPicker, LoadingBlock, PositionTag, Section, Stat } from "@/components/shared/bits";
 import { AXIS, ChartFrame, ChartTooltip, GRID, Legend, REFERENCE, SERIES } from "@/components/shared/charts";
-import { PageHeader } from "@/components/shared/ornaments";
 import { Pitch, type PitchPlayer } from "@/components/shared/Pitch";
-import { GUEST_ID, useAuth } from "@/lib/auth";
 import { upcomingByTeam } from "@/lib/fpl/fixtures";
 import { chipLabel, compact, int, price, signed } from "@/lib/fpl/format";
 import { useEntryHistory, useEntryPicks, useEntryTransfers, useEventLive, useFixtures, useFpl, usePlayerSummaries, type Fpl } from "@/lib/fpl/hooks";
 import type { Player } from "@/lib/fpl/types";
 import { rankCaptains } from "@/lib/ml/captain";
-import { BallScene } from "@/three/lazy";
 import { cn } from "@/lib/utils";
 
-function Gate() {
-  const { setDialogOpen, signIn } = useAuth();
-  return (
-    <div className="panel mx-auto flex max-w-lg flex-col items-center gap-4 p-8 text-center">
-      <BallScene />
-      <h2 className="h-gothic chrome-text text-4xl">Claim your squad</h2>
-      <p className="text-sm text-muted-foreground">
-        Enter your FPL ID to see live points on the pitch, captain picks, chip planning, transfer impact and season trends.
-      </p>
-      <div className="flex flex-wrap justify-center gap-3">
-        <Button className="btn-chrome" onClick={() => setDialogOpen(true)}>Sign in with FPL ID</Button>
-        <Button variant="outline" onClick={() => void signIn(GUEST_ID)}>Try as guest</Button>
-      </div>
-    </div>
-  );
-}
-
-function Squad({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
+export function Squad({ fpl, managerId }: AppProps) {
   const [picked, setPicked] = useState<number | null>(null);
   const gw = picked ?? fpl.gw;
   const { data: picks, isLoading, error } = useEntryPicks(managerId, gw);
@@ -97,7 +76,7 @@ function Squad({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
   );
 }
 
-function Captain({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
+export function Captain({ fpl, managerId }: AppProps) {
   const { data: picks, isLoading } = useEntryPicks(managerId, fpl.gw);
   const { data: fixtures } = useFixtures();
   const target = fpl.next;
@@ -146,7 +125,7 @@ function Captain({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
   );
 }
 
-function Chips({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
+export function Chips({ fpl, managerId }: AppProps) {
   const { data: history, isLoading } = useEntryHistory(managerId);
   const { data: fixtures } = useFixtures();
   const nextGw = fpl.next?.id ?? 39;
@@ -213,7 +192,7 @@ function Chips({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
   );
 }
 
-function Transfers({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
+export function Transfers({ fpl, managerId }: AppProps) {
   const { data: transfers, isLoading } = useEntryTransfers(managerId);
   const recent = useMemo(() => (transfers ?? []).slice(0, 20), [transfers]);
   const ids = useMemo(() => [...new Set(recent.flatMap((t) => [t.element_in, t.element_out]))], [recent]);
@@ -261,7 +240,7 @@ function Transfers({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
   );
 }
 
-function Trends({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
+export function Trends({ fpl, managerId }: AppProps) {
   const { data: history, isLoading } = useEntryHistory(managerId);
   if (isLoading) return <LoadingBlock />;
   const rows = (history?.current ?? []).map((h) => ({
@@ -337,36 +316,5 @@ function Trends({ fpl, managerId }: { fpl: Fpl; managerId: string }) {
         </Section>
       </div>
     </div>
-  );
-}
-
-export default function MyTeam() {
-  const { managerId, manager } = useAuth();
-  const { fpl, isLoading, error, refetch } = useFpl();
-
-  if (!managerId) return <Gate />;
-  if (isLoading) return <LoadingBlock className="h-96" />;
-  if (error || !fpl) return <ErrorBlock onRetry={() => void refetch()} />;
-
-  return (
-    <>
-      <PageHeader eyebrow={manager ? `${manager.player_first_name} ${manager.player_last_name} · ${manager.player_region_name}` : "Manager"} title={manager?.name ?? "My Team"} />
-      <Tabs defaultValue="squad" className="space-y-5">
-        <div className="overflow-x-auto no-scrollbar">
-          <TabsList>
-            <TabsTrigger value="squad">Squad</TabsTrigger>
-            <TabsTrigger value="captain">Captain</TabsTrigger>
-            <TabsTrigger value="chips">Chips</TabsTrigger>
-            <TabsTrigger value="transfers">Transfers</TabsTrigger>
-            <TabsTrigger value="trends">Trends</TabsTrigger>
-          </TabsList>
-        </div>
-        <TabsContent value="squad"><Squad fpl={fpl} managerId={managerId} /></TabsContent>
-        <TabsContent value="captain"><Captain fpl={fpl} managerId={managerId} /></TabsContent>
-        <TabsContent value="chips"><Chips fpl={fpl} managerId={managerId} /></TabsContent>
-        <TabsContent value="transfers"><Transfers fpl={fpl} managerId={managerId} /></TabsContent>
-        <TabsContent value="trends"><Trends fpl={fpl} managerId={managerId} /></TabsContent>
-      </Tabs>
-    </>
   );
 }

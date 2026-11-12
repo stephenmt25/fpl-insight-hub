@@ -35,7 +35,7 @@ export function Section({ title, eyebrow, action, children, className }: {
       <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
         <div>
           {eyebrow && <p className="eyebrow mb-1">{eyebrow}</p>}
-          <h2 className="h-gothic text-2xl text-foreground">{title}</h2>
+          <h2 className="h-display text-2xl text-foreground">{title}</h2>
         </div>
         {action}
       </div>
@@ -74,12 +74,12 @@ export function GameweekPicker({ value, onChange, max, min = 1, live }: {
   live?: number;
 }) {
   return (
-    <div className="flex items-center justify-center gap-3">
+    <div className="panel mx-auto flex w-fit items-center justify-center gap-3 px-3 py-2">
       <Button variant="outline" size="icon" aria-label="Previous gameweek" disabled={value <= min} onClick={() => onChange(value - 1)}>
         <ChevronLeft />
       </Button>
       <div className="min-w-40 text-center">
-        <p className="h-gothic chrome-text text-3xl">Gameweek {value}</p>
+        <p className="h-display chrome-text text-3xl">Gameweek {value}</p>
         <p className="eyebrow mt-1">
           {value === live ? <span className="text-blood">● current</span> : live && value < live ? "finished" : "upcoming"}
         </p>

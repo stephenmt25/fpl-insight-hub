@@ -11,6 +11,7 @@ export interface Stage {
 
 export interface StageOptions {
   fov?: number;
+  far?: number;
   /** Adds a studio environment map so metal surfaces have something to reflect. */
   reflections?: boolean;
   setup: (stage: Stage) => (time: number, delta: number) => void;
@@ -21,7 +22,7 @@ export interface StageOptions {
  * Handles resize, pauses when hidden or off-screen, renders a single still
  * frame under prefers-reduced-motion, and disposes every GPU resource.
  */
-export function mountStage(container: HTMLElement, { fov = 40, reflections = false, setup }: StageOptions): () => void {
+export function mountStage(container: HTMLElement, { fov = 40, far = 200, reflections = false, setup }: StageOptions): () => void {
   let renderer: THREE.WebGLRenderer;
   try {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, powerPreference: "high-performance" });
@@ -35,7 +36,7 @@ export function mountStage(container: HTMLElement, { fov = 40, reflections = fal
   container.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(fov, 1, 0.1, 200);
+  const camera = new THREE.PerspectiveCamera(fov, 1, 0.5, far);
   let envTarget: THREE.WebGLRenderTarget | null = null;
   if (reflections) {
     const pmrem = new THREE.PMREMGenerator(renderer);
@@ -99,7 +100,10 @@ export function mountStage(container: HTMLElement, { fov = 40, reflections = fal
       const mesh = obj as THREE.Mesh;
       mesh.geometry?.dispose();
       const materials = Array.isArray(mesh.material) ? mesh.material : mesh.material ? [mesh.material] : [];
-      materials.forEach((m) => m.dispose());
+      materials.forEach((m) => {
+        (m as THREE.MeshBasicMaterial).map?.dispose();
+        m.dispose();
+      });
     });
     envTarget?.dispose();
     renderer.dispose();

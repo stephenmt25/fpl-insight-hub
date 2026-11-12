@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, Loader2, RotateCw, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Section, Stat } from "@/components/shared/bits";
-import { PageHeader } from "@/components/shared/ornaments";
 import { GUEST_ID } from "@/lib/auth";
 import { fplGet, type Transport } from "@/lib/fpl/client";
 import { useFpl } from "@/lib/fpl/hooks";
@@ -80,9 +79,6 @@ export default function Status() {
 
   return (
     <>
-      <PageHeader eyebrow="Live diagnostics" title="System Status">
-        Every FPL endpoint the app uses, called through both transports from your browser.
-      </PageHeader>
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         {TRANSPORTS.map((t) => {
           const { ok, total } = tally(t.id);

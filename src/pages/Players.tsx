@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import type { AppProps } from "@/apps";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, PolarAngleAxis, PolarGrid, Radar, RadarChart, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowDown, ArrowUp, Search, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -6,12 +8,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Empty, ErrorBlock, FdrChip, LoadingBlock, PositionTag, Section, Stat } from "@/components/shared/bits";
+import { Empty, FdrChip, LoadingBlock, PositionTag, Section, Stat } from "@/components/shared/bits";
 import { AXIS, ChartFrame, ChartTooltip, GRID, Legend, REFERENCE, SERIES } from "@/components/shared/charts";
-import { PageHeader } from "@/components/shared/ornaments";
 import { fullName, num, per90, positionLabel, price } from "@/lib/fpl/format";
-import { useFpl, usePlayerSummaries, usePlayerSummary, type Fpl } from "@/lib/fpl/hooks";
+import { usePlayerSummaries, usePlayerSummary, type Fpl } from "@/lib/fpl/hooks";
 import type { Player, PlayerHistoryRow } from "@/lib/fpl/types";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +48,7 @@ function PlayerDialog({ player, fpl, onClose }: { player: Player | null; fpl: Fp
         {player && (
           <>
             <DialogHeader>
-              <DialogTitle className="h-gothic chrome-text text-3xl">{fullName(player)}</DialogTitle>
+              <DialogTitle className="h-display chrome-text text-3xl">{fullName(player)}</DialogTitle>
               <DialogDescription>
                 {fpl.teamById.get(player.team)?.name} · {positionLabel(player.element_type)} · {price(player.now_cost)}
                 {player.news && <span className="mt-1 block text-warn">{player.news}</span>}
@@ -115,7 +115,7 @@ function Compare({ players, fpl, onRemove, onClear }: { players: Player[]; fpl: 
           <ChartFrame height={300}>
             <RadarChart data={data} outerRadius="72%">
               <PolarGrid stroke={GRID} />
-              <PolarAngleAxis dataKey="axis" tick={{ fill: "hsl(226 9% 62%)", fontSize: 11, fontFamily: "JetBrains Mono, monospace" }} />
+              <PolarAngleAxis dataKey="axis" tick={{ fill: "hsl(226 9% 62%)", fontSize: 11 }} />
               <Tooltip content={<ChartTooltip format={(v) => `${v} / 100`} />} />
               {players.map((p, i) => (
                 <Radar key={p.id} dataKey={String(p.id)} name={p.web_name} stroke={SERIES[i]} strokeWidth={2} fill={SERIES[i]} fillOpacity={0.12} />
@@ -160,7 +160,7 @@ function Compare({ players, fpl, onRemove, onClear }: { players: Player[]; fpl: 
   );
 }
 
-function Explorer({ fpl }: { fpl: Fpl }) {
+export function Explorer({ fpl }: AppProps) {
   const [search, setSearch] = useState("");
   const [positions, setPositions] = useState<number[]>([]);
   const [team, setTeam] = useState("all");
@@ -171,7 +171,10 @@ function Explorer({ fpl }: { fpl: Fpl }) {
   const [sort, setSort] = useState<{ key: string; dir: 1 | -1 }>({ key: "points", dir: -1 });
   const [page, setPage] = useState(0);
   const [compare, setCompare] = useState<number[]>([]);
-  const [detail, setDetail] = useState<Player | null>(null);
+  // Spotlight links straight to a player with ?player=<id>
+  const [params, setParams] = useSearchParams();
+  const detail = fpl.playerById.get(Number(params.get("player"))) ?? null;
+  const setDetail = (p: Player | null) => setParams(p ? { player: String(p.id) } : {}, { replace: true });
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -229,11 +232,11 @@ function Explorer({ fpl }: { fpl: Fpl }) {
           <thead>
             <tr className="border-b border-border">
               <th className="w-8 p-2"><span className="sr-only">Compare</span></th>
-              <th className="p-2 text-left font-mono text-[10px] font-normal uppercase tracking-widest text-muted-foreground">Player</th>
+              <th className="p-2 text-left text-[10px] font-normal uppercase tracking-widest text-muted-foreground">Player</th>
               {COLUMNS.map((col) => (
                 <th key={col.key} className={cn("p-2 text-right", col.hideOnMobile && "hidden md:table-cell")} aria-sort={sort.key === col.key ? (sort.dir === -1 ? "descending" : "ascending") : "none"}>
                   <button title={col.title} onClick={() => reset(setSort)({ key: col.key, dir: sort.key === col.key ? (sort.dir === -1 ? 1 : -1) : -1 })}
-                    className={cn("inline-flex items-center gap-0.5 font-mono text-[10px] uppercase tracking-widest hover:text-foreground", sort.key === col.key ? "text-blood" : "text-muted-foreground")}>
+                    className={cn("inline-flex items-center gap-0.5 text-[10px] uppercase tracking-widest hover:text-foreground", sort.key === col.key ? "text-blood" : "text-muted-foreground")}>
                     {col.label}
                     {sort.key === col.key && (sort.dir === -1 ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
                   </button>
@@ -289,7 +292,7 @@ const METRICS: { key: string; label: string; get: (h: PlayerHistoryRow) => numbe
   { key: "selected", label: "Owned by (managers)", get: (h) => h.selected },
 ];
 
-function ChartBuilder({ fpl }: { fpl: Fpl }) {
+export function ChartBuilder({ fpl }: AppProps) {
   const top = useMemo(() => [...fpl.players].sort((a, b) => b.total_points - a.total_points), [fpl]);
   const [ids, setIds] = useState<number[]>(() => top.slice(0, 3).map((p) => p.id));
   const [metricKey, setMetricKey] = useState("total_points");
@@ -375,26 +378,5 @@ function ChartBuilder({ fpl }: { fpl: Fpl }) {
         </>
       )}
     </Section>
-  );
-}
-
-export default function Players() {
-  const { fpl, isLoading, error, refetch } = useFpl();
-  if (isLoading) return <LoadingBlock className="h-96" />;
-  if (error || !fpl) return <ErrorBlock onRetry={() => void refetch()} />;
-  return (
-    <>
-      <PageHeader eyebrow={`${fpl.players.length} players · ${fpl.teams.length} clubs`} title="Player Explorer">
-        Filter and sort every player in the game, compare up to four head to head, or chart anyone's season.
-      </PageHeader>
-      <Tabs defaultValue="table" className="space-y-5">
-        <TabsList>
-          <TabsTrigger value="table">Explorer</TabsTrigger>
-          <TabsTrigger value="charts">Chart Builder</TabsTrigger>
-        </TabsList>
-        <TabsContent value="table"><Explorer fpl={fpl} /></TabsContent>
-        <TabsContent value="charts"><ChartBuilder fpl={fpl} /></TabsContent>
-      </Tabs>
-    </>
   );
 }

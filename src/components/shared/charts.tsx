@@ -12,7 +12,7 @@ export const SERIES = ["#e11d48", "#0b96d4", "#d97706", "#8b5cf6", "#0ea371", "#
 export const REFERENCE = "#8d93a3";
 
 export const GRID = "hsl(232 9% 16%)";
-export const AXIS = { stroke: "hsl(232 9% 24%)", tick: { fill: "hsl(226 9% 62%)", fontSize: 11, fontFamily: "JetBrains Mono, monospace" }, tickLine: false } as const;
+export const AXIS = { stroke: "hsl(232 9% 24%)", tick: { fill: "hsl(226 9% 62%)", fontSize: 11 }, tickLine: false } as const;
 
 interface TooltipEntry { name?: string | number; value?: number | string; color?: string; dataKey?: string | number }
 

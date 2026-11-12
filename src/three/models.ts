@@ -91,27 +91,6 @@ export function createThornRing(radius: number, thorns = 28): THREE.Group {
   return group;
 }
 
-/** Extruded gothic cross with flared, pointed arms. */
-export function createCross(size = 1): THREE.Mesh {
-  const arm = (len: number): [number, number][] => [
-    [-0.09, 0.09], [-0.07, len * 0.55], [-0.2, len * 0.82], [0, len], [0.2, len * 0.82], [0.07, len * 0.55], [0.09, 0.09],
-  ];
-  const rotate = ([x, y]: [number, number], quarter: number): [number, number] =>
-    quarter === 0 ? [x, y] : quarter === 1 ? [y, -x] : quarter === 2 ? [-x, -y] : [-y, x];
-  // Up, right, down (longer stem), left; traced clockwise
-  const lengths = [0.75, 0.55, 1.15, 0.55];
-  const outline = lengths.flatMap((len, quarter) => arm(len).map((p) => rotate(p, quarter)));
-
-  const shape = new THREE.Shape();
-  outline.forEach(([x, y], i) => (i === 0 ? shape.moveTo(x * size, y * size) : shape.lineTo(x * size, y * size)));
-  shape.closePath();
-  const geometry = new THREE.ExtrudeGeometry(shape, {
-    depth: 0.07 * size, bevelEnabled: true, bevelThickness: 0.035 * size, bevelSize: 0.03 * size, bevelSegments: 3,
-  });
-  geometry.center();
-  return new THREE.Mesh(geometry, CHROME());
-}
-
 /** A spiked crown: band, five tall points, jewels in the accent colour. */
 export function createCrown(radius = 1): THREE.Group {
   const group = new THREE.Group();

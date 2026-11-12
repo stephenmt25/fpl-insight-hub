@@ -2,30 +2,35 @@
 
 Live Fantasy Premier League analytics with in-browser machine learning and a three.js front end.
 
-![Dashboard](docs/dashboard.png)
+![Launcher](docs/launcher.png)
 
 ## What it does
 
-| | |
+The home screen is a Spotlight-style launcher: search apps and players (or type a team or league ID), with every feature as its own app. `Ctrl K` opens search anywhere, and a dock keeps your recent apps one click away.
+
+| Category | Apps |
 |---|---|
-| **Dashboard** | Deadline countdown, gameweek stats, team of the week, results, season charts |
-| **My Team** | Live points on the pitch, captain optimiser, chip planner, transfer impact, rank trends |
-| **Players** | Sort and filter all 670+ players, compare four head to head, build your own charts |
-| **Leagues** | Any classic league: standings, gameweek insights, and a title-race chart |
-| **Insights** | Differential finder, price-change predictions, form forecasts, fixture difficulty, league table |
+| **Matchday** | Gameweek, Fixture Planner, League Table |
+| **My Club** | Squad, Captain Picker, Chip Planner, Transfer Ledger, Season Trends |
+| **Scouting** | Player Explorer, Chart Builder, Differentials, Form Forecast, Price Watch |
+| **Rivals** | Mini-Leagues (standings, insights, title race) |
 
 Sign in with a public FPL ID (no password), or click **Try as guest**.
 
-| My Team | Form forecast |
+Behind every screen a cathedral stadium plays a looping match, filmed from a circling blimp. Each goal sets off chrome fireworks.
+
+![Stadium](docs/stadium.png)
+
+| Squad | Form Forecast |
 |---|---|
-| ![My Team](docs/my-team.png) | ![Form forecast](docs/insights.png) |
+| ![Squad](docs/my-team.png) | ![Form forecast](docs/insights.png) |
 
 ![Fixture difficulty](docs/fixtures.png)
 
 ## How it's built
 
 - **React 18 + TypeScript (strict)**, Vite 8, Tailwind, TanStack Query, Recharts
-- **three.js** scenes written by hand: a truncated-icosahedron football, thorn rings, crown and a wireframe pitch, all procedural (no model files)
+- **three.js** scenes written by hand, all procedural (no model files): a gothic stadium with instanced arches and spires, a 20,000-fan crowd and fireworks as shader-driven points, a scripted 22-player match loop, and a truncated-icosahedron football
 - **Models run client-side on live data**, each a small tested module in [`src/lib/ml`](src/lib/ml):
   - *Differentials*: k-means clustering on six z-scored features, then low-ownership picks from the top clusters
   - *Price changes*: transfer pressure relative to ownership, blended with FPL's progress-to-threshold figure
@@ -37,9 +42,10 @@ Sign in with a public FPL ID (no password), or click **Try as guest**.
 src/
   lib/fpl/     API client, typed hooks, fixtures and league-table logic
   lib/ml/      clustering, price, form and captain models (+ tests)
-  three/       WebGL stage, procedural models, scenes
-  pages/       Dashboard, MyTeam, Players, Leagues, Insights, Status
-  components/  layout, shared UI, chart theme
+  apps.tsx     app registry: routes, categories, search keywords, suggestions
+  three/       WebGL stage, stadium and match loop, procedural models
+  pages/       the apps, plus the launcher
+  components/  layout (top bar, Spotlight, dock), shared UI, chart theme
 ```
 
 ## Run it

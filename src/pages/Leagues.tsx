@@ -1,4 +1,5 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Bar, BarChart, CartesianGrid, Cell, Line, LineChart, ReferenceLine, Tooltip, XAxis, YAxis } from "recharts";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Empty, ErrorBlock, LoadingBlock, RankDelta, Section, Stat } from "@/components/shared/bits";
 import { AXIS, ChartFrame, ChartTooltip, GRID, Legend, REFERENCE, SERIES } from "@/components/shared/charts";
-import { PageHeader } from "@/components/shared/ornaments";
 import { useAuth } from "@/lib/auth";
 import { int, signed } from "@/lib/fpl/format";
 import { useEntryHistories, useLeagueStandings } from "@/lib/fpl/hooks";
@@ -22,7 +22,7 @@ function Standings({ rows, me, page, hasNext, onPage, busy }: {
     <div className={cn("panel overflow-x-auto transition-opacity", busy && "opacity-60")}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border font-mono text-[10px] uppercase tracking-widest text-muted-foreground">
+          <tr className="border-b border-border text-[10px] uppercase tracking-widest text-muted-foreground">
             <th className="p-3 text-left font-normal">Rank</th>
             <th className="p-3 text-left font-normal">Team &amp; manager</th>
             <th className="p-3 text-right font-normal">GW</th>
@@ -140,9 +140,14 @@ function TitleRace({ rows, me, myTeam }: { rows: StandingRow[]; me: number | nul
 
 export default function Leagues() {
   const { manager, managerId } = useAuth();
-  const [leagueId, setLeagueId] = useState(OVERALL);
+  const [params] = useSearchParams();
+  const linked = Number(params.get("id"));
+  const [leagueId, setLeagueId] = useState(linked > 0 ? linked : OVERALL);
   const [page, setPage] = useState(1);
   const [custom, setCustom] = useState("");
+  useEffect(() => {
+    if (linked > 0) { setLeagueId(linked); setPage(1); }
+  }, [linked]);
   const { data, isLoading, isFetching, error, refetch } = useLeagueStandings(leagueId, page);
   const me = managerId ? Number(managerId) : null;
 
@@ -155,9 +160,11 @@ export default function Leagues() {
 
   return (
     <>
-      <PageHeader eyebrow={myRef?.entry_rank ? `You are ranked ${int(myRef.entry_rank)}${myRef.rank_count ? ` of ${int(myRef.rank_count)}` : ""}` : "Classic leagues"} title={data?.league.name ?? "Leagues"}>
-        {managerId ? "Pick any of your leagues, or open one by its ID." : "Sign in to list your own leagues, or open any classic league by its ID."}
-      </PageHeader>
+      <p className="text-sm text-muted-foreground">
+        <span className="text-foreground">{data?.league.name ?? "…"}</span>
+        {myRef?.entry_rank ? ` · you are ranked ${int(myRef.entry_rank)}${myRef.rank_count ? ` of ${int(myRef.rank_count)}` : ""}` : ""}
+        {!managerId && " · sign in to list your own leagues"}
+      </p>
 
       <div className="panel flex flex-wrap items-end gap-3 p-4">
         <div className="min-w-56 flex-1 space-y-1.5">

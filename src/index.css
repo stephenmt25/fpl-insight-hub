@@ -69,7 +69,7 @@
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
-    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.9));
+    filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.9)) drop-shadow(0 0 14px rgba(0, 0, 0, 0.85));
   }
   .chrome-sheen {
     background: linear-gradient(100deg, #9da2b0 0%, #f6f7fa 18%, #8a8f9d 36%, #ffffff 50%, #8a8f9d 64%, #f6f7fa 82%, #9da2b0 100%);
@@ -80,16 +80,17 @@
     animation: sheen 7s linear infinite;
   }
   .eyebrow {
-    @apply font-mono text-[10px] uppercase tracking-[0.28em] text-muted-foreground;
+    @apply text-[11px] uppercase tracking-[0.24em] text-muted-foreground;
+    text-shadow: 0 1px 2px #000;
   }
-  .h-gothic {
-    @apply font-gothic font-bold leading-none tracking-wide;
+  .h-display {
+    @apply font-normal leading-none tracking-wide;
   }
 
   /* Panel: notched corners, hairline border, engraved corner ticks */
   .panel {
     position: relative;
-    background: linear-gradient(180deg, hsl(240 10% 9% / 0.9), hsl(240 12% 5% / 0.9));
+    background: linear-gradient(180deg, hsl(240 10% 9% / 0.62), hsl(240 12% 5% / 0.62));
     border: 1px solid hsl(var(--border));
     clip-path: polygon(
       10px 0,
@@ -101,7 +102,7 @@
       0 calc(100% - 10px),
       0 10px
     );
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(10px) saturate(1.2);
   }
   .panel::before,
   .panel::after {
@@ -137,7 +138,8 @@
 
   .pitch {
     position: relative;
-    background: repeating-linear-gradient(180deg, hsl(158 40% 9%) 0 56px, hsl(158 40% 7.5%) 56px 112px);
+    background: repeating-linear-gradient(180deg, hsl(158 40% 9% / 0.72) 0 56px, hsl(158 40% 7.5% / 0.72) 56px 112px);
+    backdrop-filter: blur(8px);
     border: 1px solid hsl(158 30% 22%);
   }
   .pitch::before {
@@ -163,7 +165,7 @@
     text-shadow: 0 0 18px hsl(var(--blood) / 0.75);
   }
   .num {
-    @apply font-mono tabular-nums;
+    @apply tabular-nums;
   }
 }
 
@@ -173,9 +175,11 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  /* A flat scrim keeps text readable over the stadium; scanlines and a vignette add texture */
   background:
-    repeating-linear-gradient(180deg, transparent 0 2px, rgba(0, 0, 0, 0.12) 2px 3px),
-    radial-gradient(ellipse at 50% 0%, transparent 35%, rgba(0, 0, 0, 0.7) 100%);
+    repeating-linear-gradient(180deg, transparent 0 2px, rgba(0, 0, 0, 0.1) 2px 3px),
+    radial-gradient(ellipse at 50% 30%, transparent 30%, rgba(0, 0, 0, 0.6) 100%),
+    linear-gradient(rgba(6, 6, 9, 0.42), rgba(6, 6, 9, 0.42));
 }
 
 @media (prefers-reduced-motion: reduce) {
