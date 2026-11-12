@@ -114,7 +114,7 @@ function Dock() {
         <TooltipTrigger asChild>
           <Link to={to} aria-label={label} aria-current={isActive ? "page" : undefined}
             className={cn(
-              "flex h-11 w-11 items-center justify-center border transition-all duration-150 hover:-translate-y-1 hover:border-chrome sm:h-12 sm:w-12",
+              "flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-150 hover:-translate-y-1 hover:border-chrome sm:h-12 sm:w-12",
               isActive ? "border-blood bg-blood/25 text-foreground" : "border-border bg-black/50 text-muted-foreground hover:text-foreground",
             )}>
             <Icon className="h-5 w-5" />
@@ -127,7 +127,7 @@ function Dock() {
 
   return (
     <nav aria-label="Dock" className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex justify-center px-3" style={{ paddingBottom: "max(0.75rem, env(safe-area-inset-bottom))" }}>
-      <div className="pointer-events-auto flex items-center gap-1.5 border border-border bg-background/85 p-1.5 shadow-2xl backdrop-blur-xl sm:gap-2 sm:p-2">
+      <div className="pointer-events-auto flex items-center gap-1.5 rounded-3xl border border-white/10 bg-background/80 p-1.5 shadow-2xl backdrop-blur-xl sm:gap-2 sm:p-2">
         {item("/", "All apps", LayoutGrid)}
         <span className="mx-0.5 h-8 w-px bg-border" aria-hidden />
         {ids.map((id) => {
@@ -173,10 +173,10 @@ export function Layout() {
           </Link>
           {!home && (
             <button onClick={() => setSpotlight(true)}
-              className="mx-auto flex h-9 w-full max-w-sm items-center gap-2 border border-border bg-black/40 px-3 text-sm text-muted-foreground transition-colors hover:border-chrome hover:text-foreground">
+              className="mx-auto flex h-9 w-full max-w-sm items-center gap-2 rounded-full border border-white/10 bg-black/40 px-3 text-sm text-muted-foreground transition-colors hover:border-chrome hover:text-foreground">
               <Search className="h-4 w-4 shrink-0" />
               <span className="flex-1 truncate text-left">Search apps and players</span>
-              <kbd className="hidden border border-border px-1.5 text-[10px] sm:block">Ctrl K</kbd>
+              <kbd className="hidden rounded-md border border-white/15 px-1.5 text-[10px] sm:block">Ctrl K</kbd>
             </button>
           )}
           <div className="ml-auto shrink-0"><UserMenu /></div>

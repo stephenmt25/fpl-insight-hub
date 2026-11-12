@@ -52,7 +52,7 @@ export function Differentials({ fpl }: AppProps) {
                 content={({ active, payload }) => {
                   const d = active && payload?.[0]?.payload as { name: string; x: number; y: number; cluster: string } | undefined;
                   return d ? (
-                    <div className="border border-border bg-popover/95 px-3 py-2 text-xs">
+                    <div className="rounded-xl border border-white/10 bg-popover/95 px-3 py-2 text-xs">
                       <p className="font-semibold text-foreground">{d.name}</p>
                       <p className="text-muted-foreground">{d.cluster} · owned by <span className="num text-foreground">{d.x}%</span> · score <span className="num text-foreground">{d.y}</span></p>
                     </div>
@@ -79,7 +79,7 @@ export function Differentials({ fpl }: AppProps) {
           {picks.length === 0 ? <Empty>No top-cluster players under that ownership.</Empty> : (
             <ul className="space-y-2">
               {picks.map((pick) => (
-                <li key={pick.player.id} className="border border-border bg-black/30 p-3">
+                <li key={pick.player.id} className="rounded-xl border border-white/10 bg-black/30 p-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="font-semibold">{pick.player.web_name}</span>
                     <PositionTag type={pick.player.element_type} />
@@ -106,7 +106,7 @@ function PriceList({ title, list, fpl }: { title: string; list: PricePrediction[
       {list.length === 0 ? <Empty>No strong signals right now. Transfer activity builds up towards the deadline.</Empty> : (
         <ul className="space-y-2">
           {list.map((p) => (
-            <li key={p.player.id} className="border border-border bg-black/30 p-3">
+            <li key={p.player.id} className="rounded-xl border border-white/10 bg-black/30 p-3">
               <div className="flex flex-wrap items-center gap-2">
                 {rise ? <TrendingUp className="h-4 w-4 text-good" /> : <TrendingDown className="h-4 w-4 text-bad" />}
                 <span className="font-semibold">{p.player.web_name}</span>
@@ -114,7 +114,7 @@ function PriceList({ title, list, fpl }: { title: string; list: PricePrediction[
                 <Badge variant="outline" className={cn("ml-auto", p.confidence === "high" && "border-blood text-blood")}>{p.confidence}</Badge>
                 <span className="num w-12 text-right text-lg font-semibold">{p.probability}%</span>
               </div>
-              <div className="mt-2 h-1 bg-muted" role="img" aria-label={`${p.probability}% probability`}>
+              <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" role="img" aria-label={`${p.probability}% probability`}>
                 <div className={cn("h-full", rise ? "bg-good" : "bg-bad")} style={{ width: `${p.probability}%` }} />
               </div>
               <p className="mt-1.5 text-xs text-muted-foreground">{p.reasons.join(" · ")}</p>
@@ -195,7 +195,7 @@ export function FormForecastTab({ fpl }: AppProps) {
         <div className="relative mb-3">
           <Input aria-label="Forecast any player" placeholder="Forecast any player…" value={query} onChange={(e) => setQuery(e.target.value)} />
           {matches.length > 0 && (
-            <ul className="absolute z-20 mt-1 w-full border border-border bg-popover">
+            <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-popover">
               {matches.map((p) => (
                 <li key={p.id}><button className="w-full px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setSelected(p.id); setQuery(""); }}>{p.web_name} <span className="num text-[10px] text-muted-foreground">{fpl.teamById.get(p.team)?.short_name}</span></button></li>
               ))}
@@ -342,7 +342,7 @@ export function LeagueTable({ fpl }: AppProps) {
                 <td className="num p-2 text-center text-base font-semibold">{r.points}</td>
                 <td className="p-2">
                   <span className="flex justify-end gap-0.5">
-                    {r.form.map((f, j) => <span key={j} className={cn("num flex h-5 w-5 items-center justify-center text-[10px] font-bold", FORM_CLASS[f])}>{f}</span>)}
+                    {r.form.map((f, j) => <span key={j} className={cn("num flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold", FORM_CLASS[f])}>{f}</span>)}
                   </span>
                 </td>
               </tr>

@@ -92,7 +92,7 @@ function Results({ fpl, gw }: { fpl: Fpl; gw: number }) {
             <li key={f.id} className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 py-2.5 text-sm">
               <span className="truncate text-right">{name(f.team_h)}</span>
               {f.started && f.team_h_score != null ? (
-                <span className="num min-w-16 border border-border bg-black/50 px-2 py-1 text-center font-semibold text-foreground">
+                <span className="num min-w-16 rounded-lg border border-white/10 bg-black/50 px-2 py-1 text-center font-semibold text-foreground">
                   {f.team_h_score} – {f.team_a_score}
                   {!f.finished && <span className="ml-1 text-blood">●</span>}
                 </span>

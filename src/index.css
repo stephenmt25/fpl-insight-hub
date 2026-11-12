@@ -23,7 +23,7 @@
     --border: 232 9% 19%;
     --input: 232 9% 22%;
     --ring: 347 77% 50%;
-    --radius: 0px;
+    --radius: 14px;
 
     --blood: 347 77% 50%;
     --chrome: 225 16% 84%;
@@ -76,50 +76,22 @@
     @apply font-normal leading-none tracking-wide;
   }
 
-  /* Panel: notched corners, hairline border, engraved corner ticks */
+  /* Panel: frosted glass with soft corners and a hairline edge */
   .panel {
     position: relative;
-    background: linear-gradient(180deg, hsl(240 10% 9% / 0.62), hsl(240 12% 5% / 0.62));
-    border: 1px solid hsl(var(--border));
-    clip-path: polygon(
-      10px 0,
-      calc(100% - 10px) 0,
-      100% 10px,
-      100% calc(100% - 10px),
-      calc(100% - 10px) 100%,
-      10px 100%,
-      0 calc(100% - 10px),
-      0 10px
-    );
-    backdrop-filter: blur(10px) saturate(1.2);
-  }
-  .panel::before,
-  .panel::after {
-    content: "";
-    position: absolute;
-    width: 20px;
-    height: 20px;
-    pointer-events: none;
-    border: 0 solid hsl(var(--chrome) / 0.5);
-  }
-  .panel::before {
-    top: 5px;
-    left: 5px;
-    border-top-width: 1px;
-    border-left-width: 1px;
-  }
-  .panel::after {
-    bottom: 5px;
-    right: 5px;
-    border-bottom-width: 1px;
-    border-right-width: 1px;
+    background: linear-gradient(180deg, hsl(240 12% 12% / 0.58), hsl(240 14% 6% / 0.62));
+    border: 1px solid hsl(0 0% 100% / 0.09);
+    border-radius: 18px;
+    box-shadow: 0 1px 0 hsl(0 0% 100% / 0.06) inset, 0 18px 40px -22px rgba(0, 0, 0, 0.9);
+    backdrop-filter: blur(14px) saturate(1.25);
   }
 
   .btn-chrome {
     background: linear-gradient(180deg, #f4f5f8 0%, #b9bdc9 45%, #7d8292 55%, #d5d8e0 100%);
     color: #0a0a0d;
     border: 1px solid #f2f3f6;
-    box-shadow: inset 0 1px 0 #fff, 0 0 0 1px #000, 0 8px 22px -10px hsl(var(--blood));
+    border-radius: 999px;
+    box-shadow: inset 0 1px 0 #fff, 0 8px 22px -10px hsl(var(--blood));
   }
   .btn-chrome:hover {
     filter: brightness(1.12);
@@ -130,12 +102,15 @@
     background: repeating-linear-gradient(180deg, hsl(158 40% 9% / 0.72) 0 56px, hsl(158 40% 7.5% / 0.72) 56px 112px);
     backdrop-filter: blur(8px);
     border: 1px solid hsl(158 30% 22%);
+    border-radius: 18px;
+    overflow: hidden;
   }
   .pitch::before {
     content: "";
     position: absolute;
     inset: 10px;
     border: 1px solid hsl(0 0% 100% / 0.14);
+    border-radius: 10px;
     background:
       linear-gradient(hsl(0 0% 100% / 0.14), hsl(0 0% 100% / 0.14)) center / 100% 1px no-repeat,
       radial-gradient(circle at center, transparent 0 44px, hsl(0 0% 100% / 0.14) 44px 45px, transparent 45px);
@@ -164,9 +139,8 @@
   inset: 0;
   pointer-events: none;
   z-index: 0;
-  /* A flat scrim keeps text readable over the stadium; scanlines and a vignette add texture */
+  /* A flat scrim and a vignette keep text readable over the stadium */
   background:
-    repeating-linear-gradient(180deg, transparent 0 2px, rgba(0, 0, 0, 0.1) 2px 3px),
     radial-gradient(ellipse at 50% 30%, transparent 30%, rgba(0, 0, 0, 0.6) 100%),
     linear-gradient(rgba(6, 6, 9, 0.42), rgba(6, 6, 9, 0.42));
 }

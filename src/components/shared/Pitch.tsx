@@ -46,7 +46,7 @@ export function Pitch({ starters, bench, className }: { starters: PitchPlayer[];
         ))}
       </div>
       {bench && bench.length > 0 && (
-        <div className="mt-2 border border-border bg-black/40 p-3">
+        <div className="mt-2 rounded-2xl border border-white/10 bg-black/40 p-3">
           <p className="eyebrow mb-2 text-center">Bench</p>
           <div className="flex justify-center gap-1 sm:gap-6">
             {bench.map((p) => <Token key={p.id} p={p} />)}

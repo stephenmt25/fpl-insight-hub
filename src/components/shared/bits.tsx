@@ -103,7 +103,7 @@ const FDR_CLASS: Record<number, string> = {
 export function FdrChip({ label, difficulty, className }: { label: string; difficulty: number; className?: string }) {
   return (
     <span
-      className={cn("num inline-flex items-center justify-center gap-1 px-1.5 py-1 text-[10px] font-semibold", FDR_CLASS[difficulty] ?? FDR_CLASS[3], className)}
+      className={cn("num inline-flex items-center justify-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-semibold", FDR_CLASS[difficulty] ?? FDR_CLASS[3], className)}
       title={`Difficulty ${difficulty} of 5`}
     >
       {label}
@@ -114,7 +114,7 @@ export function FdrChip({ label, difficulty, className }: { label: string; diffi
 
 export function PositionTag({ type }: { type: number }) {
   const label = { 1: "GKP", 2: "DEF", 3: "MID", 4: "FWD" }[type] ?? "";
-  return <span className="num border border-border px-1 py-px text-[9px] uppercase tracking-wider text-muted-foreground">{label}</span>;
+  return <span className="num rounded border border-white/15 px-1 py-px text-[9px] uppercase tracking-wider text-muted-foreground">{label}</span>;
 }
 
 export function RankDelta({ rank, last }: { rank: number; last: number }) {

@@ -86,7 +86,7 @@ export function Spotlight({ autoFocus, onDone, large, fallback }: {
 
   return (
     <div className="relative w-full">
-      <div className={cn("panel flex items-center gap-3 px-4", large ? "h-16" : "h-14")}>
+      <div className={cn("panel flex items-center gap-3 !rounded-full px-5", large ? "h-16" : "h-14")}>
         <Search className={cn("shrink-0 text-muted-foreground", large ? "h-6 w-6" : "h-5 w-5")} />
         <input
           autoFocus={autoFocus}
@@ -100,12 +100,12 @@ export function Spotlight({ autoFocus, onDone, large, fallback }: {
           placeholder="Search apps and players, or type a team or league ID"
           className={cn("h-full w-full bg-transparent text-foreground outline-none placeholder:text-muted-foreground", large ? "text-xl" : "text-base")}
         />
-        <kbd className="hidden shrink-0 border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground sm:block">Ctrl K</kbd>
+        <kbd className="hidden shrink-0 rounded-md border border-white/15 px-1.5 py-0.5 text-[10px] text-muted-foreground sm:block">Ctrl K</kbd>
       </div>
 
       {open && (
         <ul id="spotlight-results" ref={listRef} role="listbox"
-          className={cn("z-30 mt-2 max-h-[60dvh] w-full overflow-y-auto border border-border bg-popover/95 py-1 shadow-2xl backdrop-blur-xl", large && "absolute")}>
+          className={cn("z-30 mt-2 max-h-[60dvh] w-full overflow-y-auto rounded-2xl border border-white/10 bg-popover/95 py-1 shadow-2xl backdrop-blur-xl", large && "absolute")}>
           {results.length === 0 && <li className="px-4 py-6 text-center text-sm text-muted-foreground">Nothing matches “{query}”.</li>}
           {results.map((r, i) => {
             const header = r.group !== lastGroup;
@@ -115,7 +115,7 @@ export function Spotlight({ autoFocus, onDone, large, fallback }: {
                 {header && <p className="eyebrow px-4 pb-1 pt-3">{r.group}</p>}
                 <button role="option" aria-selected={i === active} data-index={i} onMouseEnter={() => setActive(i)} onClick={() => { r.run(); setQuery(""); }}
                   className={cn("flex w-full items-center gap-3 px-4 py-2 text-left", i === active && "bg-blood/15")}>
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center border border-border bg-black/40"><r.icon className="h-4 w-4 text-chrome" /></span>
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/10 bg-black/40"><r.icon className="h-4 w-4 text-chrome" /></span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm text-foreground">{r.title}</span>
                     <span className="block truncate text-xs text-muted-foreground">{r.detail}</span>

@@ -56,7 +56,7 @@ function AppFrame({ app }: { app: AppDef }) {
   return (
     <>
       <header className="flex animate-rise items-center gap-4 [text-shadow:0_1px_3px_#000]">
-        <span className="flex h-14 w-14 shrink-0 items-center justify-center border border-chrome/50 bg-gradient-to-b from-zinc-100 to-zinc-500 text-black shadow-[0_0_30px_-8px_hsl(var(--blood))]">
+        <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/40 bg-gradient-to-b from-zinc-100 to-zinc-500 text-black shadow-[0_0_30px_-8px_hsl(var(--blood))]">
           <app.icon className="h-7 w-7" />
         </span>
         <div className="min-w-0 flex-1">

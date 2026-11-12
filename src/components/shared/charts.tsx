@@ -26,7 +26,7 @@ export function ChartTooltip({ active, payload, label, labelPrefix = "", format 
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="border border-border bg-popover/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
+    <div className="rounded-xl border border-white/10 bg-popover/95 px-3 py-2 text-xs shadow-xl backdrop-blur">
       <p className="eyebrow mb-1.5">{labelPrefix}{label}</p>
       {payload.filter((p) => p.value != null).map((p) => (
         <div key={String(p.dataKey)} className="flex items-center gap-2 py-px">

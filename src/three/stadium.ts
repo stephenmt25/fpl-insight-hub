@@ -7,7 +7,7 @@ import { createPitchLines } from "./models";
  * a stone bowl with a lancet arcade and flying buttresses, a nave and great
  * tower grown out of one stand, a low-resolution city with neon corners, a
  * crowd of point sprites, and a 28-second match loop that ends in a goal
- * and fireworks.
+ * and fire from the spires.
  */
 
 const HALF_LENGTH = 52.5;
@@ -338,7 +338,9 @@ function addGargoyles(tower: THREE.Group, width: number, y: number, material: TH
   }
 }
 
-function buildTowers(group: THREE.Group, kit: Kit) {
+/** Returns the tip of every spire, where the fire comes out. */
+function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
+  const tips: THREE.Vector3[] = [];
   evenThetas(8, WALL_OFFSET).forEach((theta0, i) => {
     const theta = theta0 + Math.PI / 8;
     const tall = i % 2 === 0;
@@ -376,6 +378,7 @@ function buildTowers(group: THREE.Group, kit: Kit) {
       slit.translateZ(width / 2 + 0.05);
       tower.add(slit);
     }
+    tips.push(tower.position.clone().setY(height * 1.75 + 2));
     if (tall) {
       const rose = roseWindow(width * 0.32, kit.glass, kit.chrome, 8);
       rose.position.set(0, height * 0.48, width / 2 + 0.2);
@@ -383,6 +386,7 @@ function buildTowers(group: THREE.Group, kit: Kit) {
     }
     group.add(tower);
   });
+  return tips;
 }
 
 /** A gabled front facing +z: great rose window over a glowing door, twin turrets, a cross on the gable. */
@@ -433,7 +437,7 @@ const GREAT_TOWER_HEIGHT = 132;
  * The cathedral proper, grown out of the north stand: a nave with aisles and a
  * slate roof, a west front, and one great square tower crowned with pinnacles.
  */
-function buildCathedral(group: THREE.Group, kit: Kit) {
+function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   const theta = Math.PI / 2;
   const n = outwardNormal(theta, WALL_OFFSET);
   const cathedral = new THREE.Group();
@@ -531,6 +535,11 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
   addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.84, kit.slate);
   cathedral.add(tower);
   group.add(cathedral);
+
+  // World positions of the four corner spirelets on the great tower
+  cathedral.updateMatrixWorld(true);
+  return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) =>
+    tower.localToWorld(new THREE.Vector3((dx * width) / 2, GREAT_TOWER_HEIGHT + 37, (dz * width) / 2)));
 }
 
 function buildPortals(group: THREE.Group, kit: Kit) {
@@ -656,8 +665,57 @@ function makeFacade(kind: Facade) {
   return [walls, walls, roof, roof, walls, walls];
 }
 
-/** The street plan painted onto one texture: grid roads, a ring road, avenues to each door, and the paved plaza. */
-function makeStreetPlan(reach: number) {
+type CellKind = "church" | "gas" | "factory" | "terrace" | "flats" | "office" | "park" | "court";
+interface Cell { cx: number; cz: number; kind: CellKind; yaw: number }
+
+/** Decide what stands on every city block before anything is drawn, so the ground plan and the buildings agree. */
+function layoutCity(reach: number): Cell[] {
+  const cells: Cell[] = [];
+  const half = CELL / 2;
+  for (let i = -reach; i <= reach; i++) {
+    for (let j = -reach; j <= reach; j++) {
+      const cx = i * CELL;
+      const cz = j * CELL;
+      // A block is skipped if any corner of it would poke into the plaza or forecourt
+      if ([[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]].some(([dx, dz]) => inPlaza(cx + dx * half, cz + dz * half) || inForecourt(cx + dx * half, cz + dz * half))) continue;
+      const roll = Math.random();
+      const near = Math.hypot(cx, cz) < 360;
+      const kind: CellKind =
+        roll < 0.03 ? "church" : roll < 0.055 ? "gas" : roll < 0.09 ? "factory" : roll < 0.16 ? "park" : roll < 0.2 ? "court"
+        : near || roll < 0.42 ? "terrace" : roll < 0.74 ? "flats" : "office";
+      cells.push({ cx, cz, kind, yaw: Math.random() < 0.5 ? 0 : Math.PI / 2 });
+    }
+  }
+  return cells;
+}
+
+const plazaPoint = (angle: number, rho: number): [number, number] => [Math.cos(angle) * PLAZA * PLAZA_STRETCH * rho, Math.sin(angle) * PLAZA * rho];
+
+interface PlazaSpot { x: number; z: number; angle: number; kind: "pond" | "fountain" | "obelisk" | "grove" }
+
+/** Four parks on the diagonals and a ring of small squares between them. */
+function layoutPlaza(): PlazaSpot[] {
+  const spots: PlazaSpot[] = [];
+  for (let k = 0; k < 4; k++) {
+    const angle = Math.PI / 4 + (k * Math.PI) / 2;
+    const [x, z] = plazaPoint(angle, 0.77);
+    spots.push({ x, z, angle, kind: k % 2 ? "pond" : "fountain" });
+  }
+  for (let k = 0; k < 8; k++) {
+    const angle = Math.PI / 8 + (k * Math.PI) / 4;
+    const [x, z] = plazaPoint(angle, 0.7);
+    if (Math.abs(x) < 95 && z > 0) continue; // the cathedral forecourt
+    spots.push({ x, z, angle, kind: k % 2 ? "obelisk" : "grove" });
+  }
+  return spots;
+}
+
+/**
+ * The ground, painted onto one texture: grid roads, the ring road and avenues,
+ * the paved plaza with its lawns, ponds and squares, and for every city block
+ * the gardens, car parks, courts and yards that belong to what stands on it.
+ */
+function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
   const size = 2048;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
@@ -666,17 +724,75 @@ function makeStreetPlan(reach: number) {
   const px = (v: number) => (v + PLAN_HALF) * k;
   const asphalt = "#22252b";
   const marking = "#8a8f99";
+  const grass = "#143021";
+  const paving = "#1f2228";
+  const lot = (CELL - ROAD - 2) * k;
 
-  ctx.fillStyle = "#0c0d10"; // pavements and yards
+  ctx.fillStyle = asphalt; // everything between the blocks is road
   ctx.fillRect(0, 0, size, size);
 
-  // Grid roads run along the cell boundaries
-  for (let i = -reach - 1; i <= reach; i++) {
-    const at = px((i + 0.5) * CELL);
-    ctx.fillStyle = asphalt;
-    ctx.fillRect(at - (ROAD * k) / 2, 0, ROAD * k, size);
-    ctx.fillRect(0, at - (ROAD * k) / 2, size, ROAD * k);
+  // Each block: a pavement kerb, then whatever its building needs around it
+  for (const cell of cells) {
+    ctx.save();
+    ctx.translate(px(cell.cx), px(cell.cz));
+    ctx.rotate(cell.yaw);
+    ctx.fillStyle = "#17191d";
+    ctx.fillRect(-lot / 2, -lot / 2, lot, lot);
+    const inner = lot - 5 * k;
+    const fill = (color: string, x: number, y: number, w: number, h: number) => { ctx.fillStyle = color; ctx.fillRect(x * k, y * k, w * k, h * k); };
+    const line = (color: string, pts: number[]) => {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      for (let p = 0; p < pts.length; p += 4) { ctx.moveTo(pts[p] * k, pts[p + 1] * k); ctx.lineTo(pts[p + 2] * k, pts[p + 3] * k); }
+      ctx.stroke();
+    };
+    switch (cell.kind) {
+      case "terrace":
+        // Back gardens between the two rows, fenced into plots
+        fill(grass, -22, -4, 44, 8);
+        line("#0b1a12", Array.from({ length: 9 }, (_, n) => [-20 + n * 5, -4, -20 + n * 5, 4]).flat());
+        break;
+      case "flats":
+        ctx.fillStyle = grass;
+        ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
+        fill("#1b1d22", -22, 13, 44, 9); // car park
+        line(marking, Array.from({ length: 13 }, (_, n) => [-21 + n * 3.5, 13, -21 + n * 3.5, 17]).flat());
+        break;
+      case "office":
+        ctx.fillStyle = paving;
+        ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
+        for (const [x, y] of [[-20, -20], [16, -20], [-20, 16], [16, 16]]) fill(grass, x, y, 4, 4); // planters
+        break;
+      case "church":
+        ctx.fillStyle = grass;
+        ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
+        line("#3a3d44", [0, -22, 0, 22, -22, 10, 22, 10]);
+        break;
+      case "park":
+        ctx.fillStyle = "#17382a";
+        ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
+        line("#4a4d55", [-22, -22, 22, 22, -22, 22, 22, -22]);
+        ctx.fillStyle = "#16324a";
+        ctx.beginPath(); ctx.arc(9 * k, -10 * k, 6 * k, 0, Math.PI * 2); ctx.fill();
+        break;
+      case "court":
+        ctx.fillStyle = grass;
+        ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
+        // A caged five-a-side pitch and a hard court
+        fill("#1d5a3a", -20, -18, 40, 20);
+        line("#d7dae3", [-20, -18, 20, -18, 20, -18, 20, 2, 20, 2, -20, 2, -20, 2, -20, -18, 0, -18, 0, 2]);
+        ctx.strokeStyle = "#d7dae3"; ctx.beginPath(); ctx.arc(0, -8 * k, 3 * k, 0, Math.PI * 2); ctx.stroke();
+        fill("#6b2b2b", -14, 7, 28, 13);
+        line("#d7dae3", [-14, 7, 14, 7, 14, 7, 14, 20, 14, 20, -14, 20, -14, 20, -14, 7, 0, 7, 0, 20]);
+        break;
+      default:
+        fill("#1a1712", -22, -22, 44, 44); // works yard
+    }
+    ctx.restore();
   }
+
+  // Centre lines down every grid road
   ctx.strokeStyle = marking;
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 7]);
@@ -687,6 +803,7 @@ function makeStreetPlan(reach: number) {
     ctx.moveTo(0, at); ctx.lineTo(size, at);
   }
   ctx.stroke();
+  ctx.setLineDash([]);
 
   // Plaza: stone paving in rings and spokes, wiping out the grid inside it
   const plaza = (scale: number) => {
@@ -697,27 +814,56 @@ function makeStreetPlan(reach: number) {
   ctx.fillStyle = "#15171b";
   ctx.fill();
   ctx.fillRect(px(-70), px(0), 140 * k, 290 * k); // cathedral forecourt
-  ctx.setLineDash([]);
   ctx.strokeStyle = "#23262c";
-  for (const scale of [0.62, 0.74, 0.86]) { plaza(scale); ctx.stroke(); }
+  for (const scale of [0.6, 0.86]) { plaza(scale); ctx.stroke(); }
   for (let s = 0; s < 48; s++) {
     const a = (s / 48) * Math.PI * 2;
     ctx.beginPath();
-    ctx.moveTo(px(Math.cos(a) * PLAZA * PLAZA_STRETCH * 0.55), px(Math.sin(a) * PLAZA * 0.55));
-    ctx.lineTo(px(Math.cos(a) * PLAZA * PLAZA_STRETCH * 0.93), px(Math.sin(a) * PLAZA * 0.93));
+    ctx.moveTo(px(plazaPoint(a, 0.55)[0]), px(plazaPoint(a, 0.55)[1]));
+    ctx.lineTo(px(plazaPoint(a, 0.93)[0]), px(plazaPoint(a, 0.93)[1]));
     ctx.stroke();
   }
+  // Processional ways from each door, in a lighter stone
+  ctx.fillStyle = paving;
+  ctx.fillRect(px(-PLAZA * PLAZA_STRETCH), px(-9), PLAZA * PLAZA_STRETCH * 2 * k, 18 * k);
+  ctx.fillRect(px(-9), px(-PLAZA), 18 * k, PLAZA * k);
+  ctx.fillRect(px(-26), px(0), 52 * k, 290 * k);
 
-  // Ring road round the plaza, and avenues from it to the grid's main axes
+  for (const spot of spots) {
+    ctx.save();
+    ctx.translate(px(spot.x), px(spot.z));
+    if (spot.kind === "pond" || spot.kind === "fountain") {
+      // A lawn lying along the curve of the plaza, with a path round its centrepiece
+      ctx.rotate(spot.angle + Math.PI / 2);
+      ctx.fillStyle = "#17382a";
+      ctx.beginPath(); ctx.ellipse(0, 0, 54 * k, 31 * k, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#4a4d55";
+      ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.ellipse(0, 0, 40 * k, 19 * k, 0, 0, Math.PI * 2); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(-54 * k, 0); ctx.lineTo(54 * k, 0); ctx.stroke();
+      ctx.fillStyle = spot.kind === "pond" ? "#173a57" : paving;
+      ctx.beginPath(); ctx.arc(0, 0, (spot.kind === "pond" ? 12 : 13) * k, 0, Math.PI * 2); ctx.fill();
+    } else {
+      ctx.fillStyle = "#262a31";
+      ctx.beginPath(); ctx.arc(0, 0, 15 * k, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = "#3a3e47";
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(0, 0, 9 * k, 0, Math.PI * 2); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  // Ring road round the plaza, and avenues from it out through the grid
   ctx.strokeStyle = asphalt;
   ctx.lineWidth = (ROAD + 4) * k;
   plaza(0.97);
   ctx.stroke();
   ctx.fillStyle = asphalt;
-  ctx.fillRect(px(-PLAN_HALF), px(0) - (ROAD + 6) * k * 0.5, (PLAN_HALF - PLAZA * PLAZA_STRETCH) * k, (ROAD + 6) * k);
-  ctx.fillRect(px(PLAZA * PLAZA_STRETCH), px(0) - (ROAD + 6) * k * 0.5, (PLAN_HALF - PLAZA * PLAZA_STRETCH) * k, (ROAD + 6) * k);
-  ctx.fillRect(px(0) - (ROAD + 6) * k * 0.5, px(-PLAN_HALF), (ROAD + 6) * k, (PLAN_HALF - PLAZA) * k);
-  ctx.fillRect(px(0) - (ROAD + 6) * k * 0.5, px(290), (ROAD + 6) * k, (PLAN_HALF - 290) * k);
+  const avenue = (ROAD + 6) * k;
+  ctx.fillRect(px(-PLAN_HALF), px(0) - avenue / 2, (PLAN_HALF - PLAZA * PLAZA_STRETCH) * k, avenue);
+  ctx.fillRect(px(PLAZA * PLAZA_STRETCH), px(0) - avenue / 2, (PLAN_HALF - PLAZA * PLAZA_STRETCH) * k, avenue);
+  ctx.fillRect(px(0) - avenue / 2, px(-PLAN_HALF), avenue, (PLAN_HALF - PLAZA) * k);
+  ctx.fillRect(px(0) - avenue / 2, px(290), avenue, (PLAN_HALF - 290) * k);
   ctx.strokeStyle = marking;
   ctx.lineWidth = 1;
   ctx.setLineDash([5, 7]);
@@ -750,7 +896,7 @@ class Batch {
 
 const NEON = [0xff2bd6, 0x18e0ff, 0x7a3cff, 0x9dff3c].map((hex) => new THREE.Color(hex));
 
-interface NeonCorner {
+interface NeonSpire {
   light: THREE.PointLight;
   tubes: THREE.MeshBasicMaterial;
   halo: THREE.Sprite;
@@ -758,138 +904,321 @@ interface NeonCorner {
   phase: number;
 }
 
+/** A freestanding gothic spire outlined in neon: stone drum, buttress fins, a tall slate cone with glowing ribs. */
+function buildNeonSpire(scene: THREE.Scene, kit: Kit, base: THREE.Vector3, outward: THREE.Vector2, index: number): NeonSpire {
+  const drumHeight = 22;
+  const coneHeight = 58 + index * 5;
+  const radius = 6;
+  const spire = new THREE.Group();
+  spire.position.copy(base);
+
+  const drum = new THREE.Mesh(new THREE.CylinderGeometry(radius * 0.92, radius * 1.15, drumHeight, 8), kit.stone(3, 2));
+  drum.position.y = drumHeight / 2;
+  const cone = new THREE.Mesh(new THREE.ConeGeometry(radius, coneHeight, 8), kit.slate);
+  cone.position.y = drumHeight + coneHeight / 2;
+  spire.add(drum, cone);
+
+  const tubes = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
+  const up = new THREE.Vector3(0, 1, 0);
+  const tip = new THREE.Vector3(0, drumHeight + coneHeight, 0);
+  for (let s = 0; s < 8; s++) {
+    const angle = (s * Math.PI) / 4;
+    // ConeGeometry puts its corners at (sin, cos), so the ribs run exactly along the arrises
+    const foot = new THREE.Vector3(Math.sin(angle) * radius, drumHeight, Math.cos(angle) * radius);
+    const run = tip.clone().sub(foot);
+    const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.26, run.length(), 5), tubes);
+    rib.position.copy(foot).addScaledVector(run, 0.5);
+    rib.quaternion.setFromUnitVectors(up, run.clone().normalize());
+    spire.add(rib);
+
+    const mid = angle + Math.PI / 8;
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(1, drumHeight * 0.8, 4.5), kit.stone(0.3, 2));
+    fin.position.set(Math.sin(mid) * (radius + 2.4), drumHeight * 0.4, Math.cos(mid) * (radius + 2.4));
+    fin.rotation.y = mid;
+    const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(0.9, 7, 4), kit.slate);
+    pinnacle.position.set(Math.sin(mid) * (radius + 3.6), drumHeight * 0.8 + 3.5, Math.cos(mid) * (radius + 3.6));
+    const slit = new THREE.Mesh(new THREE.ShapeGeometry(lancet(1.6, 9), 6), tubes);
+    slit.position.set(Math.sin(angle) * (radius * 1.02), 7, Math.cos(angle) * (radius * 1.02));
+    slit.rotation.y = angle;
+    spire.add(fin, pinnacle, slit);
+  }
+  for (const [y, r] of [[drumHeight, radius + 0.25], [drumHeight + coneHeight * 0.45, radius * 0.55 + 0.25]] as const) {
+    const band = new THREE.Mesh(new THREE.TorusGeometry(r, 0.24, 5, 8), tubes);
+    band.rotation.set(Math.PI / 2, 0, Math.PI / 8);
+    band.position.y = y;
+    spire.add(band);
+  }
+  const cross = new THREE.Mesh(crossGeometry(4), kit.chrome);
+  cross.position.copy(tip).setY(tip.y - 0.5);
+  spire.add(cross);
+  scene.add(spire);
+
+  const halo = glowSprite(kit, 0xffffff, 95, 0.5);
+  halo.position.copy(base).setY(drumHeight + coneHeight * 0.5);
+  scene.add(halo);
+
+  // The light sits on the city side with a short reach, so it colours the
+  // streets and blocks behind the spire and never touches the stadium.
+  const light = new THREE.PointLight(0xffffff, 0, 165, 1.25);
+  light.position.set(base.x + outward.x * 74, 40, base.z + outward.y * 66);
+  scene.add(light);
+
+  const beam = new THREE.Mesh(
+    new THREE.CylinderGeometry(1.2, 18, 300, 16, 1, true).translate(0, -150, 0).rotateX(Math.PI),
+    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.05, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
+  );
+  beam.position.copy(base).setY(tip.y);
+  scene.add(beam);
+  return { light, tubes, halo, beam, phase: index / 4 };
+}
+
 /**
- * The city around the plaza, kept low-resolution: brick terraces with pitched
- * roofs close in, slab blocks and glass towers further out, the odd church,
- * gasometer and factory, all on a painted street grid with lamps and traffic.
+ * The city around the plaza, kept low-resolution: brick terraces with gardens
+ * close in, slab blocks and glass towers further out, churches, gasometers,
+ * factories, parks and five-a-side cages, on a painted street grid with
+ * trees, parked cars, lamps and traffic. The plaza itself has four parks,
+ * a ring of small squares, tree-lined walks and people.
  */
 function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   const reach = small ? 7 : 11;
+  const cells = layoutCity(reach);
+  const spots = layoutPlaza();
+
   const unitBox = new THREE.BoxGeometry(1, 1, 1);
   const gable = new THREE.Shape();
   gable.moveTo(-0.5, 0); gable.lineTo(0.5, 0); gable.lineTo(0, 1); gable.closePath();
   const unitRoof = new THREE.ExtrudeGeometry(gable, { depth: 1, bevelEnabled: false }).translate(0, 0, -0.5);
+  const lambert = (color: number, flat = false) => new THREE.MeshLambertMaterial({ color, flatShading: flat });
 
-  const brick = makeFacade("brick");
-  const office = makeFacade("office");
-  const slateRoof = new THREE.MeshLambertMaterial({ color: 0x15181e });
-  const metal = new THREE.MeshLambertMaterial({ color: 0x1b1e24 });
-  const cityStone = new THREE.MeshLambertMaterial({ color: 0x2b2d33 });
+  const slateRoof = lambert(0x15181e);
+  const metal = lambert(0x1b1e24);
+  const blob = new THREE.IcosahedronGeometry(0.5, 1);
   const batch = {
-    brick: new Batch(unitBox, brick),
+    brick: new Batch(unitBox, makeFacade("brick")),
     flats: new Batch(unitBox, makeFacade("flats")),
-    office: new Batch(unitBox, office),
+    office: new Batch(unitBox, makeFacade("office")),
     plain: new Batch(unitBox, metal),
-    stone: new Batch(unitBox, cityStone),
+    stone: new Batch(unitBox, lambert(0x2b2d33)),
     roofs: new Batch(unitRoof, slateRoof),
     drums: new Batch(new THREE.CylinderGeometry(0.5, 0.5, 1, 20), metal),
     spires: new Batch(new THREE.ConeGeometry(0.5, 1, 6), slateRoof),
+    trunks: new Batch(new THREE.CylinderGeometry(0.35, 0.5, 1, 5), lambert(0x241a14)),
+    leavesA: new Batch(blob, lambert(0x18472d, true)),
+    leavesB: new Batch(blob, lambert(0x113524, true)),
+    conifers: new Batch(new THREE.ConeGeometry(0.5, 1, 6), lambert(0x0e2c21, true)),
+    benches: new Batch(unitBox, lambert(0x5a4334)),
+    carsDark: new Batch(unitBox, lambert(0x2c3038)),
+    carsLight: new Batch(unitBox, lambert(0xa9adb8)),
+    carsRed: new Batch(unitBox, lambert(0x7d1d26)),
+    awnings: new Batch(unitRoof, lambert(0x8a1f33)),
   };
 
-  const lamps: number[] = [];
-  const lampColors: number[] = [];
-  const beacons: number[] = [];
-  const warm = new THREE.Color(0xffc98a);
-  const lot = CELL - ROAD - 6; // buildable width of a block
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
+  const tree = (x: number, z: number, s = 1) => {
+    batch.trunks.add(x, 2.2 * s, z, s, 4.4 * s, s);
+    const roll = Math.random();
+    if (roll < 0.22) batch.conifers.add(x, 9 * s, z, 5.5 * s, 11 * s, 5.5 * s);
+    else (roll < 0.62 ? batch.leavesA : batch.leavesB).add(x, 7.4 * s, z, rand(6, 8) * s, rand(6.5, 8) * s, rand(6, 8) * s, Math.random() * 3);
+  };
+  const bench = (x: number, z: number, yaw: number) => batch.benches.add(x, 0.5, z, 2.8, 0.7, 0.9, yaw);
 
-  for (let i = -reach; i <= reach; i++) {
-    for (let j = -reach; j <= reach; j++) {
-      const cx = i * CELL;
-      const cz = j * CELL;
-      // Street lamps at every junction outside the plaza
-      const jx = cx + CELL / 2;
-      const jz = cz + CELL / 2;
-      if (!inPlaza(jx, jz)) {
-        lamps.push(jx - 5, 5, jz - 5, jx + 5, 5, jz + 5);
-        lampColors.push(warm.r, warm.g, warm.b, warm.r, warm.g, warm.b);
+  const lamps: number[] = [];
+  const beacons: number[] = [];
+  const people: number[] = [];
+  const peopleColors: number[] = [];
+  const cloth = [0x9a9ea8, 0x5f6470, 0xd7dae3, 0xc21a40, 0x30333f].map((hex) => new THREE.Color(hex));
+  const person = (x: number, z: number) => {
+    const c = cloth[Math.floor(Math.random() * cloth.length)];
+    people.push(x, 1.2, z);
+    peopleColors.push(c.r, c.g, c.b);
+  };
+  const lot = CELL - ROAD - 6;
+
+  /* --- City blocks --- */
+  for (const { cx, cz, kind, yaw } of cells) {
+    // Local (along, across) on the block -> world, turned by the block's yaw
+    const at = (a: number, b: number): [number, number] => (yaw ? [cx + b, cz + a] : [cx + a, cz + b]);
+    lamps.push(cx + CELL / 2 - 5, 5, cz + CELL / 2 - 5, cx + CELL / 2 + 5, 5, cz + CELL / 2 + 5);
+
+    if (kind === "church") {
+      batch.stone.add(cx, 9, cz, 14, 18, 34, yaw);
+      batch.roofs.add(cx, 18, cz, 15, 9, 34, yaw);
+      const [tx, tz] = yaw ? [cx + 21, cz] : [cx, cz + 21];
+      batch.stone.add(tx, 16, tz, 8, 32, 8);
+      batch.spires.add(tx, 43, tz, 9, 22, 9);
+      for (let n = 0; n < 6; n++) tree(cx + rand(-21, 21), cz + rand(-21, 21), rand(0.8, 1.1));
+    } else if (kind === "gas") {
+      const r = rand(15, 20);
+      batch.drums.add(cx, 9, cz, r * 2, 18, r * 2);
+      batch.drums.add(cx, 23, cz, r * 2 + 1.5, 1, r * 2 + 1.5);
+      for (let p = 0; p < 8; p++) batch.plain.add(cx + Math.cos(p * 0.785) * r, 13, cz + Math.sin(p * 0.785) * r, 0.8, 26, 0.8);
+    } else if (kind === "factory") {
+      batch.brick.add(cx, 7, cz, lot, 14, 26, yaw);
+      batch.roofs.add(cx, 14, cz, 26, 7, lot, yaw + Math.PI / 2);
+      for (const side of [-1, 1]) {
+        const [sx, sz] = at(side * 14, 18);
+        batch.drums.add(sx, 20, sz, 3.4, 40, 3.4);
+        beacons.push(sx, 41, sz);
       }
-      // A block is skipped if any corner of it would poke into the plaza or forecourt
-      const half = CELL / 2;
-      if ([[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]].some(([dx, dz]) => inPlaza(cx + dx * half, cz + dz * half) || inForecourt(cx + dx * half, cz + dz * half))) continue;
+    } else if (kind === "terrace") {
+      for (const side of [-1, 1]) {
+        const h = rand(8, 11);
+        const [x, z] = at(0, side * 12);
+        batch.brick.add(x, h / 2, z, lot, h, 13, yaw);
+        batch.roofs.add(x, h, z, 14, 5.5, lot, yaw + Math.PI / 2);
+        for (let c = -2; c <= 2; c++) { const [qx, qz] = at(c * 9, side * 12); batch.plain.add(qx, h + 5, qz, 1.4, 3.5, 1.4); }
+      }
+      for (let n = 0; n < 4; n++) { const [x, z] = at(rand(-20, 20), rand(-2.5, 2.5)); tree(x, z, 0.6); }
+    } else if (kind === "flats") {
+      const slabs = Math.random() < 0.5 ? 2 : 1;
+      for (let s = 0; s < slabs; s++) {
+        const h = rand(20, 46);
+        const [x, z] = at(slabs === 2 ? (s - 0.5) * 24 : 0, -6);
+        batch.flats.add(x, h / 2, z, 16, h, lot - 14, yaw + Math.PI / 2);
+        batch.plain.add(x, h + 1.5, z, 7, 3, 9, yaw);
+      }
+      for (let n = 0; n < 5; n++) { const [x, z] = at(rand(-21, 21), rand(-22, 8)); if (Math.random() < 0.6) tree(x, z, rand(0.7, 1)); }
+      for (let n = 0; n < 12; n++) {
+        if (Math.random() < 0.45) continue;
+        const [x, z] = at(-19.3 + n * 3.5, 15.2);
+        (Math.random() < 0.5 ? batch.carsDark : Math.random() < 0.7 ? batch.carsLight : batch.carsRed).add(x, 0.8, z, 1.9, 1.4, 4.2, yaw);
+      }
+    } else if (kind === "office") {
+      const w = rand(24, 32);
+      const h = rand(48, 120);
+      batch.office.add(cx, h / 2, cz, w, h, w);
+      let top = h;
+      if (Math.random() < 0.5) { batch.office.add(cx, h + h * 0.16, cz, w * 0.62, h * 0.32, w * 0.62); top = h * 1.32; }
+      if (Math.random() < 0.5) { batch.plain.add(cx, top + 9, cz, 0.7, 18, 0.7); beacons.push(cx, top + 18.5, cz); }
+      for (const [x, z] of [[-18, -18], [18, -18], [-18, 18], [18, 18]]) tree(cx + x, cz + z, 0.7);
+    } else if (kind === "park") {
+      for (let n = 0; n < 16; n++) { const [x, z] = at(rand(-21, 21), rand(-21, 21)); if (Math.hypot(x - at(9, -10)[0], z - at(9, -10)[1]) > 8) tree(x, z, rand(0.8, 1.25)); }
+      for (let n = 0; n < 4; n++) { const a = n * 1.57; const [x, z] = at(9 + Math.cos(a) * 8, -10 + Math.sin(a) * 8); bench(x, z, a); }
+      for (let n = 0; n < 8; n++) { const [x, z] = at(rand(-20, 20), rand(-20, 20)); person(x, z); }
+    } else {
+      // Cage fence posts and floodlights round the five-a-side pitch
+      for (const [a, b] of [[-20, -18], [20, -18], [-20, 2], [20, 2]]) { const [x, z] = at(a, b); batch.plain.add(x, 4, z, 0.5, 8, 0.5); lamps.push(x, 8.2, z); }
+      for (let n = 0; n < 10; n++) { const [x, z] = at(rand(-18, 18), rand(-16, 0)); person(x, z); }
+      for (let n = 0; n < 5; n++) { const [x, z] = at(rand(-21, 21), rand(8, 21)); tree(x, z, 0.8); }
+    }
 
-      const distance = Math.hypot(cx, cz);
-      const roll = Math.random();
-      const yaw = Math.random() < 0.5 ? 0 : Math.PI / 2;
-
-      if (roll < 0.03) {
-        // Parish church: nave, pitched roof, tower and spire
-        batch.stone.add(cx, 9, cz, 14, 18, 34, yaw);
-        batch.roofs.add(cx, 18, cz, 15, 9, 34, yaw);
-        const tx = cx + (yaw ? 21 : 0);
-        const tz = cz + (yaw ? 0 : 21);
-        batch.stone.add(tx, 16, tz, 8, 32, 8);
-        batch.spires.add(tx, 43, tz, 9, 22, 9);
-      } else if (roll < 0.06) {
-        // Gasometer: a drum inside a ring frame
-        const r = rand(15, 20);
-        batch.drums.add(cx, 9, cz, r * 2, 18, r * 2);
-        batch.drums.add(cx, 23, cz, r * 2 + 1.5, 1, r * 2 + 1.5);
-        for (let p = 0; p < 8; p++) batch.plain.add(cx + Math.cos(p * 0.785) * r, 13, cz + Math.sin(p * 0.785) * r, 0.8, 26, 0.8);
-      } else if (roll < 0.1) {
-        // Factory: long shed with a ridge roof and two chimneys
-        batch.brick.add(cx, 7, cz, lot, 14, 26, yaw);
-        batch.roofs.add(cx, 14, cz, 26, 7, lot, yaw + Math.PI / 2);
-        for (const side of [-1, 1]) {
-          const sx = cx + (yaw ? 0 : side * 14);
-          const sz = cz + (yaw ? side * 14 : 0) + (yaw ? 0 : 17) ;
-          batch.drums.add(sx + (yaw ? 17 : 0), 20, sz, 3.4, 40, 3.4);
-          beacons.push(sx + (yaw ? 17 : 0), 41, sz);
-        }
-      } else if (distance < 360 || roll < 0.32) {
-        // Terraced streets: two back-to-back rows of pitched-roof houses
-        for (const side of [-1, 1]) {
-          const h = rand(8, 11);
-          const ox = yaw ? side * 11 : 0;
-          const oz = yaw ? 0 : side * 11;
-          batch.brick.add(cx + ox, h / 2, cz + oz, lot, h, 14, yaw);
-          batch.roofs.add(cx + ox, h, cz + oz, 15, 5.5, lot, yaw + Math.PI / 2);
-          // Chimney stacks along the ridge
-          for (let c = -2; c <= 2; c++) batch.plain.add(cx + ox + (yaw ? 0 : c * 9), h + 5, cz + oz + (yaw ? c * 9 : 0), 1.4, 3.5, 1.4);
-        }
-      } else if (roll < 0.7) {
-        // Slab blocks of flats with a plant room on the roof
-        const slabs = Math.random() < 0.5 ? 2 : 1;
-        for (let s = 0; s < slabs; s++) {
-          const h = rand(20, 46);
-          const off = slabs === 2 ? (s - 0.5) * 24 : 0;
-          const x = cx + (yaw ? 0 : off);
-          const z = cz + (yaw ? off : 0);
-          batch.flats.add(x, h / 2, z, 17, h, lot, yaw);
-          batch.plain.add(x, h + 1.5, z, 7, 3, 9, yaw);
-        }
-      } else {
-        // Glass towers, some stepped back near the top, some with a mast
-        const w = rand(26, 36);
-        const h = rand(48, 120);
-        batch.office.add(cx, h / 2, cz, w, h, w);
-        let top = h;
-        if (Math.random() < 0.5) {
-          batch.office.add(cx, h + h * 0.16, cz, w * 0.62, h * 0.32, w * 0.62);
-          top = h * 1.32;
-        }
-        if (Math.random() < 0.5) {
-          batch.plain.add(cx, top + 9, cz, 0.7, 18, 0.7);
-          beacons.push(cx, top + 18.5, cz);
+    if (small) continue;
+    // Street trees on the pavement and cars parked at the kerb, on all four sides
+    for (const [ex, ez] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+      for (let t = -18; t <= 18; t += 9) {
+        const px = cx + ex * (lot / 2 + 2.6) + (ex ? 0 : t);
+        const pz = cz + ez * (lot / 2 + 2.6) + (ez ? 0 : t);
+        if (Math.random() < 0.45) tree(px, pz, 0.62);
+        if (Math.random() < 0.3) {
+          const car = Math.random() < 0.5 ? batch.carsDark : Math.random() < 0.7 ? batch.carsLight : batch.carsRed;
+          car.add(cx + ex * (CELL / 2 - 4.4) + (ex ? 0 : t + 4), 0.8, cz + ez * (CELL / 2 - 4.4) + (ez ? 0 : t + 4), 1.9, 1.4, 4.2, ex ? 0 : Math.PI / 2);
         }
       }
     }
   }
+
+  /* --- The plaza --- */
+  const clearOfWays = (x: number, z: number) => Math.abs(z) > 14 && !(Math.abs(x) < 14 && z < 0) && !(Math.abs(x) < 34 && z > 0);
+  // A double row of trees and a line of lamps inside the ring road
+  for (const [rho, count] of [[0.9, 150], [0.84, 136]] as const) {
+    for (let n = 0; n < count; n++) {
+      const [x, z] = plazaPoint((n / count) * Math.PI * 2, rho);
+      if (clearOfWays(x, z)) tree(x, z, rand(0.85, 1.1));
+    }
+  }
+  for (let n = 0; n < 72; n++) { const [x, z] = plazaPoint((n / 72) * Math.PI * 2, 0.8); lamps.push(x, 5, z); }
+  // Avenues of trees and benches along each processional way
+  for (let d = 0.6; d < 0.82; d += 0.036) {
+    for (const side of [-1, 1]) {
+      const along = PLAZA * PLAZA_STRETCH * d;
+      for (const dir of [-1, 1]) { tree(dir * along, side * 13, 0.95); if (Math.random() < 0.7) bench(dir * along + 5, side * 10.5, 0); }
+      tree(side * 13, -PLAZA * d, 0.95);
+      if (Math.random() < 0.7) bench(side * 10.5, -PLAZA * d + 5, Math.PI / 2);
+    }
+  }
+  for (let z = 150; z < 285; z += 13) for (const side of [-1, 1]) { tree(side * 30, z, 1.05); lamps.push(side * 24, 5, z + 6); }
+
+  for (const spot of spots) {
+    if (spot.kind === "pond" || spot.kind === "fountain") {
+      const tangent = spot.angle + Math.PI / 2;
+      const local = (u: number, v: number): [number, number] => [spot.x + u * Math.cos(tangent) - v * Math.sin(tangent), spot.z + u * Math.sin(tangent) + v * Math.cos(tangent)];
+      for (let n = 0; n < 26; n++) {
+        const a = Math.random() * Math.PI * 2;
+        const r = Math.sqrt(Math.random());
+        const [u, v] = [Math.cos(a) * 50 * r, Math.sin(a) * 28 * r];
+        if (Math.hypot(u, v) < 17) continue;
+        const [x, z] = local(u, v);
+        tree(x, z, rand(0.9, 1.35));
+      }
+      for (let n = 0; n < 8; n++) {
+        const a = (n / 8) * Math.PI * 2;
+        bench(spot.x + Math.cos(a) * 15.5, spot.z + Math.sin(a) * 15.5, -a + Math.PI / 2);
+        lamps.push(spot.x + Math.cos(a + 0.4) * 19, 5, spot.z + Math.sin(a + 0.4) * 19);
+      }
+      for (let n = 0; n < 34; n++) { const a = Math.random() * 6.28; const r = rand(13, 40); const [x, z] = local(Math.cos(a) * r, Math.sin(a) * r * 0.55); person(x, z); }
+      if (spot.kind === "fountain") {
+        const basin = new THREE.Mesh(new THREE.CylinderGeometry(8, 8.6, 1.4, 24), kit.stone(4, 0.3));
+        basin.position.set(spot.x, 0.7, spot.z);
+        const water = new THREE.Mesh(new THREE.CircleGeometry(7.3, 24), new THREE.MeshBasicMaterial({ color: 0x2f6f96 }));
+        water.rotation.x = -Math.PI / 2;
+        water.position.set(spot.x, 1.45, spot.z);
+        const jet = new THREE.Mesh(new THREE.ConeGeometry(1.1, 9, 8), new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.55 }));
+        jet.position.set(spot.x, 5.5, spot.z);
+        const spray = glowSprite(kit, 0x9fd4ff, 30, 0.35);
+        spray.position.set(spot.x, 7, spot.z);
+        scene.add(basin, water, jet, spray);
+      }
+    } else {
+      for (let n = 0; n < 8; n++) { const a = (n / 8) * Math.PI * 2; bench(spot.x + Math.cos(a) * 11.5, spot.z + Math.sin(a) * 11.5, -a + Math.PI / 2); }
+      for (let n = 0; n < 26; n++) { const a = Math.random() * 6.28; const r = rand(3, 17); person(spot.x + Math.cos(a) * r, spot.z + Math.sin(a) * r); }
+      lamps.push(spot.x, 6, spot.z);
+      if (spot.kind === "obelisk") {
+        const obelisk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.7, 15, 4), kit.stone(1, 3));
+        obelisk.position.set(spot.x, 7.5, spot.z);
+        obelisk.rotation.y = Math.PI / 4;
+        const cross = new THREE.Mesh(crossGeometry(2.6), kit.chrome);
+        cross.position.set(spot.x, 15, spot.z);
+        cross.rotation.y = -spot.angle + Math.PI / 2;
+        scene.add(obelisk, cross);
+      } else {
+        for (let n = 0; n < 5; n++) { const a = n * 1.257; tree(spot.x + Math.cos(a) * 4, spot.z + Math.sin(a) * 4, 1.1); }
+      }
+      // Two market stalls with striped awnings on the outer edge of each square
+      for (const side of [-1, 1]) {
+        const a = spot.angle + side * 0.11;
+        const [x, z] = plazaPoint(a, 0.795);
+        batch.stone.add(x, 1.6, z, 5, 3.2, 4, -a);
+        batch.awnings.add(x, 3.2, z, 5.6, 1.8, 4.6, -a + Math.PI / 2);
+        lamps.push(x, 3, z);
+      }
+    }
+  }
+  // People drifting down the ways, across the forecourt and round the plaza
+  for (let n = 0; n < (small ? 300 : 900); n++) {
+    const roll = Math.random();
+    if (roll < 0.3) person(rand(-1, 1) * PLAZA * PLAZA_STRETCH * 0.9, rand(-8, 8));
+    else if (roll < 0.45) person(rand(-8, 8), -rand(0.5, 0.92) * PLAZA);
+    else if (roll < 0.7) person(rand(-24, 24), rand(150, 285));
+    else { const [x, z] = plazaPoint(Math.random() * 6.28, rand(0.6, 0.9)); person(x, z); }
+  }
+
   Object.values(batch).forEach((b) => b.addTo(scene));
 
-  const lampGeometry = new THREE.BufferGeometry();
-  lampGeometry.setAttribute("position", new THREE.Float32BufferAttribute(lamps, 3));
-  lampGeometry.setAttribute("color", new THREE.Float32BufferAttribute(lampColors, 3));
-  scene.add(new THREE.Points(lampGeometry, new THREE.PointsMaterial({ size: 2.6, sizeAttenuation: false, vertexColors: true, transparent: true, opacity: 0.85 })));
-  const beaconGeometry = new THREE.BufferGeometry();
-  beaconGeometry.setAttribute("position", new THREE.Float32BufferAttribute(beacons, 3));
-  const beaconMaterial = new THREE.PointsMaterial({ color: 0xff2d2d, size: 3.4, sizeAttenuation: false, transparent: true });
-  scene.add(new THREE.Points(beaconGeometry, beaconMaterial));
+  const dots = (positions: number[], material: THREE.PointsMaterial, colors?: number[]) => {
+    const geometry = new THREE.BufferGeometry();
+    geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+    if (colors) geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3));
+    scene.add(new THREE.Points(geometry, material));
+    return material;
+  };
+  dots(lamps, new THREE.PointsMaterial({ color: 0xffc98a, size: 2.6, sizeAttenuation: false, transparent: true, opacity: 0.85 }));
+  dots(people, new THREE.PointsMaterial({ size: 1.7, sizeAttenuation: false, vertexColors: true }), peopleColors);
+  const beaconMaterial = dots(beacons, new THREE.PointsMaterial({ color: 0xff2d2d, size: 3.4, sizeAttenuation: false, transparent: true }));
 
-  // Wet ground: the street plan on a glossy plane, with a plain dark skirt beyond it for the fog to swallow
+  // Wet ground: the plan on a glossy plane, with a plain dark skirt beyond it for the fog to swallow
   const streets = new THREE.Mesh(
     new THREE.PlaneGeometry(PLAN_HALF * 2, PLAN_HALF * 2),
-    new THREE.MeshStandardMaterial({ map: makeStreetPlan(reach), metalness: 0.55, roughness: 0.5, envMapIntensity: 0.1 }),
+    new THREE.MeshStandardMaterial({ map: makeStreetPlan(reach, cells, spots), metalness: 0.5, roughness: 0.52, envMapIntensity: 0.1 }),
   );
   streets.rotation.x = -Math.PI / 2;
   streets.position.y = -0.4;
@@ -924,7 +1253,6 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
         // No driving across the plaza or the cathedral forecourt
         float hidden = step(length(vec2(p.x / ${PLAZA_STRETCH.toFixed(2)}, p.z)), ${(PLAZA + 6).toFixed(1)});
         hidden = max(hidden, step(abs(p.x), 72.0) * step(0.0, p.z) * step(p.z, 292.0));
-        // Seen from the +x / +z side you get headlights for traffic coming toward you
         vColor = aLane.w > 0.0 ? vec3(1.0, 0.95, 0.8) : vec3(1.0, 0.16, 0.12);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
@@ -941,70 +1269,31 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   trafficPoints.frustumCulled = false;
   scene.add(trafficPoints);
 
-  // Neon towers in four corners of the plaza
-  const upAxis = new THREE.Vector3(0, 1, 0);
-  const corners: NeonCorner[] = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([sx, sz], k) => {
-    const height = 50 + k * 5;
-    const base = new THREE.Vector3(sx * 155, 0, sz * 130);
-    const block = new THREE.Mesh(new THREE.BoxGeometry(16, height, 16), office);
-    block.position.copy(base).setY(height / 2);
-    scene.add(block);
-
-    const tubes = new THREE.MeshBasicMaterial({ color: 0xffffff, fog: false });
-    for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
-      const tube = new THREE.Mesh(new THREE.BoxGeometry(1.1, height, 1.1), tubes);
-      tube.position.set(base.x + dx * 8.4, height / 2, base.z + dz * 8.4);
-      scene.add(tube);
-    }
-    const crown = new THREE.Mesh(new THREE.TorusGeometry(10.5, 0.6, 6, 4), tubes);
-    crown.rotation.set(Math.PI / 2, 0, Math.PI / 4);
-    crown.position.copy(base).setY(height + 1);
-    scene.add(crown);
-
-    const halo = glowSprite(kit, 0xffffff, 110, 0.5);
-    halo.position.copy(base).setY(height * 0.75);
-    scene.add(halo);
-
-    // The light sits on the city side of the tower with a short reach, so it
-    // colours the streets and blocks behind it and never touches the stadium.
-    const light = new THREE.PointLight(0xffffff, 0, 165, 1.25);
-    light.position.set(base.x + sx * 74, 40, base.z + sz * 66);
-    scene.add(light);
-
-    // A searchlight sweeping the sky from the roof
-    const beam = new THREE.Mesh(
-      new THREE.CylinderGeometry(1.5, 22, 320, 16, 1, true).translate(0, -160, 0).rotateX(Math.PI),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.07, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide, fog: false }),
-    );
-    beam.position.copy(base).setY(height);
-    beam.quaternion.setFromUnitVectors(upAxis, upAxis);
-    scene.add(beam);
-    return { light, tubes, halo, beam, phase: k / 4 };
-  });
+  // Four neon spires on the outer corners of the plaza
+  const neon = [[1, 1], [-1, 1], [-1, -1], [1, -1]].map(([sx, sz], index) =>
+    buildNeonSpire(scene, kit, new THREE.Vector3(sx * 155, 0, sz * 130), new THREE.Vector2(sx, sz), index));
 
   const color = new THREE.Color();
   return (time: number, excite: number, pointScale: number) => {
     traffic.uniforms.uTime.value = time;
     traffic.uniforms.uScale.value = pointScale;
     beaconMaterial.opacity = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(time * 2.2));
-    for (const corner of corners) {
-      // Drift through the palette, each corner a quarter-turn apart
-      const position = Math.max(0, time * 0.035 + corner.phase) * NEON.length;
-      const from = NEON[Math.floor(position) % NEON.length];
-      const to = NEON[(Math.floor(position) + 1) % NEON.length];
-      color.lerpColors(from, to, smooth(position % 1));
+    for (const spire of neon) {
+      // Drift through the palette, each spire a quarter-turn apart
+      const position = Math.max(0, time * 0.035 + spire.phase) * NEON.length;
+      color.lerpColors(NEON[Math.floor(position) % NEON.length], NEON[(Math.floor(position) + 1) % NEON.length], smooth(position % 1));
       // A slow pulse (under 1 Hz, so it never strobes hard); the goal pushes it to full
-      const pulse = 0.55 + 0.45 * Math.sin(time * 4.4 + corner.phase * Math.PI * 2);
-      const level = Math.min(1, pulse + excite * 0.5);
-      corner.light.color.copy(color);
-      corner.light.intensity = 2600 * level;
-      corner.tubes.color.copy(color).multiplyScalar(0.55 + 0.45 * level);
-      (corner.halo.material as THREE.SpriteMaterial).color.copy(color);
-      (corner.halo.material as THREE.SpriteMaterial).opacity = 0.25 + 0.4 * level;
-      const beamMaterial = corner.beam.material as THREE.MeshBasicMaterial;
-      beamMaterial.color.copy(color);
-      beamMaterial.opacity = 0.02 + 0.035 * level;
-      corner.beam.rotation.set(0.5 + 0.25 * Math.sin(time * 0.31 + corner.phase * 9), time * 0.22 + corner.phase * Math.PI * 2, 0, "YXZ");
+      const level = Math.min(1, 0.55 + 0.45 * Math.sin(time * 4.4 + spire.phase * Math.PI * 2) + excite * 0.5);
+      spire.light.color.copy(color);
+      spire.light.intensity = 2600 * level;
+      spire.tubes.color.copy(color).multiplyScalar(0.6 + 0.4 * level);
+      const halo = spire.halo.material as THREE.SpriteMaterial;
+      halo.color.copy(color);
+      halo.opacity = 0.25 + 0.35 * level;
+      const beam = spire.beam.material as THREE.MeshBasicMaterial;
+      beam.color.copy(color);
+      beam.opacity = 0.02 + 0.035 * level;
+      spire.beam.rotation.set(0.5 + 0.25 * Math.sin(time * 0.31 + spire.phase * 9), time * 0.22 + spire.phase * Math.PI * 2, 0, "YXZ");
     }
   };
 }
@@ -1147,72 +1436,65 @@ function buildCrowd(group: THREE.Group, count: number) {
   return material;
 }
 
-/* ---------- Fireworks ---------- */
+/* ---------- Fire ---------- */
 
-const FIREWORK_LIFE = 2.8;
-
-function buildFireworks(group: THREE.Group, bursts: number, perBurst: number) {
-  const count = bursts * perBurst;
-  const origins = new Float32Array(count * 3);
-  const velocities = new Float32Array(count * 3);
-  const starts = new Float32Array(count);
-  const seeds = new Float32Array(count);
-  const tints = new Float32Array(count);
-  const rim = evenThetas(bursts, WALL_OFFSET);
-  for (let b = 0; b < bursts; b++) {
-    const origin = ring(rim[(b * 7) % bursts], WALL_OFFSET - 6 - Math.random() * 30, 62 + Math.random() * 46);
-    const start = b < 6 ? b * 0.12 : 0.6 + Math.random() * 6.4; // opening salvo, then rolling volleys
-    const speed = 20 + Math.random() * 16;
-    const tint = Math.random() < 0.3 ? 1 : 0;
-    for (let i = 0; i < perBurst; i++) {
-      const k = b * perBurst + i;
-      const dir = new THREE.Vector3().randomDirection().multiplyScalar(speed * (0.75 + Math.random() * 0.25));
-      origins.set([origin.x, origin.y, origin.z], k * 3);
-      velocities.set([dir.x, dir.y, dir.z], k * 3);
-      starts[k] = start;
-      seeds[k] = Math.random();
-      tints[k] = tint;
+/**
+ * Jets of flame roaring out of the spire tips when a goal goes in. Each jet is
+ * a looping fountain of point sprites; `uPower` fades the whole lot in and out.
+ */
+function buildFire(group: THREE.Group, tips: THREE.Vector3[], perJet: number) {
+  const count = tips.length * perJet;
+  const positions = new Float32Array(count * 3);
+  const seeds = new Float32Array(count * 4);
+  tips.forEach((tip, j) => {
+    for (let i = 0; i < perJet; i++) {
+      const k = j * perJet + i;
+      positions.set([tip.x, tip.y, tip.z], k * 3);
+      seeds.set([Math.random(), Math.random(), Math.random(), Math.random()], k * 4);
     }
-  }
+  });
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute("position", new THREE.BufferAttribute(origins, 3));
-  geometry.setAttribute("aVelocity", new THREE.BufferAttribute(velocities, 3));
-  geometry.setAttribute("aStart", new THREE.BufferAttribute(starts, 1));
-  geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 1));
-  geometry.setAttribute("aTint", new THREE.BufferAttribute(tints, 1));
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 4));
   const material = new THREE.ShaderMaterial({
-    uniforms: { uT: { value: -1 }, uScale: { value: 600 } },
+    uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 600 } },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
-      uniform float uT; uniform float uScale;
-      attribute vec3 aVelocity; attribute float aStart; attribute float aSeed; attribute float aTint;
-      varying float vAlpha; varying float vTint;
+      uniform float uTime; uniform float uPower; uniform float uScale;
+      attribute vec4 aSeed;
+      varying float vLife; varying float vAlpha;
       void main() {
-        float age = uT - aStart;
-        float alive = step(0.0, age) * step(age, ${FIREWORK_LIFE.toFixed(1)});
-        // Drag slows the shell, gravity pulls the sparks into a willow
-        vec3 p = position + aVelocity * (1.0 - exp(-1.5 * age)) / 1.5 + vec3(0.0, -3.5 * age * age, 0.0);
-        float fade = 1.0 - age / ${FIREWORK_LIFE.toFixed(1)};
-        vAlpha = alive * fade * (0.55 + 0.45 * sin(age * 34.0 + aSeed * 60.0));
-        vTint = aTint;
+        float life = 1.5 + aSeed.x * 0.9;
+        float age = mod(uTime + aSeed.y * life, life);
+        float u = age / life;
+        // Straight up out of the spire, fanning out and slowing as it climbs
+        vec3 dir = normalize(vec3((aSeed.z - 0.5) * 0.7, 1.0, (aSeed.w - 0.5) * 0.7));
+        float speed = (46.0 + aSeed.x * 38.0) * (0.55 + 0.45 * uPower);
+        vec3 p = position + dir * speed * age * (1.0 - 0.38 * u);
+        p.x += sin(age * 6.0 + aSeed.y * 30.0) * 2.4 * u;
+        p.z += cos(age * 5.0 + aSeed.z * 30.0) * 2.4 * u;
+        vLife = u;
+        vAlpha = uPower * smoothstep(0.0, 0.06, u) * (1.0 - u);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = alive * uScale * (1.8 + aSeed * 1.9) / -mv.z;
+        gl_PointSize = step(0.002, uPower) * uScale * (4.0 + 12.0 * u) / -mv.z;
       }`,
     fragmentShader: /* glsl */ `
-      varying float vAlpha; varying float vTint;
+      varying float vLife; varying float vAlpha;
       void main() {
         float d = length(gl_PointCoord - 0.5);
-        float core = smoothstep(0.5, 0.0, d);
-        vec3 chrome = mix(vec3(0.82, 0.86, 0.95), vec3(1.0), core);
-        vec3 blood = mix(vec3(0.88, 0.11, 0.28), vec3(1.0, 0.75, 0.8), core);
-        gl_FragColor = vec4(mix(chrome, blood, vTint), vAlpha * core);
+        float soft = smoothstep(0.5, 0.05, d);
+        // White-hot at the nozzle, through yellow and orange, to deep red smoke
+        vec3 color = mix(vec3(1.0, 0.96, 0.78), vec3(1.0, 0.62, 0.1), smoothstep(0.0, 0.22, vLife));
+        color = mix(color, vec3(1.0, 0.25, 0.03), smoothstep(0.2, 0.55, vLife));
+        color = mix(color, vec3(0.45, 0.03, 0.02), smoothstep(0.55, 1.0, vLife));
+        gl_FragColor = vec4(color, vAlpha * soft);
       }`,
   });
   const points = new THREE.Points(geometry, material);
-  points.frustumCulled = false; // sparks travel far from their origins
+  points.frustumCulled = false; // flames travel far from the tips
   group.add(points);
   return material;
 }
@@ -1366,12 +1648,12 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   buildPitch(stadium);
   buildBowl(stadium, kit);
   buildArcade(stadium, kit);
-  buildTowers(stadium, kit);
+  const spireTips = buildTowers(stadium, kit);
   buildPortals(stadium, kit);
-  buildCathedral(stadium, kit);
+  spireTips.push(...buildCathedral(stadium, kit));
   const beams = buildFloodlights(stadium, kit);
   const crowd = buildCrowd(stadium, small ? 9000 : 20000);
-  const fireworks = buildFireworks(stadium, small ? 22 : 36, small ? 110 : 170);
+  const fire = buildFire(stadium, spireTips, small ? 160 : 420);
   const playMatch = buildMatch(stadium);
   const pulseCity = buildCity(scene, kit, small);
   const rain = buildRain(scene, small ? 2500 : 7000);
@@ -1401,8 +1683,9 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   const moon = new THREE.DirectionalLight(0xcfd9ff, 1.25);
   moon.position.set(-120, 180, 90);
   scene.add(moon);
-  const flare = new THREE.PointLight(0xffffff, 0, 500, 1.2);
-  flare.position.set(0, 90, 0);
+  // Firelight on the stone while the spires burn
+  const flare = new THREE.PointLight(0xff7a1a, 0, 520, 1.2);
+  flare.position.set(0, 120, 0);
   scene.add(flare);
 
   return (time: number, delta: number) => {
@@ -1418,14 +1701,17 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     crowd.uniforms.uTime.value = time;
     crowd.uniforms.uExcite.value = excite;
     crowd.uniforms.uScale.value = pointScale;
-    fireworks.uniforms.uT.value = sinceGoal;
-    fireworks.uniforms.uScale.value = pointScale;
+    // The spires catch fire at the goal, burn hard for a few seconds, then gutter out
+    const burn = sinceGoal < 0 ? 0 : Math.min(1, sinceGoal * 3) * Math.exp(-Math.max(0, sinceGoal - 4.5) * 0.9);
+    fire.uniforms.uTime.value = time;
+    fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
+    fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
     kit.glass.opacity = 0.5 + excite * 0.45 + Math.sin(time * 1.3) * 0.05;
     beams.opacity = 0.055 + excite * 0.06;
     (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + excite * 0.3;
     for (const ember of embers) ember.intensity = EMBER * (0.8 + excite * 1.2);
-    flare.intensity = sinceGoal > 0 && sinceGoal < 8 ? 1800 * Math.exp(-sinceGoal * 0.5) * (0.7 + 0.3 * Math.sin(time * 23)) : 0;
+    flare.intensity = 2600 * burn * (0.75 + 0.25 * Math.sin(time * 19));
     pulseCity(time, excite, pointScale);
     mist.rotation.y = time * 0.006;
 

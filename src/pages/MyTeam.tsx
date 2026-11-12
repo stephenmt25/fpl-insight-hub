@@ -100,7 +100,7 @@ export function Captain({ fpl, managerId }: AppProps) {
       </p>
       <ol className="space-y-2">
         {options.slice(0, 8).map((o, i) => (
-          <li key={o.player.id} className={cn("border border-border bg-black/30 p-3", i === 0 && "border-blood/70")}>
+          <li key={o.player.id} className={cn("rounded-xl border border-white/10 bg-black/30 p-3", i === 0 && "border-blood/70")}>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <span className={cn("num w-6 text-lg font-semibold", i === 0 ? "text-blood" : "text-muted-foreground")}>{i + 1}</span>
               <span className="font-semibold">{o.player.web_name}</span>
@@ -114,7 +114,7 @@ export function Captain({ fpl, managerId }: AppProps) {
               {i === 1 && <Badge variant="outline">Vice</Badge>}
               <span className="num ml-auto text-lg font-semibold">{o.score.toFixed(1)}</span>
             </div>
-            <div className="mt-2 h-1 bg-muted">
+            <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted">
               <div className={cn("h-full", i === 0 ? "bg-blood" : "bg-chrome/60")} style={{ width: `${Math.max(2, (o.score / best) * 100)}%` }} />
             </div>
             <p className="mt-1.5 text-xs text-muted-foreground">{o.reasons.join(" · ")}</p>
@@ -159,7 +159,7 @@ export function Chips({ fpl, managerId }: AppProps) {
             const expired = !play && nextGw > chip.stop_event;
             const open = !play && !expired && nextGw >= chip.start_event;
             return (
-              <li key={chip.id} className="flex items-center justify-between gap-3 border border-border bg-black/30 p-3">
+              <li key={chip.id} className="flex items-center justify-between gap-3 rounded-xl border border-white/10 bg-black/30 p-3">
                 <div>
                   <p className="font-semibold">{chipLabel(chip.name)}</p>
                   <p className="num text-xs text-muted-foreground">Gameweeks {chip.start_event}–{chip.stop_event}</p>
@@ -179,7 +179,7 @@ export function Chips({ fpl, managerId }: AppProps) {
         ) : (
           <ul className="space-y-2">
             {special.map((s) => (
-              <li key={s.gw} className="border border-border bg-black/30 p-3 text-sm">
+              <li key={s.gw} className="rounded-xl border border-white/10 bg-black/30 p-3 text-sm">
                 <p className="num font-semibold">Gameweek {s.gw}</p>
                 {s.doubles.length > 0 && <p className="text-good">Double: <span className="text-foreground">{s.doubles.join(", ")}</span></p>}
                 {s.blanks.length > 0 && <p className="text-bad">Blank: <span className="text-foreground">{s.blanks.join(", ")}</span></p>}

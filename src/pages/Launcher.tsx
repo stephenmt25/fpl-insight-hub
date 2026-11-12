@@ -27,7 +27,7 @@ function AppTile({ app, locked, featured }: { app: AppDef; locked: boolean; feat
         featured && "flex-col items-start gap-4 p-4",
       )}>
       <span className={cn(
-        "flex shrink-0 items-center justify-center border border-chrome/50 bg-gradient-to-b from-zinc-100 to-zinc-500 text-black transition-shadow group-hover:shadow-[0_0_28px_-6px_hsl(var(--blood))]",
+        "flex shrink-0 items-center justify-center rounded-2xl border border-white/40 bg-gradient-to-b from-zinc-100 to-zinc-500 text-black transition-shadow group-hover:shadow-[0_0_28px_-6px_hsl(var(--blood))]",
         featured ? "h-14 w-14" : "h-11 w-11",
       )}>
         <app.icon className={featured ? "h-7 w-7" : "h-5 w-5"} />

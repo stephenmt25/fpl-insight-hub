@@ -29,7 +29,7 @@ export default {
         warn: "hsl(var(--warn))",
         bad: "hsl(var(--bad))",
       },
-      borderRadius: { lg: "var(--radius)", md: "var(--radius)", sm: "var(--radius)" },
+      borderRadius: { lg: "var(--radius)", md: "calc(var(--radius) - 4px)", sm: "calc(var(--radius) - 8px)" },
       keyframes: {
         sheen: { "0%": { backgroundPosition: "200% 0" }, "100%": { backgroundPosition: "-200% 0" } },
         rise: { from: { opacity: "0", transform: "translateY(10px)" }, to: { opacity: "1", transform: "none" } },

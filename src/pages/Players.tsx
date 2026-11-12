@@ -331,7 +331,7 @@ export function ChartBuilder({ fpl }: AppProps) {
         <div className="relative">
           <Input aria-label="Add a player to the chart" placeholder={ids.length >= 6 ? "Remove a player to add another" : "Add a player…"} disabled={ids.length >= 6} value={query} onChange={(e) => setQuery(e.target.value)} />
           {matches.length > 0 && (
-            <ul className="absolute z-20 mt-1 w-full border border-border bg-popover">
+            <ul className="absolute z-20 mt-1 w-full overflow-hidden rounded-xl border border-white/10 bg-popover">
               {matches.map((p) => (
                 <li key={p.id}>
                   <button className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setIds([...ids, p.id]); setQuery(""); }}>
@@ -353,7 +353,7 @@ export function ChartBuilder({ fpl }: AppProps) {
       </div>
       <div className="mb-3 flex flex-wrap gap-2">
         {ids.map((id, i) => (
-          <span key={id} className="inline-flex items-center gap-1.5 border border-border bg-black/40 px-2 py-1 text-xs">
+          <span key={id} className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-black/40 px-2.5 py-1 text-xs">
             <span className="h-2 w-2" style={{ background: SERIES[i] }} />
             {fpl.playerById.get(id)?.web_name}
             <button aria-label="Remove" onClick={() => setIds(ids.filter((x) => x !== id))} className="text-muted-foreground hover:text-blood"><X className="h-3 w-3" /></button>
