@@ -17,7 +17,7 @@ The home screen is a Spotlight-style launcher: search apps and players (or type 
 
 Sign in with a public FPL ID (no password), or click **Try as guest**.
 
-Behind every screen a stone cathedral stadium plays a looping match on a rainy night, filmed from a circling blimp, with parks, squares, a low-poly city and neon spires around it. Each goal sends fire roaring out of the spires.
+Behind every screen a stone cathedral stadium plays a looping match on a rainy night, filmed from a circling blimp, with parks, squares, a low-poly city and neon spires around it. The match cycles through four passages of play; home goals send fire roaring out of the spires.
 
 ![Stadium](docs/stadium.png)
 

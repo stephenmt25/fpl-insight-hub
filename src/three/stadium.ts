@@ -6,8 +6,8 @@ import { createPitchLines } from "./models";
  * A gothic cathedral stadium on a rainy night, seen from a circling blimp:
  * a stone bowl with a lancet arcade and flying buttresses, a nave and great
  * tower grown out of one stand, a low-resolution city with neon corners, a
- * crowd of point sprites, and a 28-second match loop that ends in a goal
- * and fire from the spires.
+ * crowd of point sprites, and a match played as 28-second passages: home
+ * goals (with fire from the spires), an away goal, and a save.
  */
 
 const HALF_LENGTH = 52.5;
@@ -353,11 +353,12 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
 
     const shaft = new THREE.Mesh(new THREE.BoxGeometry(width, height, width), kit.stone(1, height / 11));
     shaft.position.y = height / 2;
-    const spire = new THREE.Mesh(new THREE.ConeGeometry(width * 0.72, height * 0.75, 8), kit.slate);
-    spire.position.y = height + height * 0.375;
+    const spireHeight = height * SPIRE_RATIO;
+    const spire = new THREE.Mesh(new THREE.ConeGeometry(width * 0.72, spireHeight, 8), kit.slate);
+    spire.position.y = height + spireHeight / 2;
     spire.rotation.y = Math.PI / 8;
     const cross = new THREE.Mesh(crossGeometry(width * 0.75), kit.chrome);
-    cross.position.y = height * 1.75 - 1;
+    cross.position.y = height + spireHeight - 1;
     tower.add(shaft, spire, cross);
 
     for (const level of [0.3, 0.62, 1]) {
@@ -378,7 +379,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
       slit.translateZ(width / 2 + 0.05);
       tower.add(slit);
     }
-    tips.push(tower.position.clone().setY(height * 1.75 + 2));
+    tips.push(tower.position.clone().setY(height + spireHeight + 2));
     if (tall) {
       const rose = roseWindow(width * 0.32, kit.glass, kit.chrome, 8);
       rose.position.set(0, height * 0.48, width / 2 + 0.2);
@@ -430,6 +431,8 @@ function makePortal(kit: Kit) {
   return portal;
 }
 
+/** Spire height as a share of the tower beneath it. */
+const SPIRE_RATIO = 0.42;
 const NAVE_LENGTH = 58;
 const GREAT_TOWER_HEIGHT = 132;
 
@@ -505,10 +508,10 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   for (const [dx, dz] of [[1, 1], [1, -1], [-1, 1], [-1, -1]]) {
     const turret = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 3, GREAT_TOWER_HEIGHT + 6, 8), turretStone);
     turret.position.set((dx * width) / 2, (GREAT_TOWER_HEIGHT + 6) / 2, (dz * width) / 2);
-    const spirelet = new THREE.Mesh(new THREE.ConeGeometry(3.2, 30, 8), kit.slate);
-    spirelet.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 21, (dz * width) / 2);
+    const spirelet = new THREE.Mesh(new THREE.ConeGeometry(3.2, 17, 8), kit.slate);
+    spirelet.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 14.5, (dz * width) / 2);
     const finial = new THREE.Mesh(crossGeometry(4.5), kit.chrome);
-    finial.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 35, (dz * width) / 2);
+    finial.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 22, (dz * width) / 2);
     tower.add(turret, spirelet, finial);
   }
   for (let face = 0; face < 4; face++) {
@@ -539,7 +542,7 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   // World positions of the four corner spirelets on the great tower
   cathedral.updateMatrixWorld(true);
   return [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) =>
-    tower.localToWorld(new THREE.Vector3((dx * width) / 2, GREAT_TOWER_HEIGHT + 37, (dz * width) / 2)));
+    tower.localToWorld(new THREE.Vector3((dx * width) / 2, GREAT_TOWER_HEIGHT + 24, (dz * width) / 2)));
 }
 
 function buildPortals(group: THREE.Group, kit: Kit) {
@@ -559,25 +562,33 @@ function buildFloodlights(group: THREE.Group, kit: Kit) {
   const head = new THREE.MeshBasicMaterial({ color: 0xf2f7ff, fog: false });
   const steel = new THREE.MeshStandardMaterial({ color: 0x23262d, metalness: 0.8, roughness: 0.4 });
   const upAxis = new THREE.Vector3(0, 1, 0);
+  // Halfway between each corner tower and its neighbour, where nothing else stands
   const thetas = evenThetas(16, WALL_OFFSET);
-  for (const k of [1, 5, 9, 13]) {
-    const theta = thetas[k] + 0.06;
+  for (const k of [2, 6, 10, 14]) {
+    const theta = thetas[k];
     const n = outwardNormal(theta, WALL_OFFSET);
-    const foot = ring(theta, WALL_OFFSET, WALL_HEIGHT);
-    const top = foot.clone().setY(WALL_HEIGHT + 38);
-    const mast = new THREE.Mesh(new THREE.BoxGeometry(1.3, 38, 1.3), steel);
-    mast.position.copy(foot).setY(WALL_HEIGHT + 19);
-    const panel = new THREE.Mesh(new THREE.BoxGeometry(13, 7, 1), head);
-    panel.position.copy(top);
-    panel.rotation.y = Math.atan2(n.x, n.z);
-    panel.rotateX(0.5);
-    const halo = glowSprite(kit, 0xd5e4ff, 95, 0.75);
-    halo.position.copy(top).addScaledVector(n, -2);
+    // The mast rises from the canopy's inner ring, just inside the wall
+    const foot = ring(theta, WALL_OFFSET, WALL_HEIGHT + CANOPY_RISE).addScaledVector(n, -CANOPY_REACH);
+    const mastHeight = 13;
+    const top = foot.clone().setY(foot.y + mastHeight);
+    const mast = new THREE.Mesh(new THREE.BoxGeometry(1.1, mastHeight, 1.1), steel);
+    mast.position.copy(foot).setY(foot.y + mastHeight / 2);
 
-    const target = new THREE.Vector3(Math.sign(foot.x) * 20, 0, Math.sign(foot.z) * 12);
-    const span = target.clone().sub(top);
-    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(2, 30, span.length(), 20, 1, true), beam);
-    shaft.position.copy(top).addScaledVector(span, 0.5);
+    const target = new THREE.Vector3(Math.sign(foot.x) * 18, 0, Math.sign(foot.z) * 11);
+    // A dark housing with the lit face on the pitch side only, so from behind it is just a silhouette
+    const panel = new THREE.Mesh(new THREE.BoxGeometry(11, 5.5, 0.8), steel);
+    const face = new THREE.Mesh(new THREE.PlaneGeometry(10.2, 4.7), head);
+    face.position.z = 0.45;
+    panel.add(face);
+    panel.position.copy(top);
+    panel.lookAt(target); // the lamp face points straight at its patch of pitch
+    const lamp = top.clone().addScaledVector(target.clone().sub(top).normalize(), 1.2);
+    const halo = glowSprite(kit, 0xd5e4ff, 54, 0.7);
+    halo.position.copy(lamp);
+
+    const span = target.clone().sub(lamp);
+    const shaft = new THREE.Mesh(new THREE.CylinderGeometry(2, 26, span.length(), 20, 1, true), beam);
+    shaft.position.copy(lamp).addScaledVector(span, 0.5);
     shaft.quaternion.setFromUnitVectors(upAxis, span.clone().negate().normalize());
     group.add(mast, panel, halo, shaft);
   }
@@ -723,8 +734,8 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
   const k = size / (PLAN_HALF * 2);
   const px = (v: number) => (v + PLAN_HALF) * k;
   const asphalt = "#22252b";
-  const marking = "#8a8f99";
-  const grass = "#143021";
+  const marking = "#50545c";
+  const grass = "#0b1b13";
   const paving = "#1f2228";
   const lot = (CELL - ROAD - 2) * k;
 
@@ -770,20 +781,20 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
         line("#3a3d44", [0, -22, 0, 22, -22, 10, 22, 10]);
         break;
       case "park":
-        ctx.fillStyle = "#17382a";
+        ctx.fillStyle = "#0d2018";
         ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
         line("#4a4d55", [-22, -22, 22, 22, -22, 22, 22, -22]);
-        ctx.fillStyle = "#16324a";
+        ctx.fillStyle = "#0b1b2a";
         ctx.beginPath(); ctx.arc(9 * k, -10 * k, 6 * k, 0, Math.PI * 2); ctx.fill();
         break;
       case "court":
         ctx.fillStyle = grass;
         ctx.fillRect(-inner / 2, -inner / 2, inner, inner);
         // A caged five-a-side pitch and a hard court
-        fill("#1d5a3a", -20, -18, 40, 20);
+        fill("#0f2f20", -20, -18, 40, 20);
         line("#d7dae3", [-20, -18, 20, -18, 20, -18, 20, 2, 20, 2, -20, 2, -20, 2, -20, -18, 0, -18, 0, 2]);
         ctx.strokeStyle = "#d7dae3"; ctx.beginPath(); ctx.arc(0, -8 * k, 3 * k, 0, Math.PI * 2); ctx.stroke();
-        fill("#6b2b2b", -14, 7, 28, 13);
+        fill("#3a1719", -14, 7, 28, 13);
         line("#d7dae3", [-14, 7, 14, 7, 14, 7, 14, 20, 14, 20, -14, 20, -14, 20, -14, 7, 0, 7, 0, 20]);
         break;
       default:
@@ -814,15 +825,6 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
   ctx.fillStyle = "#15171b";
   ctx.fill();
   ctx.fillRect(px(-70), px(0), 140 * k, 290 * k); // cathedral forecourt
-  ctx.strokeStyle = "#23262c";
-  for (const scale of [0.6, 0.86]) { plaza(scale); ctx.stroke(); }
-  for (let s = 0; s < 48; s++) {
-    const a = (s / 48) * Math.PI * 2;
-    ctx.beginPath();
-    ctx.moveTo(px(plazaPoint(a, 0.55)[0]), px(plazaPoint(a, 0.55)[1]));
-    ctx.lineTo(px(plazaPoint(a, 0.93)[0]), px(plazaPoint(a, 0.93)[1]));
-    ctx.stroke();
-  }
   // Processional ways from each door, in a lighter stone
   ctx.fillStyle = paving;
   ctx.fillRect(px(-PLAZA * PLAZA_STRETCH), px(-9), PLAZA * PLAZA_STRETCH * 2 * k, 18 * k);
@@ -835,13 +837,13 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
     if (spot.kind === "pond" || spot.kind === "fountain") {
       // A lawn lying along the curve of the plaza, with a path round its centrepiece
       ctx.rotate(spot.angle + Math.PI / 2);
-      ctx.fillStyle = "#17382a";
+      ctx.fillStyle = "#0d2018";
       ctx.beginPath(); ctx.ellipse(0, 0, 54 * k, 31 * k, 0, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = "#4a4d55";
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.ellipse(0, 0, 40 * k, 19 * k, 0, 0, Math.PI * 2); ctx.stroke();
       ctx.beginPath(); ctx.moveTo(-54 * k, 0); ctx.lineTo(54 * k, 0); ctx.stroke();
-      ctx.fillStyle = spot.kind === "pond" ? "#173a57" : paving;
+      ctx.fillStyle = spot.kind === "pond" ? "#0b1d2c" : paving;
       ctx.beginPath(); ctx.arc(0, 0, (spot.kind === "pond" ? 12 : 13) * k, 0, Math.PI * 2); ctx.fill();
     } else {
       ctx.fillStyle = "#262a31";
@@ -870,6 +872,8 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
   plaza(0.97);
   ctx.stroke();
 
+  weatherGround(ctx, size, (x, z) => inPlaza(x, z) || inForecourt(x, z), (px0) => px0 / k - PLAN_HALF);
+
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.anisotropy = 8;
@@ -891,6 +895,47 @@ class Batch {
     const mesh = new THREE.InstancedMesh(this.geometry, this.material, this.matrices.length);
     this.matrices.forEach((m, i) => mesh.setMatrixAt(i, m));
     scene.add(mesh);
+  }
+}
+
+/**
+ * Breaks up the flat painted plan so it reads as ground rather than a drawing:
+ * irregular flagstones on the plaza, fine grain everywhere, dark damp patches
+ * and a scatter of puddles.
+ */
+function weatherGround(ctx: CanvasRenderingContext2D, size: number, paved: (x: number, z: number) => boolean, toWorld: (px: number) => number) {
+  // Flagstones: jittered joints, each slab a slightly different grey
+  const slab = 9;
+  for (let gy = 0; gy < size; gy += slab) {
+    let gx = (gy / slab) % 2 ? -4 : 0;
+    while (gx < size) {
+      const w = slab + Math.random() * 9;
+      if (paved(toWorld(gx + w / 2), toWorld(gy + slab / 2))) {
+        const tone = Math.random();
+        ctx.fillStyle = tone < 0.5 ? `rgba(255,255,255,${(0.012 + tone * 0.05).toFixed(3)})` : `rgba(0,0,0,${(tone * 0.22).toFixed(3)})`;
+        ctx.fillRect(gx, gy, w - 0.8, slab - 0.8);
+      }
+      gx += w;
+    }
+  }
+  // Fine grain over everything
+  for (let i = 0; i < 90000; i++) {
+    const light = Math.random() < 0.45;
+    ctx.fillStyle = light ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.16)";
+    ctx.fillRect(Math.random() * size, Math.random() * size, 1 + Math.random() * 2, 1 + Math.random() * 2);
+  }
+  // Damp patches and puddles: soft dark blots of every size
+  for (let i = 0; i < 900; i++) {
+    const x = Math.random() * size;
+    const y = Math.random() * size;
+    const r = 6 + Math.random() ** 2 * 60;
+    const blot = ctx.createRadialGradient(x, y, 0, x, y, r);
+    blot.addColorStop(0, `rgba(0,0,0,${(0.1 + Math.random() * 0.2).toFixed(2)})`);
+    blot.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = blot;
+    ctx.beginPath();
+    ctx.ellipse(x, y, r, r * (0.4 + Math.random() * 0.6), Math.random() * Math.PI, 0, Math.PI * 2);
+    ctx.fill();
   }
 }
 
@@ -1003,14 +1048,14 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
     drums: new Batch(new THREE.CylinderGeometry(0.5, 0.5, 1, 20), metal),
     spires: new Batch(new THREE.ConeGeometry(0.5, 1, 6), slateRoof),
     trunks: new Batch(new THREE.CylinderGeometry(0.35, 0.5, 1, 5), lambert(0x241a14)),
-    leavesA: new Batch(blob, lambert(0x18472d, true)),
-    leavesB: new Batch(blob, lambert(0x113524, true)),
-    conifers: new Batch(new THREE.ConeGeometry(0.5, 1, 6), lambert(0x0e2c21, true)),
-    benches: new Batch(unitBox, lambert(0x5a4334)),
+    leavesA: new Batch(blob, lambert(0x0f2a1c, true)),
+    leavesB: new Batch(blob, lambert(0x0b2117, true)),
+    conifers: new Batch(new THREE.ConeGeometry(0.5, 1, 6), lambert(0x091c15, true)),
+    benches: new Batch(unitBox, lambert(0x33271f)),
     carsDark: new Batch(unitBox, lambert(0x2c3038)),
-    carsLight: new Batch(unitBox, lambert(0xa9adb8)),
-    carsRed: new Batch(unitBox, lambert(0x7d1d26)),
-    awnings: new Batch(unitRoof, lambert(0x8a1f33)),
+    carsLight: new Batch(unitBox, lambert(0x6d717b)),
+    carsRed: new Batch(unitBox, lambert(0x43131a)),
+    awnings: new Batch(unitRoof, lambert(0x47121d)),
   };
 
   const rand = (a: number, b: number) => a + Math.random() * (b - a);
@@ -1159,12 +1204,12 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
       if (spot.kind === "fountain") {
         const basin = new THREE.Mesh(new THREE.CylinderGeometry(8, 8.6, 1.4, 24), kit.stone(4, 0.3));
         basin.position.set(spot.x, 0.7, spot.z);
-        const water = new THREE.Mesh(new THREE.CircleGeometry(7.3, 24), new THREE.MeshBasicMaterial({ color: 0x2f6f96 }));
+        const water = new THREE.Mesh(new THREE.CircleGeometry(7.3, 24), new THREE.MeshBasicMaterial({ color: 0x12303f }));
         water.rotation.x = -Math.PI / 2;
         water.position.set(spot.x, 1.45, spot.z);
-        const jet = new THREE.Mesh(new THREE.ConeGeometry(1.1, 9, 8), new THREE.MeshBasicMaterial({ color: 0xcfe6ff, transparent: true, opacity: 0.55 }));
+        const jet = new THREE.Mesh(new THREE.ConeGeometry(1.1, 9, 8), new THREE.MeshBasicMaterial({ color: 0x9fb4c8, transparent: true, opacity: 0.28 }));
         jet.position.set(spot.x, 5.5, spot.z);
-        const spray = glowSprite(kit, 0x9fd4ff, 30, 0.35);
+        const spray = glowSprite(kit, 0x7fa6c4, 26, 0.14);
         spray.position.set(spot.x, 7, spot.z);
         scene.add(basin, water, jet, spray);
       }
@@ -1196,10 +1241,11 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   // People drifting down the ways, across the forecourt and round the plaza
   for (let n = 0; n < (small ? 300 : 900); n++) {
     const roll = Math.random();
-    if (roll < 0.3) person(rand(-1, 1) * PLAZA * PLAZA_STRETCH * 0.9, rand(-8, 8));
-    else if (roll < 0.45) person(rand(-8, 8), -rand(0.5, 0.92) * PLAZA);
+    // Only on the stretches outside the stadium, never across the pitch
+    if (roll < 0.3) person((Math.random() < 0.5 ? 1 : -1) * rand(0.62, 0.92) * PLAZA * PLAZA_STRETCH, rand(-8, 8));
+    else if (roll < 0.45) person(rand(-8, 8), -rand(0.62, 0.92) * PLAZA);
     else if (roll < 0.7) person(rand(-24, 24), rand(150, 285));
-    else { const [x, z] = plazaPoint(Math.random() * 6.28, rand(0.6, 0.9)); person(x, z); }
+    else { const [x, z] = plazaPoint(Math.random() * 6.28, rand(0.66, 0.9)); person(x, z); }
   }
 
   Object.values(batch).forEach((b) => b.addTo(scene));
@@ -1218,11 +1264,13 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   // Wet ground: the plan on a glossy plane, with a plain dark skirt beyond it for the fog to swallow
   const streets = new THREE.Mesh(
     new THREE.PlaneGeometry(PLAN_HALF * 2, PLAN_HALF * 2),
-    new THREE.MeshStandardMaterial({ map: makeStreetPlan(reach, cells, spots), metalness: 0.5, roughness: 0.52, envMapIntensity: 0.1 }),
+// Matte and tinted almost to black: no sheen from the moon or the sky, but
+    // coloured light from doors and neon still lands on it
+    new THREE.MeshLambertMaterial({ map: makeStreetPlan(reach, cells, spots), color: 0x55555a }),
   );
   streets.rotation.x = -Math.PI / 2;
   streets.position.y = -0.4;
-  const skirt = new THREE.Mesh(new THREE.CircleGeometry(1500, 48), new THREE.MeshBasicMaterial({ color: 0x08090b }));
+  const skirt = new THREE.Mesh(new THREE.CircleGeometry(1500, 48), new THREE.MeshBasicMaterial({ color: 0x030304 }));
   skirt.rotation.x = -Math.PI / 2;
   skirt.position.y = -0.8;
   scene.add(streets, skirt);
@@ -1302,10 +1350,10 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
 function buildMist(scene: THREE.Scene, kit: Kit, count: number) {
   const mist = new THREE.Group();
   for (let i = 0; i < count; i++) {
-    const bank = new THREE.Sprite(new THREE.SpriteMaterial({ map: kit.glow, color: 0x8f9bb3, transparent: true, opacity: 0.035 + Math.random() * 0.045, depthWrite: false, fog: false }));
+    const bank = new THREE.Sprite(new THREE.SpriteMaterial({ map: kit.glow, color: 0x39414f, transparent: true, opacity: 0.018 + Math.random() * 0.026, depthWrite: false, fog: false }));
     const angle = Math.random() * Math.PI * 2;
     const radius = 210 + Math.random() * 500;
-    bank.position.set(Math.cos(angle) * radius * PLAZA_STRETCH, 6 + Math.random() * 46, Math.sin(angle) * radius);
+    bank.position.set(Math.cos(angle) * radius * PLAZA_STRETCH, 14 + Math.random() * 50, Math.sin(angle) * radius);
     bank.scale.set(260 + Math.random() * 300, 70 + Math.random() * 80, 1);
     mist.add(bank);
   }
@@ -1353,7 +1401,7 @@ function buildPitch(group: THREE.Group) {
   canvas.height = 64;
   const ctx = canvas.getContext("2d")!;
   for (let i = 0; i < 16; i++) {
-    ctx.fillStyle = i % 2 ? "#0d3a26" : "#0a2f1f";
+    ctx.fillStyle = i % 2 ? "#0a2d1e" : "#082518";
     ctx.fillRect(i * 32, 0, 32, 64);
   }
   const texture = new THREE.CanvasTexture(canvas);
@@ -1368,7 +1416,7 @@ function buildPitch(group: THREE.Group) {
 
   // LED boards around the touchline
   const boards = new THREE.CatmullRomCurve3(Array.from({ length: 96 }, (_, i) => ring((i / 96) * Math.PI * 2, 6.4, 0.7)), true);
-  group.add(new THREE.Mesh(new THREE.TubeGeometry(boards, 300, 0.55, 4, true), new THREE.MeshBasicMaterial({ color: 0xb3123a })));
+  group.add(new THREE.Mesh(new THREE.TubeGeometry(boards, 300, 0.55, 4, true), new THREE.MeshBasicMaterial({ color: 0x7d0f2a })));
 
   // Goal frames
   const goal: number[] = [];
@@ -1411,19 +1459,21 @@ function buildCrowd(group: THREE.Group, count: number) {
   geometry.setAttribute("aColor", new THREE.BufferAttribute(colors, 3));
   geometry.setAttribute("aPhase", new THREE.BufferAttribute(phases, 1));
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uExcite: { value: 0 }, uScale: { value: 600 } },
+    uniforms: { uTime: { value: 0 }, uExcite: { value: 0 }, uScale: { value: 600 }, uEnd: { value: 0 } },
     vertexShader: /* glsl */ `
-      uniform float uTime; uniform float uExcite; uniform float uScale;
+      uniform float uTime; uniform float uExcite; uniform float uScale; uniform float uEnd;
       attribute vec3 aColor; attribute float aPhase;
       varying vec3 vColor;
       void main() {
         vec3 p = position;
         float sway = sin(uTime * 2.0 + aPhase * 6.283);
         float jump = max(0.0, sin(uTime * (5.0 + aPhase * 3.0) + aPhase * 40.0));
-        p.y += sway * 0.12 + uExcite * jump * 1.8;
+        // uEnd: 0 = the whole ground, +1 = only the home end (x > 0), -1 = only the away end
+        float excite = uExcite * (uEnd == 0.0 ? 1.0 : smoothstep(-12.0, 28.0, position.x * uEnd));
+        p.y += sway * 0.12 + excite * jump * 1.8;
         // Camera flashes pop at random around the bowl
-        float flash = step(0.9985 - uExcite * 0.01, fract(sin(aPhase * 91.7 + floor(uTime * 9.0) * 12.9898) * 43758.5453));
-        vColor = aColor * (0.8 + 0.2 * sway + uExcite * 0.9) + flash * 2.5;
+        float flash = step(0.9985 - excite * 0.01, fract(sin(aPhase * 91.7 + floor(uTime * 9.0) * 12.9898) * 43758.5453));
+        vColor = aColor * (0.8 + 0.2 * sway + excite * 0.9) + flash * 2.5;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = uScale * (1.0 + flash * 1.6) / -mv.z;
@@ -1470,16 +1520,16 @@ function buildFire(group: THREE.Group, tips: THREE.Vector3[], perJet: number) {
         float age = mod(uTime + aSeed.y * life, life);
         float u = age / life;
         // Straight up out of the spire, fanning out and slowing as it climbs
-        vec3 dir = normalize(vec3((aSeed.z - 0.5) * 0.7, 1.0, (aSeed.w - 0.5) * 0.7));
+        vec3 dir = normalize(vec3((aSeed.z - 0.5) * 0.26, 1.0, (aSeed.w - 0.5) * 0.26));
         float speed = (46.0 + aSeed.x * 38.0) * (0.55 + 0.45 * uPower);
         vec3 p = position + dir * speed * age * (1.0 - 0.38 * u);
-        p.x += sin(age * 6.0 + aSeed.y * 30.0) * 2.4 * u;
-        p.z += cos(age * 5.0 + aSeed.z * 30.0) * 2.4 * u;
+        p.x += sin(age * 6.0 + aSeed.y * 30.0) * 1.1 * u;
+        p.z += cos(age * 5.0 + aSeed.z * 30.0) * 1.1 * u;
         vLife = u;
         vAlpha = uPower * smoothstep(0.0, 0.06, u) * (1.0 - u);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
-        gl_PointSize = step(0.002, uPower) * uScale * (4.0 + 12.0 * u) / -mv.z;
+        gl_PointSize = step(0.002, uPower) * uScale * (2.6 + 4.2 * u) / -mv.z;
       }`,
     fragmentShader: /* glsl */ `
       varying float vLife; varying float vAlpha;
@@ -1513,45 +1563,89 @@ const HOME_SHAPE: XZ[] = [
   [8, -22], [12, 0], [8, 22],
 ];
 
-/** The scripted move: who has the ball where, and when. Team A attacks towards +x. */
-const MOVE: { t: number; pos: XZ; player: number; lofted?: boolean }[] = [
-  { t: 0, pos: [0, 0], player: 9 },
-  { t: 1.8, pos: [-11, 3], player: 6 },
-  { t: 4.6, pos: [-3, -19], player: 5, lofted: true },
-  { t: 7.8, pos: [21, -27], player: 8, lofted: true },
-  { t: 11.6, pos: [38, -17], player: 8 },
-  { t: 13.6, pos: [41, 5], player: 9 },
-  { t: 14.6, pos: [43, 4], player: 9 },
-  { t: GOAL_AT, pos: [HALF_LENGTH + 1.4, -1.6], player: -1, lofted: true },
+interface Step { t: number; pos: XZ; player: number; lofted?: boolean }
+interface Move {
+  /** 1 = the home side in crimson, -1 = the visitors in silver. */
+  team: 1 | -1;
+  scores: boolean;
+  /** Who has the ball where and when, written as if attacking towards +x; mirrored for the visitors. */
+  steps: Step[];
+}
+
+const GOAL_LINE = HALF_LENGTH + 1.4;
+
+/** The passages of play, shown one after another: each lasts one LOOP and ends with a shot at GOAL_AT. */
+const MOVES: Move[] = [
+  // Down the left, cut back, tapped in
+  { team: 1, scores: true, steps: [
+    { t: 0, pos: [0, 0], player: 9 },
+    { t: 1.8, pos: [-11, 3], player: 6 },
+    { t: 4.6, pos: [-3, -19], player: 5, lofted: true },
+    { t: 7.8, pos: [21, -27], player: 8, lofted: true },
+    { t: 11.6, pos: [38, -17], player: 8 },
+    { t: 13.6, pos: [41, 5], player: 9 },
+    { t: 14.6, pos: [43, 4], player: 9 },
+    { t: GOAL_AT, pos: [GOAL_LINE, -1.6], player: -1, lofted: true },
+  ] },
+  // The visitors break through the middle and score
+  { team: -1, scores: true, steps: [
+    { t: 0, pos: [0, 0], player: 9 },
+    { t: 1.6, pos: [-9, -4], player: 6 },
+    { t: 4.2, pos: [2, 16], player: 7, lofted: true },
+    { t: 7.4, pos: [24, 24], player: 10, lofted: true },
+    { t: 10.8, pos: [37, 12], player: 10 },
+    { t: 12.6, pos: [40, -4], player: 9 },
+    { t: 13.8, pos: [42, -3], player: 9 },
+    { t: GOAL_AT, pos: [GOAL_LINE, 2.1], player: -1, lofted: true },
+  ] },
+  // Patient build-up, a shot from the edge of the box, and the keeper holds it
+  { team: 1, scores: false, steps: [
+    { t: 0, pos: [0, 0], player: 9 },
+    { t: 2, pos: [-12, -2], player: 6 },
+    { t: 5, pos: [-2, 18], player: 7 },
+    { t: 8.5, pos: [20, 10], player: 10, lofted: true },
+    { t: 11.5, pos: [30, -4], player: 9 },
+    { t: 13.4, pos: [33, -2], player: 9 },
+    { t: 15, pos: [HALF_LENGTH - 2.5, 1.2], player: -1 },
+    { t: GOAL_AT, pos: [HALF_LENGTH - 2.5, 1.2], player: -1 },
+  ] },
+  // Worked across midfield, then a strike from distance into the corner
+  { team: 1, scores: true, steps: [
+    { t: 0, pos: [0, 0], player: 9 },
+    { t: 1.8, pos: [-10, -3], player: 6 },
+    { t: 4.4, pos: [-6, -20], player: 5 },
+    { t: 7.2, pos: [8, -10], player: 6 },
+    { t: 10.4, pos: [19, 2], player: 6 },
+    { t: 12.6, pos: [26, 6], player: 7 },
+    { t: 14.3, pos: [28, 5], player: 7 },
+    { t: GOAL_AT, pos: [GOAL_LINE, -2.9], player: -1, lofted: true },
+  ] },
 ];
 const CELEBRATION: XZ = [46, -29];
 
 const smooth = (u: number) => u * u * (3 - 2 * u);
 const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
-function ballAt(t: number): { x: number; z: number; y: number; owner: number } {
+/** Ball position in the attacking team's own frame (always attacking +x). */
+function ballAt(t: number, steps: Step[]): { x: number; z: number; y: number; owner: number } {
+  const [endX, endZ] = steps[steps.length - 1].pos;
   if (t >= RESET_AT) {
     // Carried back to the centre spot for the restart
     const u = smooth(clamp01((t - RESET_AT) / (LOOP - RESET_AT - 0.8)));
-    const [gx, gz] = MOVE[MOVE.length - 1].pos;
-    return { x: gx * (1 - u), z: gz * (1 - u), y: 0.7, owner: -1 };
+    return { x: endX * (1 - u), z: endZ * (1 - u), y: 0.7, owner: -1 };
   }
-  if (t >= GOAL_AT) {
-    const [gx, gz] = MOVE[MOVE.length - 1].pos;
-    return { x: gx, z: gz, y: 0.7, owner: -1 };
-  }
+  if (t >= GOAL_AT) return { x: endX, z: endZ, y: 0.7, owner: -1 };
   let i = 0;
-  while (i < MOVE.length - 2 && MOVE[i + 1].t <= t) i++;
-  const from = MOVE[i];
-  const to = MOVE[i + 1];
+  while (i < steps.length - 2 && steps[i + 1].t <= t) i++;
+  const from = steps[i];
+  const to = steps[i + 1];
   const u = clamp01((t - from.t) / (to.t - from.t));
-  const dribble = from.player === to.player;
+  const dribble = from.player === to.player && from.player >= 0;
   const e = dribble ? u : smooth(u);
-  const height = to.lofted ? Math.sin(Math.PI * u) * 5 : 0;
   return {
     x: from.pos[0] + (to.pos[0] - from.pos[0]) * e,
     z: from.pos[1] + (to.pos[1] - from.pos[1]) * e,
-    y: 0.7 + height,
+    y: 0.7 + (to.lofted ? Math.sin(Math.PI * u) * 5 : 0),
     owner: dribble ? from.player : -1,
   };
 }
@@ -1575,18 +1669,30 @@ function buildMatch(group: THREE.Group) {
     return new THREE.Vector2(i < 11 ? x : -x, z);
   });
   const target = new THREE.Vector2();
+  const aim = new THREE.Vector2();
   const m = new THREE.Matrix4();
 
-  return (t: number, delta: number) => {
-    const b = ballAt(t);
-    ball.position.set(b.x, b.y, b.z);
-    const celebrating = smooth(clamp01((t - GOAL_AT - 0.3) / 1.6)) * (1 - smooth(clamp01((t - RESET_AT) / 2.5)));
+  /** Advances the match; returns the time within the current passage and who (if anyone) scores in it. */
+  return (time: number, delta: number): { t: number; scorer: 1 | -1 | 0 } => {
+    const move = MOVES[Math.floor(time / LOOP) % MOVES.length];
+    const t = time % LOOP;
+    const dir = move.team; // world x direction the attackers are heading
+    const local = ballAt(t, move.steps);
+    const bx = local.x * dir;
+    const bz = local.z;
+    ball.position.set(bx, local.y, bz);
+    const scored = move.scores;
+    const celebrating = scored ? smooth(clamp01((t - GOAL_AT - 0.3) / 1.6)) * (1 - smooth(clamp01((t - RESET_AT) / 2.5))) : 0;
+    const shotAt = move.steps[move.steps.length - 2].t;
+    const shotZ = move.steps[move.steps.length - 1].pos[1];
 
     // The defender best placed to close the ball down
     let presser = -1;
     let nearest = Infinity;
-    for (let i = 12; i < 22; i++) {
-      const d = (current[i].x - b.x) ** 2 + (current[i].y - b.z) ** 2;
+    for (let i = 0; i < 22; i++) {
+      const side = i < 11 ? 1 : -1;
+      if (side === dir || i % 11 === 0) continue;
+      const d = (current[i].x - bx) ** 2 + (current[i].y - bz) ** 2;
       if (d < nearest) { nearest = d; presser = i; }
     }
 
@@ -1595,38 +1701,39 @@ function buildMatch(group: THREE.Group) {
       const side = i < 11 ? 1 : -1;
       const [hx, hz] = HOME_SHAPE[slot];
       // The whole shape slides with the ball; keepers barely move
-      const follow = slot === 0 ? 0.05 : 0.45;
-      target.set(side * hx + b.x * follow, hz + b.z * (slot === 0 ? 0.12 : 0.18));
+      target.set(side * hx + bx * (slot === 0 ? 0.05 : 0.45), hz + bz * (slot === 0 ? 0.12 : 0.18));
 
-      if (side === 1) {
-        // Run onto the next pass, or carry the ball
+      if (side === dir) {
+        // Attackers run onto the next pass, or carry the ball
         let pull = 0;
         let px = 0;
         let pz = 0;
-        for (const step of MOVE) {
+        for (const step of move.steps) {
           if (step.player !== slot) continue;
           const w = 1 - clamp01((Math.abs(t - step.t) - 0.4) / 2.6);
-          if (w > pull) { pull = w; [px, pz] = step.pos; }
+          if (w > pull) { pull = w; px = step.pos[0] * dir; pz = step.pos[1]; }
         }
-        if (b.owner === slot) { pull = 1; px = b.x - 0.9; pz = b.z; }
-        if (t < GOAL_AT + 0.3) target.lerp(new THREE.Vector2(px, pz), smooth(pull));
+        if (local.owner === slot) { pull = 1; px = bx - 0.9 * dir; pz = bz; }
+        if (t < GOAL_AT + 0.3) target.lerp(aim.set(px, pz), smooth(pull));
         if (slot !== 0) {
           const angle = (slot / 10) * Math.PI * 2 + t * 1.5;
-          target.lerp(new THREE.Vector2(CELEBRATION[0] + Math.cos(angle) * 3.5, CELEBRATION[1] + Math.sin(angle) * 3.5), celebrating);
+          target.lerp(aim.set(CELEBRATION[0] * dir + Math.cos(angle) * 3.5, CELEBRATION[1] + Math.sin(angle) * 3.5), celebrating);
         }
       } else if (i === presser && t < GOAL_AT) {
-        target.lerp(new THREE.Vector2(b.x + 1.5, b.z), 0.7);
-      } else if (slot === 0 && t > 14.6 && t < RESET_AT) {
-        target.set(side * hx, 4.5); // the keeper goes the wrong way
+        target.lerp(aim.set(bx + 1.5 * dir, bz), 0.7);
+      } else if (slot === 0 && t > shotAt && t < RESET_AT) {
+        // Beaten keepers go the wrong way; a save means getting across to the ball
+        target.set(side * hx, scored ? -Math.sign(shotZ) * 4.5 : shotZ);
       }
 
       current[i].lerp(target, 1 - Math.exp(-delta * 2.6));
       const speed = current[i].distanceTo(target);
-      const hop = Math.abs(Math.sin(t * 9 + i)) * Math.min(0.5, speed * 0.15) + (side === 1 && slot !== 0 ? celebrating * Math.abs(Math.sin(t * 7 + i)) * 1.2 : 0);
+      const hop = Math.abs(Math.sin(t * 9 + i)) * Math.min(0.5, speed * 0.15) + (side === dir && slot !== 0 ? celebrating * Math.abs(Math.sin(t * 7 + i)) * 1.2 : 0);
       m.makeTranslation(current[i].x, 1.8 + hop, current[i].y);
       players.setMatrixAt(i, m);
     }
     players.instanceMatrix.needsUpdate = true;
+    return { t, scorer: scored ? dir : 0 };
   };
 }
 
@@ -1689,30 +1796,36 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   scene.add(flare);
 
   return (time: number, delta: number) => {
-    const t = time % LOOP;
-    playMatch(t, delta);
+    const { t, scorer } = playMatch(time, delta);
 
-    // Crowd: murmur, rising as the chance develops, eruption at the goal
+    // Crowd: a murmur that rises as the chance develops. A home goal lifts the
+    // whole ground, an away goal only the visitors' end, a save draws a groan.
     const sinceGoal = t - GOAL_AT;
+    const settle = 1 - smooth(clamp01((t - RESET_AT) / 3)) * 0.8;
     const excite = sinceGoal < 0
       ? 0.05 + 0.3 * smooth(clamp01((t - 11.5) / 4.5))
-      : Math.max(0.08, Math.exp(-sinceGoal * 0.22)) * (1 - smooth(clamp01((t - RESET_AT) / 3)) * 0.8);
+      : scorer === 0
+        ? Math.max(0.06, 0.3 * Math.exp(-sinceGoal * 0.9))
+        : Math.max(0.08, Math.exp(-sinceGoal * 0.22)) * settle;
+    const homeJoy = scorer === 1 && sinceGoal >= 0 ? excite : sinceGoal < 0 ? excite : 0.06;
+    crowd.uniforms.uEnd.value = sinceGoal >= 0 && scorer === -1 ? -1 : 0;
     const pointScale = renderer.domElement.height / (2 * Math.tan((camera.fov * Math.PI) / 360));
     crowd.uniforms.uTime.value = time;
     crowd.uniforms.uExcite.value = excite;
     crowd.uniforms.uScale.value = pointScale;
     // The spires catch fire at the goal, burn hard for a few seconds, then gutter out
-    const burn = sinceGoal < 0 ? 0 : Math.min(1, sinceGoal * 3) * Math.exp(-Math.max(0, sinceGoal - 4.5) * 0.9);
+    // Only for a home goal: nobody lights the cathedral for the visitors
+    const burn = sinceGoal < 0 || scorer !== 1 ? 0 : Math.min(1, sinceGoal * 3) * Math.exp(-Math.max(0, sinceGoal - 4.5) * 0.9);
     fire.uniforms.uTime.value = time;
     fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
     fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
-    kit.glass.opacity = 0.5 + excite * 0.45 + Math.sin(time * 1.3) * 0.05;
-    beams.opacity = 0.055 + excite * 0.06;
-    (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + excite * 0.3;
-    for (const ember of embers) ember.intensity = EMBER * (0.8 + excite * 1.2);
+    kit.glass.opacity = 0.5 + homeJoy * 0.45 + Math.sin(time * 1.3) * 0.05;
+    beams.opacity = 0.055 + homeJoy * 0.06;
+    (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + homeJoy * 0.3;
+    for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2);
     flare.intensity = 2600 * burn * (0.75 + 0.25 * Math.sin(time * 19));
-    pulseCity(time, excite, pointScale);
+    pulseCity(time, homeJoy, pointScale);
     mist.rotation.y = time * 0.006;
 
     // The blimp: one slow lap every ~100 seconds
