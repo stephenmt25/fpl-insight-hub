@@ -17,7 +17,7 @@ The home screen is a Spotlight-style launcher: search apps and players (or type 
 
 Sign in with a public FPL ID (no password), or click **Try as guest**.
 
-Behind every screen a cathedral stadium plays a looping match, filmed from a circling blimp. Each goal sets off chrome fireworks.
+Behind every screen a stone cathedral stadium plays a looping match on a rainy night, filmed from a circling blimp, with a low-poly city and neon towers around it. Each goal sets off fireworks.
 
 ![Stadium](docs/stadium.png)
 
@@ -30,7 +30,7 @@ Behind every screen a cathedral stadium plays a looping match, filmed from a cir
 ## How it's built
 
 - **React 18 + TypeScript (strict)**, Vite 8, Tailwind, TanStack Query, Recharts
-- **three.js** scenes written by hand, all procedural (no model files): a gothic stadium with instanced arches and spires, a 20,000-fan crowd and fireworks as shader-driven points, a scripted 22-player match loop, and a truncated-icosahedron football
+- **three.js** scenes written by hand, all procedural (no model files): a gothic stadium with instanced arches, buttresses and a great tower, canvas-drawn stone, a city of instanced blocks, rain, a 20,000-fan crowd and fireworks as shader-driven points, a scripted 22-player match loop, and a truncated-icosahedron football
 - **Models run client-side on live data**, each a small tested module in [`src/lib/ml`](src/lib/ml):
   - *Differentials*: k-means clustering on six z-scored features, then low-ownership picks from the top clusters
   - *Price changes*: transfer pressure relative to ownership, blended with FPL's progress-to-threshold figure

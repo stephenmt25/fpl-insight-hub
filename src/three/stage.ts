@@ -76,7 +76,8 @@ export function mountStage(container: HTMLElement, { fov = 40, far = 200, reflec
   const frame = (now: number) => {
     raf = requestAnimationFrame(frame);
     // Time only advances while the scene is on screen, so it resumes where it paused
-    const delta = Math.min((now - last) / 1000, 0.05);
+    // The first rAF timestamp can predate `last`, so clamp at zero
+    const delta = Math.min(Math.max((now - last) / 1000, 0), 0.05);
     last = now;
     if (!visible || document.hidden) return;
     elapsed += delta;
