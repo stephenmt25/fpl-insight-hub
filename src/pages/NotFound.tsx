@@ -1,14 +1,14 @@
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
+import { BallScene } from "@/three/lazy";
 
 export default function NotFound() {
-  const navigate = useNavigate();
-
   return (
-    <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
-      <h1 className="text-6xl font-bold text-fpl-primary">404</h1>
-      <p className="text-xl text-muted-foreground">Page not found</p>
-      <Button onClick={() => navigate('/')}>Back to Dashboard</Button>
+    <div className="flex min-h-[60dvh] flex-col items-center justify-center gap-4 text-center">
+      <BallScene />
+      <h1 className="text-title text-8xl">404</h1>
+      <p className="text-muted-foreground">Offside. That page doesn't exist.</p>
+      <Button asChild className="btn-chrome"><Link to="/">Back to the dashboard</Link></Button>
     </div>
   );
 }
