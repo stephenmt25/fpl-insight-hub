@@ -12,6 +12,7 @@ import { Sigil } from "@/components/shared/ornaments";
 import { GUEST_ID, useAuth } from "@/lib/auth";
 import { Backdrop } from "@/three/lazy";
 import { cn } from "@/lib/utils";
+import { ScoreButton } from "./ScoreButton";
 import { Spotlight } from "./Spotlight";
 
 function SignInDialog() {
@@ -188,6 +189,7 @@ export function Layout() {
       </main>
 
       <Dock />
+      <ScoreButton />
       <SpotlightOverlay open={spotlight} onOpenChange={setSpotlight} />
       <SignInDialog />
     </div>

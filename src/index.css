@@ -145,6 +145,29 @@
     linear-gradient(rgba(6, 6, 9, 0.42), rgba(6, 6, 9, 0.42));
 }
 
+/* "Watch" mode: the app fades out so the stadium behind it can be seen */
+header,
+main,
+nav[aria-label="Dock"],
+.fx-overlay {
+  transition: opacity 0.35s ease;
+}
+html[data-watching] header,
+html[data-watching] main,
+html[data-watching] nav[aria-label="Dock"],
+html[data-watching] .fx-overlay {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The Score button rattles as the heat builds */
+@keyframes score-shudder {
+  0%, 100% { translate: 0 0; }
+  25% { translate: -1.5px 1px; }
+  50% { translate: 1.5px -1px; }
+  75% { translate: -1px -1.5px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

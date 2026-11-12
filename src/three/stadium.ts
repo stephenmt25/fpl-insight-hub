@@ -1,7 +1,9 @@
 import * as THREE from "three";
 import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
+import { mayhem } from "@/lib/mayhem";
 import { BLOOD, CHROME, type Stage } from "./stage";
 import { createCrown, createFootball, createPitchLines, createThornRing } from "./models";
+import { Wreck, wobble } from "./wreck";
 
 /**
  * A gothic cathedral stadium on a rainy night, seen from a circling blimp:
@@ -320,10 +322,13 @@ interface Kit {
   /** Window geometries already built, by size and tracery pattern. */
   windows: Map<string, { pane: THREE.BufferGeometry; iron: THREE.BufferGeometry }>;
   glow: THREE.CanvasTexture;
+  /** Everything that can be shaken off the building, and the crews that put it back. */
+  wreck: Wreck;
 }
 
-function makeKit(): Kit {
+function makeKit(scene: THREE.Scene): Kit {
   const base = makeStoneTexture();
+  const glow = makeGlowTexture();
   return {
     stone: (u, v, tint = 0xffffff) => {
       const map = base.clone();
@@ -362,7 +367,8 @@ function makeKit(): Kit {
     neon: new THREE.MeshBasicMaterial({ color: NEON_RED, fog: false }),
     iron: new THREE.MeshStandardMaterial({ color: 0x060607, roughness: 0.55, metalness: 0.5, envMapIntensity: 0.25 }),
     windows: new Map(),
-    glow: makeGlowTexture(),
+    glow,
+    wreck: new Wreck(scene, glow),
   };
 }
 
@@ -497,6 +503,13 @@ function buildArcade(group: THREE.Group, kit: Kit) {
     ribs.setMatrixAt(i, place(between, 0, WALL_HEIGHT, 1));
   });
   group.add(frames, panes, piers, pinnacles, outerPiers, outerPinnacles, flyers, crosses, ribs);
+
+  // What comes off when the place is shaken: pinnacles and crosses first, then the roof ribs, then the flyers
+  kit.wreck.instances(pinnacles, 1, 1.5);
+  kit.wreck.instances(outerPinnacles, 1, 1.5);
+  kit.wreck.instances(crosses, 1, 0.4);
+  kit.wreck.instances(ribs, 2, 0.4);
+  kit.wreck.instances(flyers, 3, 0.8);
 }
 
 /** Horizontal spikes jutting from the four corners of a square tower, like gargoyle spouts. */
@@ -532,6 +545,8 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
     const cross = new THREE.Mesh(crossGeometry(width * 0.75), kit.chrome);
     cross.position.y = height + spireHeight - 1;
     tower.add(shaft, spire, cross);
+    kit.wreck.object(cross, 2, { rest: 0.5 });
+    kit.wreck.object(spire, 3, { rest: width * 0.6 });
 
     for (const level of [0.3, 0.62, 1]) {
       const belt = new THREE.Mesh(new THREE.BoxGeometry(width + 1.2, 1.1, width + 1.2), kit.slate);
@@ -543,6 +558,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
       const pinnacle = new THREE.Mesh(new THREE.ConeGeometry(width * 0.14, height * 0.26, 4), kit.slate);
       pinnacle.position.set((dx * width) / 2, height + height * 0.13, (dz * width) / 2);
       tower.add(pinnacle);
+      kit.wreck.object(pinnacle, 2, { rest: 1 });
     }
     for (const face of [0, 1, 2, 3]) {
       const slit = traceriedWindow(kit, width * 0.22, height * 0.2, { lights: 1, transoms: 2 });
@@ -596,10 +612,13 @@ function makePortal(kit: Kit) {
     const finial = new THREE.Mesh(crossGeometry(3.4), kit.chrome);
     finial.position.set(side * 19.5, 81, 2);
     portal.add(niche, turret, cap, finial);
+    kit.wreck.object(finial, 2, { rest: 0.4 });
+    kit.wreck.object(cap, 3, { rest: 3 });
   }
   const cross = new THREE.Mesh(crossGeometry(8), kit.chrome);
   cross.position.set(0, 69, 2);
   portal.add(cross);
+  kit.wreck.object(cross, 2, { rest: 0.6 });
   return portal;
 }
 
@@ -628,6 +647,8 @@ function buildCrownSteeple(tower: THREE.Group, kit: Kit, width: number) {
     const tube = new THREE.Mesh(new THREE.TubeGeometry(curve, 20, 0.2, 5), kit.neon);
     tube.position.y = 0.95;
     tower.add(rib, tube);
+    kit.wreck.object(rib, 4, { rest: 1, recentre: true });
+    kit.wreck.object(tube, 4, { rest: 0.4, recentre: true });
   }
   const collar = new THREE.Mesh(new THREE.TorusGeometry(3.1, 0.7, 6, 24), kit.iron);
   collar.rotation.x = Math.PI / 2;
@@ -655,18 +676,35 @@ function buildCrownSteeple(tower: THREE.Group, kit: Kit, width: number) {
   aura.position.y = heart;
   tower.add(collar, plinth, crown, ball, ...rings, shaft, aura);
 
+  // The relic is the last thing to go before the tower itself. While a part is
+  // loose it belongs to the wreck, so the idle animation below leaves it alone.
+  const loose = { ball: false, crown: false, rings: [false, false] };
+  kit.wreck.object(collar, 4, { rest: 0.8 });
+  kit.wreck.object(crown, 4, { rest: 1, onChange: (standing) => { loose.crown = !standing; } });
+  rings.forEach((ring, i) => kit.wreck.object(ring, 4, { rest: 0.6, onChange: (standing) => { loose.rings[i] = !standing; } }));
+  kit.wreck.object(ball, 4, {
+    rest: 5.8,
+    bounce: 0.55,
+    onChange: (standing) => {
+      loose.ball = !standing;
+      shaft.visible = aura.visible = standing; // nothing to hold up once the ball has dropped
+    },
+  });
+
   let last = 0;
   let spin = 0;
-  /** `joy` (0-1) is the home crowd's excitement: the ball spins up and its aura swells on a goal. */
+  /** `joy` is the home crowd's excitement (0-1, more in a frenzy): the ball spins up and its aura swells. */
   return (time: number, joy: number) => {
     spin += Math.max(0, time - last) * (0.4 + joy * 2.6);
     last = time;
-    ball.rotation.set(Math.sin(time * 0.3) * 0.25, spin, 0);
-    ball.position.y = heart + Math.sin(time * 0.9) * 0.5;
-    rings[0].rotation.z = spin * 0.6;
-    rings[1].rotation.z = -spin * 0.45;
-    crown.rotation.y = -time * 0.3;
-    (aura.material as THREE.SpriteMaterial).opacity = 0.32 + joy * 0.45;
+    if (!loose.ball) {
+      ball.rotation.set(Math.sin(time * 0.3) * 0.25, spin, 0);
+      ball.position.y = heart + Math.sin(time * 0.9) * 0.5;
+    }
+    if (!loose.rings[0]) rings[0].rotation.z = spin * 0.6;
+    if (!loose.rings[1]) rings[1].rotation.z = -spin * 0.45;
+    if (!loose.crown) crown.rotation.y = -time * 0.3;
+    (aura.material as THREE.SpriteMaterial).opacity = Math.min(0.9, 0.32 + joy * 0.45);
   };
 }
 
@@ -722,6 +760,8 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
       flyer.position.set(side * (naveWidth / 2 + 7), 40, z + 4.75);
       flyer.rotation.z = -side * 0.5;
       cathedral.add(aisleWindow, clerestory, buttress, pinnacle, flyer);
+      kit.wreck.object(pinnacle, 1, { rest: 1.2 });
+      kit.wreck.object(flyer, 3, { rest: 0.6 });
     }
   }
 
@@ -750,6 +790,8 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
     const finial = new THREE.Mesh(crossGeometry(4.5), kit.chrome);
     finial.position.set((dx * width) / 2, GREAT_TOWER_HEIGHT + 22, (dz * width) / 2);
     tower.add(turret, spirelet, finial);
+    kit.wreck.object(finial, 2, { rest: 0.5 });
+    kit.wreck.object(spirelet, 3, { rest: 2.6 });
   }
   for (let face = 0; face < 4; face++) {
     const side = new THREE.Group();
@@ -768,6 +810,7 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
       const merlon = new THREE.Mesh(new THREE.ConeGeometry(1.3, 13, 4), kit.slate);
       merlon.position.set(x, GREAT_TOWER_HEIGHT + 6.5, width / 2);
       side.add(merlon);
+      kit.wreck.object(merlon, 2, { rest: 1.2 });
     }
     tower.add(side);
   }
@@ -776,6 +819,7 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
   const turnRelic = buildCrownSteeple(tower, kit, width);
   cathedral.add(tower);
   group.add(cathedral);
+  kit.wreck.tower(tower, GREAT_TOWER_HEIGHT, width);
 
   // Fire spouts on the great tower: one at each corner where the steeple springs,
   // pointing level and straight out along the diagonal, away from the middle of the tower
@@ -784,7 +828,7 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
   const centre = tower.localToWorld(new THREE.Vector3(0, level, 0));
   const spouts: Spout[] = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) => {
     const origin = tower.localToWorld(new THREE.Vector3(dx * (width / 2 + 3.2), level, dz * (width / 2 + 3.2)));
-    return { origin, direction: origin.clone().sub(centre).normalize() };
+    return { origin, direction: origin.clone().sub(centre).normalize(), reach: 0.45, onTower: true };
   });
   return { spouts, turnRelic };
 }
@@ -1946,7 +1990,7 @@ function buildCrowd(group: THREE.Group, count: number) {
         p.y += sway * 0.12 + excite * jump * 1.8;
         // Camera flashes pop at random around the bowl
         float flash = step(0.9985 - excite * 0.01, fract(sin(aPhase * 91.7 + floor(uTime * 9.0) * 12.9898) * 43758.5453));
-        vColor = aColor * (0.8 + 0.2 * sway + excite * 0.9) + flash * 2.5;
+        vColor = aColor * (0.8 + 0.2 * sway + min(excite, 1.3) * 0.9) + flash * 2.5;
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = uScale * (1.0 + flash * 1.6) / -mv.z;
@@ -1962,7 +2006,14 @@ function buildCrowd(group: THREE.Group, count: number) {
 /* ---------- Fire ---------- */
 
 /** Where a jet of fire comes out, and which way it points. */
-interface Spout { origin: THREE.Vector3; direction: THREE.Vector3 }
+interface Spout {
+  origin: THREE.Vector3;
+  direction: THREE.Vector3;
+  /** Length of the jet relative to a full-size one. */
+  reach?: number;
+  /** Mounted on the great tower, so it goes out when the tower falls. */
+  onTower?: boolean;
+}
 
 /**
  * Jets of flame roaring out of the spouts when a goal goes in: straight up
@@ -1973,27 +2024,30 @@ function buildFire(group: THREE.Group, spouts: Spout[], perJet: number) {
   const count = spouts.length * perJet;
   const positions = new Float32Array(count * 3);
   const directions = new Float32Array(count * 3);
+  const mounts = new Float32Array(count * 2); // reach, on-tower flag
   const seeds = new Float32Array(count * 4);
-  spouts.forEach(({ origin, direction }, j) => {
+  spouts.forEach(({ origin, direction, reach = 1, onTower = false }, j) => {
     for (let i = 0; i < perJet; i++) {
       const k = j * perJet + i;
       positions.set([origin.x, origin.y, origin.z], k * 3);
       directions.set([direction.x, direction.y, direction.z], k * 3);
+      mounts.set([reach, onTower ? 1 : 0], k * 2);
       seeds.set([Math.random(), Math.random(), Math.random(), Math.random()], k * 4);
     }
   });
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
   geometry.setAttribute("aDir", new THREE.BufferAttribute(directions, 3));
+  geometry.setAttribute("aMount", new THREE.BufferAttribute(mounts, 2));
   geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 4));
   const material = new THREE.ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 600 } },
+    uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 600 }, uTower: { value: 1 } },
     transparent: true,
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
-      uniform float uTime; uniform float uPower; uniform float uScale;
-      attribute vec4 aSeed; attribute vec3 aDir;
+      uniform float uTime; uniform float uPower; uniform float uScale; uniform float uTower;
+      attribute vec4 aSeed; attribute vec3 aDir; attribute vec2 aMount;
       varying float vLife; varying float vAlpha;
       void main() {
         float life = 1.5 + aSeed.x * 0.9;
@@ -2004,13 +2058,13 @@ function buildFire(group: THREE.Group, spouts: Spout[], perJet: number) {
         vec3 side = normalize(cross(aDir, abs(aDir.y) > 0.9 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0)));
         vec3 lift = cross(side, aDir);
         vec3 dir = normalize(aDir + side * (aSeed.z - 0.5) * 0.26 + lift * (aSeed.w - 0.5) * 0.26);
-        float speed = (46.0 + aSeed.x * 38.0) * (0.55 + 0.45 * uPower);
+        float speed = (46.0 + aSeed.x * 38.0) * (0.55 + 0.45 * uPower) * aMount.x;
         vec3 p = position + dir * speed * age * (1.0 - 0.38 * u);
         p += side * sin(age * 6.0 + aSeed.y * 30.0) * 1.1 * u + lift * cos(age * 5.0 + aSeed.z * 30.0) * 1.1 * u;
         // Hot gas rises: a sideways jet curls upward as it slows
-        p.y += (1.0 - abs(aDir.y)) * 15.0 * u * u;
+        p.y += (1.0 - abs(aDir.y)) * 15.0 * aMount.x * u * u;
         vLife = u;
-        vAlpha = uPower * smoothstep(0.0, 0.06, u) * (1.0 - u);
+        vAlpha = uPower * smoothstep(0.0, 0.06, u) * (1.0 - u) * mix(1.0, uTower, aMount.y);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = step(0.002, uPower) * uScale * (2.6 + 4.2 * u) / -mv.z;
@@ -2220,6 +2274,142 @@ function buildMatch(group: THREE.Group) {
   };
 }
 
+/* ---------- Mayhem ---------- */
+
+/**
+ * The extra celebration that builds as the Score button is hammered: confetti
+ * tumbling through the bowl, red flare smoke rising from the stands and, once
+ * things are properly out of hand, fans spilling onto the pitch. `uHeat`
+ * decides how many of each are switched on.
+ */
+function buildParty(group: THREE.Group, small: boolean) {
+  const confetti = small ? 600 : 1500;
+  const smoke = small ? 200 : 520;
+  const invaders = small ? 160 : 380;
+  const count = confetti + smoke + invaders;
+  const positions = new Float32Array(count * 3);
+  const colors = new Float32Array(count * 3);
+  const seeds = new Float32Array(count * 4);
+  const types = new Float32Array(count);
+  const paper = [0xff2d55, 0xffffff, 0xc9ccd6, 0xffc21a].map((hex) => new THREE.Color(hex));
+  const flare = new THREE.Color(1, 0.12, 0.2);
+  const shirts = [new THREE.Color(0xff2d55), new THREE.Color(0xdfe3ee)];
+
+  for (let i = 0; i < count; i++) {
+    const type = i < confetti ? 0 : i < confetti + smoke ? 1 : 2;
+    let p: THREE.Vector3;
+    let c: THREE.Color;
+    if (type === 0) {
+      // Anywhere over the bowl; the shader supplies the height
+      p = ring(Math.random() * Math.PI * 2, STAND_START + Math.random() * 40).multiplyScalar(Math.sqrt(Math.random()));
+      c = paper[Math.floor(Math.random() * paper.length)];
+    } else if (type === 1) {
+      const row = Math.random() * ROWS;
+      p = ring(Math.random() * Math.PI * 2, STAND_START + row * ROW_DEPTH, 2.5 + row * ROW_RISE);
+      c = flare;
+    } else {
+      p = new THREE.Vector3((Math.random() - 0.5) * 2 * (HALF_LENGTH - 4), 1.4, (Math.random() - 0.5) * 2 * (HALF_WIDTH - 3));
+      c = shirts[Math.random() < 0.8 ? 0 : 1];
+    }
+    positions.set([p.x, p.y, p.z], i * 3);
+    colors.set([c.r, c.g, c.b], i * 3);
+    seeds.set([Math.random(), Math.random(), Math.random(), Math.random()], i * 4);
+    types[i] = type;
+  }
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("aColor", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 4));
+  geometry.setAttribute("aType", new THREE.BufferAttribute(types, 1));
+  const material = new THREE.ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uHeat: { value: 0 }, uScale: { value: 600 } },
+    transparent: true,
+    depthWrite: false,
+    vertexShader: /* glsl */ `
+      uniform float uTime; uniform float uHeat; uniform float uScale;
+      attribute vec3 aColor; attribute vec4 aSeed; attribute float aType;
+      varying vec3 vColor; varying float vAlpha; varying float vType;
+      void main() {
+        vec3 p = position;
+        // Each particle has its own threshold, so more of them join in as the heat rises
+        float on = step(aSeed.x, uHeat * 1.15);
+        float size = 1.0;
+        float alpha = 1.0;
+        if (aType < 0.5) {
+          // Confetti: tumbles down through the bowl, glinting as it turns
+          float life = 5.0 + aSeed.y * 4.0;
+          float u = fract(uTime / life + aSeed.z);
+          p.y = mix(72.0, 2.0, u);
+          p.x += sin(uTime * 1.3 + aSeed.w * 40.0) * 3.0;
+          p.z += cos(uTime * 1.1 + aSeed.y * 40.0) * 3.0;
+          size = 1.1;
+          alpha = 0.55 + 0.45 * sin(uTime * 9.0 + aSeed.w * 50.0);
+        } else if (aType < 1.5) {
+          // Flare smoke: billows up out of the stands and thins
+          float life = 3.0 + aSeed.y * 2.0;
+          float u = fract(uTime / life + aSeed.z);
+          p.y += u * 26.0;
+          p.x += sin(u * 6.0 + aSeed.w * 30.0) * 2.5 * u;
+          size = 3.0 + 9.0 * u;
+          alpha = (1.0 - u) * 0.5;
+        } else {
+          // Pitch invaders: only once it is well out of hand
+          on = step(aSeed.x, (uHeat - 0.55) * 2.4);
+          p.x += sin(uTime * (0.6 + aSeed.y) + aSeed.z * 40.0) * 6.0;
+          p.z += cos(uTime * (0.5 + aSeed.w) + aSeed.y * 40.0) * 5.0;
+          p.y += abs(sin(uTime * 7.0 + aSeed.z * 30.0)) * 0.9;
+          size = 1.25;
+        }
+        vColor = aColor;
+        vAlpha = alpha;
+        vType = aType;
+        vec4 mv = modelViewMatrix * vec4(p, 1.0);
+        gl_Position = projectionMatrix * mv;
+        gl_PointSize = on * uScale * size / -mv.z;
+      }`,
+    fragmentShader: /* glsl */ `
+      varying vec3 vColor; varying float vAlpha; varying float vType;
+      void main() {
+        // Smoke is a soft puff; paper and people are hard-edged
+        float soft = vType > 0.5 && vType < 1.5 ? smoothstep(0.5, 0.0, length(gl_PointCoord - 0.5)) : 1.0;
+        gl_FragColor = vec4(vColor, vAlpha * soft);
+      }`,
+  });
+  const points = new THREE.Points(geometry, material);
+  points.frustumCulled = false;
+  group.add(points);
+  return material;
+}
+
+/** A ball lashed into the home side's goal for every press of the Score button. */
+function buildShots(group: THREE.Group) {
+  const material = new THREE.MeshBasicMaterial({ color: 0xffffff });
+  const shots = Array.from({ length: 6 }, () => {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(0.95, 10, 8), material);
+    mesh.visible = false;
+    group.add(mesh);
+    return { mesh, progress: 1, from: new THREE.Vector3(), to: new THREE.Vector3() };
+  });
+  return {
+    fire() {
+      const shot = shots.find((s) => s.progress >= 1) ?? shots[0];
+      shot.progress = 0;
+      shot.from.set(14 + Math.random() * 22, 0.9, (Math.random() - 0.5) * 44);
+      shot.to.set(HALF_LENGTH + 1.6, 0.6 + Math.random() * 1.6, (Math.random() - 0.5) * 6.4);
+      shot.mesh.visible = true;
+    },
+    update(delta: number) {
+      for (const shot of shots) {
+        if (shot.progress >= 1) continue;
+        shot.progress = Math.min(1, shot.progress + delta / 0.45);
+        shot.mesh.position.lerpVectors(shot.from, shot.to, shot.progress);
+        shot.mesh.position.y += Math.sin(Math.PI * shot.progress) * 3.2;
+        if (shot.progress >= 1) shot.mesh.visible = false;
+      }
+    },
+  };
+}
+
 /* ---------- Scene ---------- */
 
 const EMBER = 700;
@@ -2231,7 +2421,7 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   scene.fog = new THREE.FogExp2(haze, small ? 0.0023 : 0.0021);
   scene.background = haze;
 
-  const kit = makeKit();
+  const kit = makeKit(scene);
   const stadium = new THREE.Group();
   scene.add(stadium);
 
@@ -2247,6 +2437,20 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   const crowd = buildCrowd(stadium, small ? 9000 : 20000);
   const fire = buildFire(stadium, spouts, small ? 160 : 420);
   const playMatch = buildMatch(stadium);
+  const party = buildParty(stadium, small);
+  const shots = buildShots(stadium);
+
+  // Workers come out of the three portals, the cathedral's west door, and a gate on each diagonal
+  const doors = [0, Math.PI, (3 * Math.PI) / 2].map((theta) => {
+    const door = ring(theta, WALL_OFFSET).addScaledVector(outwardNormal(theta, WALL_OFFSET), 20);
+    return new THREE.Vector2(door.x, door.z);
+  });
+  doors.push(new THREE.Vector2(0, HALF_WIDTH + WALL_OFFSET + NAVE_LENGTH + 8));
+  for (let k = 0; k < 4; k++) {
+    const gate = ring(Math.PI / 4 + (k * Math.PI) / 2, WALL_OFFSET + 4);
+    doors.push(new THREE.Vector2(gate.x, gate.z));
+  }
+  kit.wreck.seal(doors);
   const pulseCity = buildCity(scene, kit, small);
   const rain = buildRain(scene, small ? 2500 : 7000);
   const mist = buildMist(scene, kit, small ? 24 : 60);
@@ -2283,37 +2487,57 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   return (time: number, delta: number) => {
     const { t, scorer } = playMatch(time, delta);
 
+    // The Score button: every press is a goal for the home side, whatever the match is doing
+    const pressed = mayhem.takeGoals();
+    for (let g = 0; g < Math.min(pressed, 3); g++) shots.fire();
+    shots.update(delta);
+    const chaos = kit.wreck.update(time, delta, pressed);
+
     // Crowd: a murmur that rises as the chance develops. A home goal lifts the
     // whole ground, an away goal only the visitors' end, a save draws a groan.
     const sinceGoal = t - GOAL_AT;
     const settle = 1 - smooth(clamp01((t - RESET_AT) / 3)) * 0.8;
-    const excite = sinceGoal < 0
+    const matchExcite = sinceGoal < 0
       ? 0.05 + 0.3 * smooth(clamp01((t - 11.5) / 4.5))
       : scorer === 0
         ? Math.max(0.06, 0.3 * Math.exp(-sinceGoal * 0.9))
         : Math.max(0.08, Math.exp(-sinceGoal * 0.22)) * settle;
-    const homeJoy = scorer === 1 && sinceGoal >= 0 ? excite : sinceGoal < 0 ? excite : 0.06;
-    crowd.uniforms.uEnd.value = sinceGoal >= 0 && scorer === -1 ? -1 : 0;
+    // A pressed goal lifts everyone, and the hotter the streak the wilder they get
+    const excite = Math.max(matchExcite, chaos.burst) * (1 + chaos.heat * 1.4);
+    const homeGoal = Math.max(scorer === 1 && sinceGoal >= 0 ? matchExcite : 0, chaos.burst);
+    const homeJoy = Math.max(scorer === 1 && sinceGoal >= 0 ? matchExcite : sinceGoal < 0 ? matchExcite : 0.06, chaos.burst);
+    crowd.uniforms.uEnd.value = chaos.burst < 0.05 && sinceGoal >= 0 && scorer === -1 ? -1 : 0;
     const pointScale = renderer.domElement.height / (2 * Math.tan((camera.fov * Math.PI) / 360));
     crowd.uniforms.uTime.value = time;
     crowd.uniforms.uExcite.value = excite;
     crowd.uniforms.uScale.value = pointScale;
-    // The spires catch fire at the goal, burn hard for a few seconds, then gutter out
-    // Only for a home goal: nobody lights the cathedral for the visitors
-    const burn = sinceGoal < 0 || scorer !== 1 ? 0 : Math.min(1, sinceGoal * 3) * Math.exp(-Math.max(0, sinceGoal - 4.5) * 0.9);
+    party.uniforms.uTime.value = time;
+    party.uniforms.uHeat.value = chaos.heat;
+    party.uniforms.uScale.value = pointScale;
+
+    // The spires catch fire at a home goal, burn hard for a few seconds, then gutter out;
+    // nobody lights the cathedral for the visitors. Pressed goals relight it, bigger each time.
+    const matchBurn = sinceGoal < 0 || scorer !== 1 ? 0 : Math.min(1, sinceGoal * 3) * Math.exp(-Math.max(0, sinceGoal - 4.5) * 0.9);
+    const burn = Math.max(matchBurn, Math.min(1, chaos.burst * 1.6)) * (1 + chaos.heat * 0.9);
     fire.uniforms.uTime.value = time;
     fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
+    fire.uniforms.uTower.value = chaos.towerUp ? 1 : 0;
     fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
     // Steady light in the cathedral windows; they only flare for a home goal
-    kit.glass.uniforms.uGlow.value = 0.45 + 0.55 * (scorer === 1 && sinceGoal >= 0 ? excite : 0);
+    kit.glass.uniforms.uGlow.value = 0.45 + 0.55 * Math.min(1, homeGoal);
     beams.opacity = 0.055 + homeJoy * 0.06;
-    (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + homeJoy * 0.3;
-    for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2);
-    flare.intensity = 2600 * burn * (0.75 + 0.25 * Math.sin(time * 19));
+    (bowlGlow.material as THREE.SpriteMaterial).opacity = Math.min(0.8, 0.26 + homeJoy * 0.3 + chaos.heat * 0.2);
+    for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2 + chaos.heat);
+    flare.intensity = 2600 * Math.min(1.6, burn) * (0.75 + 0.25 * Math.sin(time * 19));
     pulseCity(time, homeJoy, pointScale);
-    cathedral.turnRelic(time, scorer === 1 && sinceGoal >= 0 ? excite : 0);
+    cathedral.turnRelic(time, homeGoal + chaos.heat * 1.5);
     mist.rotation.y = time * 0.006;
+
+    // The whole building shudders as the heat builds, and harder still when the tower goes
+    const shake = chaos.shake;
+    stadium.position.set(wobble(time * 31) * shake * 2.6, wobble(time * 27 + 5) * shake * 1.1, wobble(time * 29 + 9) * shake * 2.6);
+    stadium.rotation.set(wobble(time * 23) * shake * 0.011, 0, wobble(time * 19 + 3) * shake * 0.011);
 
     // The blimp: one slow lap every ~100 seconds
     // It starts opposite the cathedral, and climbs as it passes behind the great tower
@@ -2321,6 +2545,9 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     const lift = Math.max(0, Math.sin(angle)) ** 2;
     const radius = 315 + Math.sin(time * 0.05) * 16 + lift * 60;
     camera.position.set(Math.cos(angle) * radius + pointer.x * 8, 192 + Math.sin(time * 0.08) * 12 + pointer.y * 5 + lift * 80, Math.sin(angle) * radius * 0.86);
+    // The camera crew feels it too
+    camera.position.x += wobble(time * 41) * shake * 1.5;
+    camera.position.y += wobble(time * 43 + 2) * shake * 1.1;
     // Aimed well above the pitch so the great tower and the relic on it stay in frame all the way round
     camera.lookAt(0, 60, 0);
   };
