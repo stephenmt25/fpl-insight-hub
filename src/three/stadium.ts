@@ -777,11 +777,16 @@ function buildCathedral(group: THREE.Group, kit: Kit) {
   cathedral.add(tower);
   group.add(cathedral);
 
-  // World positions of the four corner spirelets on the great tower
+  // Fire spouts on the great tower: one at each corner where the steeple springs,
+  // pointing level and straight out along the diagonal, away from the middle of the tower
   cathedral.updateMatrixWorld(true);
-  const tips = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) =>
-    tower.localToWorld(new THREE.Vector3((dx * width) / 2, GREAT_TOWER_HEIGHT + 24, (dz * width) / 2)));
-  return { tips, turnRelic };
+  const level = GREAT_TOWER_HEIGHT + 5;
+  const centre = tower.localToWorld(new THREE.Vector3(0, level, 0));
+  const spouts: Spout[] = [[1, 1], [1, -1], [-1, 1], [-1, -1]].map(([dx, dz]) => {
+    const origin = tower.localToWorld(new THREE.Vector3(dx * (width / 2 + 3.2), level, dz * (width / 2 + 3.2)));
+    return { origin, direction: origin.clone().sub(centre).normalize() };
+  });
+  return { spouts, turnRelic };
 }
 
 function buildPortals(group: THREE.Group, kit: Kit) {
@@ -1956,23 +1961,30 @@ function buildCrowd(group: THREE.Group, count: number) {
 
 /* ---------- Fire ---------- */
 
+/** Where a jet of fire comes out, and which way it points. */
+interface Spout { origin: THREE.Vector3; direction: THREE.Vector3 }
+
 /**
- * Jets of flame roaring out of the spire tips when a goal goes in. Each jet is
- * a looping fountain of point sprites; `uPower` fades the whole lot in and out.
+ * Jets of flame roaring out of the spouts when a goal goes in: straight up
+ * from the spire tips, sideways from the great tower's corners. Each jet is a
+ * looping fountain of point sprites; `uPower` fades the whole lot in and out.
  */
-function buildFire(group: THREE.Group, tips: THREE.Vector3[], perJet: number) {
-  const count = tips.length * perJet;
+function buildFire(group: THREE.Group, spouts: Spout[], perJet: number) {
+  const count = spouts.length * perJet;
   const positions = new Float32Array(count * 3);
+  const directions = new Float32Array(count * 3);
   const seeds = new Float32Array(count * 4);
-  tips.forEach((tip, j) => {
+  spouts.forEach(({ origin, direction }, j) => {
     for (let i = 0; i < perJet; i++) {
       const k = j * perJet + i;
-      positions.set([tip.x, tip.y, tip.z], k * 3);
+      positions.set([origin.x, origin.y, origin.z], k * 3);
+      directions.set([direction.x, direction.y, direction.z], k * 3);
       seeds.set([Math.random(), Math.random(), Math.random(), Math.random()], k * 4);
     }
   });
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setAttribute("aDir", new THREE.BufferAttribute(directions, 3));
   geometry.setAttribute("aSeed", new THREE.BufferAttribute(seeds, 4));
   const material = new THREE.ShaderMaterial({
     uniforms: { uTime: { value: 0 }, uPower: { value: 0 }, uScale: { value: 600 } },
@@ -1981,18 +1993,22 @@ function buildFire(group: THREE.Group, tips: THREE.Vector3[], perJet: number) {
     blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */ `
       uniform float uTime; uniform float uPower; uniform float uScale;
-      attribute vec4 aSeed;
+      attribute vec4 aSeed; attribute vec3 aDir;
       varying float vLife; varying float vAlpha;
       void main() {
         float life = 1.5 + aSeed.x * 0.9;
         float age = mod(uTime + aSeed.y * life, life);
         float u = age / life;
         // Straight up out of the spire, fanning out and slowing as it climbs
-        vec3 dir = normalize(vec3((aSeed.z - 0.5) * 0.26, 1.0, (aSeed.w - 0.5) * 0.26));
+        // Two axes square to the spout, to fan the jet out and make it flicker
+        vec3 side = normalize(cross(aDir, abs(aDir.y) > 0.9 ? vec3(1.0, 0.0, 0.0) : vec3(0.0, 1.0, 0.0)));
+        vec3 lift = cross(side, aDir);
+        vec3 dir = normalize(aDir + side * (aSeed.z - 0.5) * 0.26 + lift * (aSeed.w - 0.5) * 0.26);
         float speed = (46.0 + aSeed.x * 38.0) * (0.55 + 0.45 * uPower);
         vec3 p = position + dir * speed * age * (1.0 - 0.38 * u);
-        p.x += sin(age * 6.0 + aSeed.y * 30.0) * 1.1 * u;
-        p.z += cos(age * 5.0 + aSeed.z * 30.0) * 1.1 * u;
+        p += side * sin(age * 6.0 + aSeed.y * 30.0) * 1.1 * u + lift * cos(age * 5.0 + aSeed.z * 30.0) * 1.1 * u;
+        // Hot gas rises: a sideways jet curls upward as it slows
+        p.y += (1.0 - abs(aDir.y)) * 15.0 * u * u;
         vLife = u;
         vAlpha = uPower * smoothstep(0.0, 0.06, u) * (1.0 - u);
         vec4 mv = modelViewMatrix * vec4(p, 1.0);
@@ -2222,13 +2238,14 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
   buildPitch(stadium);
   buildBowl(stadium, kit);
   buildArcade(stadium, kit);
-  const spireTips = buildTowers(stadium, kit);
+  const up = new THREE.Vector3(0, 1, 0);
+  const spouts: Spout[] = buildTowers(stadium, kit).map((origin) => ({ origin, direction: up }));
   buildPortals(stadium, kit);
   const cathedral = buildCathedral(stadium, kit);
-  spireTips.push(...cathedral.tips);
+  spouts.push(...cathedral.spouts);
   const beams = buildFloodlights(stadium, kit);
   const crowd = buildCrowd(stadium, small ? 9000 : 20000);
-  const fire = buildFire(stadium, spireTips, small ? 160 : 420);
+  const fire = buildFire(stadium, spouts, small ? 160 : 420);
   const playMatch = buildMatch(stadium);
   const pulseCity = buildCity(scene, kit, small);
   const rain = buildRain(scene, small ? 2500 : 7000);
