@@ -1,4 +1,5 @@
 import * as THREE from "three";
+import { mergeGeometries } from "three/examples/jsm/utils/BufferGeometryUtils.js";
 import { BLOOD, CHROME, type Stage } from "./stage";
 import { createPitchLines } from "./models";
 
@@ -23,6 +24,8 @@ const TIER_GAP = [11.2, 13.4] as const;
 const CANOPY_REACH = 12;
 const CANOPY_RISE = 9;
 const SHAPE_N = 3; // superellipse exponent: between an ellipse (2) and a rectangle (∞)
+
+type XZ = [number, number];
 
 const sgnPow = (v: number, e: number) => Math.sign(v) * Math.abs(v) ** e;
 
@@ -174,6 +177,135 @@ function glassPane(shape: THREE.Shape, segments: number) {
   return geometry;
 }
 
+interface TraceryOptions {
+  /** Vertical lights the window is divided into. */
+  lights?: number;
+  /** Horizontal bars across the lights. */
+  transoms?: number;
+  /** Belfry slats between the top transom and the springing of the arch. */
+  louvres?: number;
+  /** A second, outer moulding over the arch. */
+  hood?: boolean;
+}
+
+/** The outline of a lancet() arch, from its right foot over the apex to its left foot. */
+function archPoints(width: number, height: number, segments = 10): THREE.Vector2[] {
+  const spring = height * 0.58;
+  const half = width / 2;
+  const pts = [new THREE.Vector2(half, 0), new THREE.Vector2(half, spring)];
+  for (let i = 1; i <= segments; i++) {
+    const t = i / segments;
+    pts.push(new THREE.Vector2(half * (1 - t * t), (1 - t) ** 2 * spring + 2 * (1 - t) * t * height * 0.88 + t * t * height));
+  }
+  for (let i = 1; i <= segments; i++) {
+    const t = i / segments;
+    pts.push(new THREE.Vector2(-half * (2 * t - t * t), (1 - t) ** 2 * height + 2 * (1 - t) * t * height * 0.88 + t * t * spring));
+  }
+  pts.push(new THREE.Vector2(-half, 0));
+  return pts;
+}
+
+/** Half the clear width of a lancet() arch at height `y` (above the springing it narrows to the apex). */
+function archHalfWidth(width: number, height: number, y: number) {
+  const spring = height * 0.58;
+  if (y <= spring) return width / 2;
+  if (y >= height) return 0;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 24; i++) {
+    const t = (lo + hi) / 2;
+    const at = (1 - t) ** 2 * spring + 2 * (1 - t) * t * height * 0.88 + t * t * height;
+    if (at < y) lo = t; else hi = t;
+  }
+  return (width / 2) * (1 - lo * lo);
+}
+
+/**
+ * Ironwork for a pointed window, merged into one geometry: a moulded frame and
+ * sill, mullions dividing it into lights, a pointed head over each light, and
+ * in the arch a cusped oculus with a smaller one above it. Transoms, belfry
+ * louvres and an outer hood moulding are optional.
+ */
+function traceryGeometry(width: number, height: number, { lights = 2, transoms = 0, louvres = 0, hood = false }: TraceryOptions = {}) {
+  const bar = Math.max(0.14, width * 0.05);
+  const depth = bar * 1.5;
+  const spring = height * 0.58;
+  const parts: THREE.BufferGeometry[] = [];
+  const box = (w: number, h: number, x: number, y: number, turn = 0, thickness = depth) => {
+    const g = new THREE.BoxGeometry(w, h, thickness);
+    if (turn) g.rotateZ(turn);
+    parts.push(g.translate(x, y, 0).toNonIndexed());
+  };
+  const ringAt = (radius: number, x: number, y: number, tube = bar * 0.45) =>
+    parts.push(new THREE.TorusGeometry(radius, tube, 4, 16).translate(x, y, 0).toNonIndexed());
+  const archBand = (outerW: number, outerH: number, innerW: number, innerH: number, thickness: number) => {
+    const outline = [...archPoints(outerW, outerH), ...archPoints(innerW, innerH).reverse()];
+    const g = new THREE.ExtrudeGeometry(new THREE.Shape(outline), { depth: thickness, bevelEnabled: false }).translate(0, 0, -thickness / 2);
+    parts.push(g.index ? g.toNonIndexed() : g);
+  };
+
+  archBand(width + bar * 1.5, height + bar * 0.9, width - bar * 0.5, height - bar * 0.3, depth);
+  if (hood) archBand(width + bar * 4.6, height + bar * 2.6, width + bar * 3.2, height + bar * 1.9, depth * 0.7);
+  box(width + bar * (hood ? 5.4 : 2.6), bar * 1.3, 0, -bar * 0.65, 0, depth * 1.6); // sill
+
+  // Mullions, and a pointed head springing over each light
+  const clear = width - bar * 0.5;
+  const light = clear / lights;
+  const rise = light * 0.8;
+  for (let i = 1; i < lights; i++) box(bar * 0.8, spring, -clear / 2 + i * light, spring / 2);
+  if (lights > 1) {
+    const length = Math.hypot(light / 2, rise);
+    const angle = Math.atan2(rise, light / 2);
+    for (let i = 0; i < lights; i++) {
+      const left = -clear / 2 + i * light;
+      box(length, bar * 0.7, left + light / 4, spring + rise / 2, angle);
+      box(length, bar * 0.7, left + (light * 3) / 4, spring + rise / 2, -angle);
+    }
+  }
+
+  // The arch above the lights: a large oculus, cusped into a quatrefoil when there is room, and a small one over it
+  const headBase = spring + (lights > 1 ? rise : 0);
+  const room = height - headBase;
+  const centre = headBase + room * 0.42;
+  const radius = Math.min(archHalfWidth(width, height, centre) - bar * 1.3, room * 0.36, centre - headBase - bar * 0.3);
+  if (radius > bar * 1.5) {
+    ringAt(radius, 0, centre);
+    if (radius > bar * 3.6) {
+      for (let c = 0; c < 4; c++) {
+        const a = Math.PI / 4 + (c * Math.PI) / 2;
+        ringAt(radius * 0.4, Math.cos(a) * radius * 0.5, centre + Math.sin(a) * radius * 0.5, bar * 0.3);
+      }
+    }
+    const above = height - (centre + radius);
+    const upper = centre + radius + above * 0.42;
+    const small = Math.min(archHalfWidth(width, height, upper) - bar, above * 0.3);
+    if (small > bar * 1.1) ringAt(small, 0, upper, bar * 0.35);
+  }
+
+  for (let t = 1; t <= transoms; t++) box(clear, bar * 0.8, 0, (spring * t) / (transoms + 1));
+  const louvreFrom = transoms ? (spring * transoms) / (transoms + 1) : 0;
+  for (let l = 1; l <= louvres; l++) box(clear, bar * 0.35, 0, louvreFrom + ((spring - louvreFrom) * l) / (louvres + 1), 0, depth * 0.6);
+
+  const merged = mergeGeometries(parts, false);
+  if (!merged) throw new Error("Tracery parts could not be merged");
+  return merged;
+}
+
+/** A glass pane with its ironwork in front, facing +z with the sill at the origin. Geometries are shared per size. */
+function traceriedWindow(kit: Kit, width: number, height: number, options: TraceryOptions = {}) {
+  const key = `${width}x${height}:${JSON.stringify(options)}`;
+  let shared = kit.windows.get(key);
+  if (!shared) {
+    shared = { pane: glassPane(lancet(width, height), 10), iron: traceryGeometry(width, height, options) };
+    kit.windows.set(key, shared);
+  }
+  const window = new THREE.Group();
+  const iron = new THREE.Mesh(shared.iron, kit.iron);
+  iron.position.z = Math.max(0.14, width * 0.05) * 0.75 + 0.06; // half the ironwork's depth, plus clearance from the glass
+  window.add(new THREE.Mesh(shared.pane, kit.glass), iron);
+  return window;
+}
+
 interface Kit {
   /** Stone with the block texture tiled `u` by `v` times across each face. */
   stone: (u: number, v: number, tint?: number) => THREE.MeshStandardMaterial;
@@ -185,6 +317,8 @@ interface Kit {
   neon: THREE.MeshBasicMaterial;
   /** Black ironwork for window and door surrounds. */
   iron: THREE.MeshStandardMaterial;
+  /** Window geometries already built, by size and tracery pattern. */
+  windows: Map<string, { pane: THREE.BufferGeometry; iron: THREE.BufferGeometry }>;
   glow: THREE.CanvasTexture;
 }
 
@@ -227,6 +361,7 @@ function makeKit(): Kit {
     }),
     neon: new THREE.MeshBasicMaterial({ color: NEON_RED, fog: false }),
     iron: new THREE.MeshStandardMaterial({ color: 0x060607, roughness: 0.55, metalness: 0.5, envMapIntensity: 0.25 }),
+    windows: new Map(),
     glow: makeGlowTexture(),
   };
 }
@@ -309,11 +444,8 @@ function buildBowl(group: THREE.Group, kit: Kit) {
 function buildArcade(group: THREE.Group, kit: Kit) {
   const bays = 76;
   const thetas = evenThetas(bays, WALL_OFFSET);
-  const windowShape = lancet(6.2, 22);
-  const hole = lancet(4.6, 20.4);
-  windowShape.holes.push(new THREE.Path(hole.getPoints(12).map((p) => new THREE.Vector2(p.x, p.y + 0.8))));
-  const frameGeometry = new THREE.ExtrudeGeometry(windowShape, { depth: 0.9, bevelEnabled: false, curveSegments: 10 });
   const paneGeometry = glassPane(lancet(4.8, 21), 10);
+  const frameGeometry = traceryGeometry(4.8, 21, { lights: 2, hood: true });
 
   const pierStone = kit.stone(0.4, 5);
   const frames = new THREE.InstancedMesh(frameGeometry, kit.iron, bays * 2);
@@ -334,10 +466,6 @@ function buildArcade(group: THREE.Group, kit: Kit) {
     return m.compose(ring(theta, WALL_OFFSET, y).addScaledVector(n, out), q, new THREE.Vector3(scale, scale, scale));
   };
 
-  // Window tracery: a mullion and an oculus in the head of each tall window
-  const mullions = new THREE.InstancedMesh(new THREE.BoxGeometry(0.32, 14, 0.5), kit.iron, bays);
-  const oculi = new THREE.InstancedMesh(new THREE.TorusGeometry(1.25, 0.2, 6, 20), kit.iron, bays);
-
   // Flying buttresses: a free-standing pier outside the wall, tied back to it by a sloping flyer
   const FLY_OUT = 12;
   const outerPiers = new THREE.InstancedMesh(new THREE.BoxGeometry(1.7, 30, 2.6), kit.stone(0.4, 3.5), bays);
@@ -354,12 +482,10 @@ function buildArcade(group: THREE.Group, kit: Kit) {
   const step = (Math.PI * 2) / bays;
   thetas.forEach((theta, i) => {
     // Tall clerestory window above a smaller arcade arch
-    frames.setMatrixAt(i * 2, place(theta, 0.1, 16, 1));
+    frames.setMatrixAt(i * 2, place(theta, 0.56, 16.4, 1));
     panes.setMatrixAt(i * 2, place(theta, 0.3, 16.4, 1));
-    frames.setMatrixAt(i * 2 + 1, place(theta, 0.1, 1, 0.55));
+    frames.setMatrixAt(i * 2 + 1, place(theta, 0.45, 1.2, 0.55));
     panes.setMatrixAt(i * 2 + 1, place(theta, 0.3, 1.2, 0.55));
-    mullions.setMatrixAt(i, place(theta, 0.5, 16.8 + 7, 1));
-    oculi.setMatrixAt(i, place(theta, 0.5, 16 + 16.2, 1));
     const between = theta + step / 2;
     piers.setMatrixAt(i, place(between, 1.4, (WALL_HEIGHT + 4) / 2, 1));
     pinnacles.setMatrixAt(i, place(between, 1.4, WALL_HEIGHT + 9.5, 1));
@@ -370,7 +496,7 @@ function buildArcade(group: THREE.Group, kit: Kit) {
     if (i % 2 === 0) crosses.setMatrixAt(i / 2, place(between, FLY_OUT, 38.6, 1));
     ribs.setMatrixAt(i, place(between, 0, WALL_HEIGHT, 1));
   });
-  group.add(frames, panes, piers, pinnacles, mullions, oculi, outerPiers, outerPinnacles, flyers, crosses, ribs);
+  group.add(frames, panes, piers, pinnacles, outerPiers, outerPinnacles, flyers, crosses, ribs);
 }
 
 /** Horizontal spikes jutting from the four corners of a square tower, like gargoyle spouts. */
@@ -419,7 +545,7 @@ function buildTowers(group: THREE.Group, kit: Kit): THREE.Vector3[] {
       tower.add(pinnacle);
     }
     for (const face of [0, 1, 2, 3]) {
-      const slit = new THREE.Mesh(glassPane(lancet(width * 0.22, height * 0.2), 8), kit.glass);
+      const slit = traceriedWindow(kit, width * 0.22, height * 0.2, { lights: 1, transoms: 2 });
       slit.position.y = height * 0.72;
       slit.rotation.y = (face * Math.PI) / 2;
       slit.translateZ(width / 2 + 0.05);
@@ -456,12 +582,12 @@ function makePortal(kit: Kit) {
   doorFrame.holes.push(new THREE.Path(lancet(8.6, 22).getPoints(12)));
   const frame = new THREE.Mesh(new THREE.ExtrudeGeometry(doorFrame, { depth: 1.2, bevelEnabled: false, curveSegments: 10 }), kit.iron);
   frame.position.z = 4;
-  const door = new THREE.Mesh(glassPane(lancet(8.8, 22.4), 10), kit.glass);
+  const door = traceriedWindow(kit, 8.8, 22.4, { lights: 2, transoms: 1 });
   door.position.set(0, 0.2, 4.1);
   portal.add(door, frame);
 
   for (const side of [-1, 1]) {
-    const niche = new THREE.Mesh(glassPane(lancet(3, 12), 8), kit.glass);
+    const niche = traceriedWindow(kit, 3, 12, { lights: 1, transoms: 1 });
     niche.position.set(side * 11.5, 6, 4.1);
     const turret = new THREE.Mesh(new THREE.BoxGeometry(5, 60, 5), kit.stone(0.5, 5.5));
     turret.position.set(side * 19.5, 30, 2);
@@ -516,10 +642,10 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
 
     for (let z = 5; z < NAVE_LENGTH; z += 9.5) {
       const x = side * (naveWidth / 2 + 13.1);
-      const aisleWindow = new THREE.Mesh(glassPane(lancet(4.6, 18), 8), kit.glass);
+      const aisleWindow = traceriedWindow(kit, 4.6, 18, { lights: 2, hood: true });
       aisleWindow.position.set(x, 5, z);
       aisleWindow.rotation.y = (side * Math.PI) / 2;
-      const clerestory = new THREE.Mesh(glassPane(lancet(3.6, 12), 8), kit.glass);
+      const clerestory = traceriedWindow(kit, 3.6, 12, { lights: 2 });
       clerestory.position.set(side * (naveWidth / 2 + 0.1), 37, z);
       clerestory.rotation.y = (side * Math.PI) / 2;
       const buttress = new THREE.Mesh(new THREE.BoxGeometry(3.4, 34, 1.8), buttressStone);
@@ -545,7 +671,7 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   const shaft = new THREE.Mesh(new THREE.BoxGeometry(width, GREAT_TOWER_HEIGHT, width), kit.stone(2.6, 12));
   shaft.position.y = GREAT_TOWER_HEIGHT / 2;
   tower.add(shaft);
-  for (const level of [0.42, 0.62, 0.84, 1]) {
+  for (const level of [0.42, 0.62, 0.945, 1]) {
     const course = new THREE.Mesh(new THREE.BoxGeometry(width + 1.6, 1.4, width + 1.6), kit.slate);
     course.position.y = GREAT_TOWER_HEIGHT * level;
     tower.add(course);
@@ -563,15 +689,14 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
   for (let face = 0; face < 4; face++) {
     const side = new THREE.Group();
     side.rotation.y = (face * Math.PI) / 2;
-    // Paired belfry lancets, a lower pair below, and small pinnacles along the parapet
-    for (const x of [-6, 6]) {
-      const belfry = new THREE.Mesh(glassPane(lancet(6, 34), 10), kit.glass);
-      belfry.position.set(x, GREAT_TOWER_HEIGHT * 0.66, width / 2 + 0.1);
-      const lower = new THREE.Mesh(glassPane(lancet(4.4, 20), 10), kit.glass);
-      lower.position.set(x, GREAT_TOWER_HEIGHT * 0.44, width / 2 + 0.1);
-      const mullion = new THREE.Mesh(new THREE.BoxGeometry(0.5, 30, 0.6), kit.slate);
-      mullion.position.set(x, GREAT_TOWER_HEIGHT * 0.66 + 14, width / 2 + 0.3);
-      side.add(belfry, lower, mullion);
+    // A pair of three-light belfry windows with louvres, a pair of two-light windows below,
+    // and small pinnacles along the parapet
+    for (const x of [-6.6, 6.6]) {
+      const belfry = traceriedWindow(kit, 7.6, 36, { lights: 3, transoms: 1, louvres: 9, hood: true });
+      belfry.position.set(x, GREAT_TOWER_HEIGHT * 0.64, width / 2 + 0.1);
+      const lower = traceriedWindow(kit, 5.6, 21, { lights: 2, transoms: 1, hood: true });
+      lower.position.set(x, GREAT_TOWER_HEIGHT * 0.435, width / 2 + 0.1);
+      side.add(belfry, lower);
     }
     for (const x of [-8, 0, 8]) {
       const merlon = new THREE.Mesh(new THREE.ConeGeometry(1.3, 13, 4), kit.slate);
@@ -581,7 +706,7 @@ function buildCathedral(group: THREE.Group, kit: Kit): THREE.Vector3[] {
     tower.add(side);
   }
   addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.62, kit.slate);
-  addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.84, kit.slate);
+  addGargoyles(tower, width, GREAT_TOWER_HEIGHT * 0.945, kit.slate);
   cathedral.add(tower);
   group.add(cathedral);
 
@@ -735,6 +860,7 @@ function layoutCity(reach: number): Cell[] {
       const cz = j * CELL;
       // A block is skipped if any corner of it would poke into the plaza or forecourt
       if ([[-1, -1], [1, -1], [-1, 1], [1, 1], [0, 0]].some(([dx, dz]) => inPlaza(cx + dx * half, cz + dz * half) || inForecourt(cx + dx * half, cz + dz * half))) continue;
+      if (i === 0 || j === 0) continue; // the boulevards that run out from each door
       const roll = Math.random();
       const near = Math.hypot(cx, cz) < 360;
       const kind: CellKind =
@@ -772,7 +898,7 @@ function layoutPlaza(): PlazaSpot[] {
  * the paved plaza with its lawns, ponds and squares, and for every city block
  * the gardens, car parks, courts and yards that belong to what stands on it.
  */
-function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
+function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[], lamps: XZ[]) {
   const size = 2048;
   const canvas = document.createElement("canvas");
   canvas.width = canvas.height = size;
@@ -849,6 +975,20 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
     ctx.restore();
   }
 
+  // Boulevards along both axes: pavement, a grass verge either side, the carriageway down the middle
+  const boulevard = (x: number, z: number, w: number, h: number, alongX: boolean) => {
+    ctx.fillStyle = "#17191d";
+    ctx.fillRect(px(x), px(z), w * k, h * k);
+    ctx.fillStyle = grass;
+    for (const side of [-1, 1]) {
+      if (alongX) ctx.fillRect(px(x), px(side * 17 - 4.5), w * k, 9 * k);
+      else ctx.fillRect(px(side * 17 - 4.5), px(z), 9 * k, h * k);
+    }
+  };
+  const lane = CELL / 2 - ROAD / 2;
+  boulevard(-PLAN_HALF, -lane, PLAN_HALF * 2, lane * 2, true);
+  boulevard(-lane, -PLAN_HALF, lane * 2, PLAN_HALF * 2, false);
+
   // Centre lines down every grid road
   ctx.strokeStyle = marking;
   ctx.lineWidth = 1;
@@ -920,10 +1060,15 @@ function makeStreetPlan(reach: number, cells: Cell[], spots: PlazaSpot[]) {
 
   weatherGround(ctx, size, (x, z) => inPlaza(x, z) || inForecourt(x, z), (px0) => px0 / k - PLAN_HALF);
 
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 8;
-  return texture;
+  // Lamplight: a warm pool under every street lamp, multiplied over the plan so it lights what is really there
+  const light = document.createElement("canvas");
+  light.width = light.height = size;
+  const glow = light.getContext("2d")!;
+  glow.fillStyle = "#000";
+  glow.fillRect(0, 0, size, size);
+  glow.globalCompositeOperation = "lighter";
+  for (const [x, z] of lamps) pool(glow, px(x), px(z), 21 * k);
+  return { map: toTexture(canvas), glow: toTexture(lit(canvas, light, 1.9)) };
 }
 
 /** Collects instance matrices per mesh kind, then emits one InstancedMesh for each. */
@@ -983,6 +1128,173 @@ function weatherGround(ctx: CanvasRenderingContext2D, size: number, paved: (x: n
     ctx.ellipse(x, y, r, r * (0.4 + Math.random() * 0.6), Math.random() * Math.PI, 0, Math.PI * 2);
     ctx.fill();
   }
+}
+
+/* ---------- Roads and street lamps ---------- */
+
+const SEGMENT = CELL - ROAD; // length of road between two junctions
+const LAMP_GLOW = "255,196,110";
+
+/** Where the two lamps stand on every road segment, in the segment's own frame (x along the road). */
+const SEGMENT_LAMPS: [number, number][] = [[-SEGMENT / 4, -(ROAD / 2 + 1.3)], [SEGMENT / 4, ROAD / 2 + 1.3]];
+
+function canvasPair(w: number, h: number) {
+  const make = () => {
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    return canvas;
+  };
+  return [make(), make()] as const;
+}
+
+function toTexture(canvas: HTMLCanvasElement) {
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 8;
+  return texture;
+}
+
+/** Warm pool of lamplight, drawn additively onto a black canvas that is later multiplied over the surface. */
+function pool(ctx: CanvasRenderingContext2D, x: number, y: number, radius: number, strength = 1) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, radius);
+  g.addColorStop(0, `rgba(${LAMP_GLOW},${strength})`);
+  g.addColorStop(0.35, `rgba(${LAMP_GLOW},${strength * 0.5})`);
+  g.addColorStop(1, `rgba(${LAMP_GLOW},0)`);
+  ctx.fillStyle = g;
+  ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
+}
+
+/** `surface` brightened and multiplied by `light`: what the surface looks like where the lamps reach it. */
+function lit(surface: HTMLCanvasElement, light: HTMLCanvasElement, gain: number) {
+  const out = document.createElement("canvas");
+  out.width = surface.width;
+  out.height = surface.height;
+  const ctx = out.getContext("2d")!;
+  ctx.filter = `brightness(${gain})`;
+  ctx.drawImage(surface, 0, 0);
+  ctx.filter = "none";
+  ctx.globalCompositeOperation = "multiply";
+  ctx.drawImage(light, 0, 0);
+  return out;
+}
+
+/**
+ * The two modelled road pieces, each as a surface texture plus its lamplit
+ * version: a stretch of road with granite kerbs, gutters, a dashed centre line,
+ * patches and a manhole; and a junction with zebra crossings on all four arms.
+ */
+function makeRoadPieces() {
+  const scale = 8; // pixels per metre
+  const kerb = (ctx: CanvasRenderingContext2D, length: number, y: number) => {
+    for (let x = 0; x < length; x += 9) {
+      const v = 70 + Math.random() * 34;
+      ctx.fillStyle = `rgb(${v},${v},${v + 4})`;
+      ctx.fillRect(x + 0.5, y, 8, 6);
+    }
+  };
+  const grain = (ctx: CanvasRenderingContext2D, w: number, h: number, count: number) => {
+    for (let i = 0; i < count; i++) {
+      ctx.fillStyle = Math.random() < 0.5 ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.22)";
+      ctx.fillRect(Math.random() * w, Math.random() * h, 1 + Math.random() * 2, 1 + Math.random() * 2);
+    }
+  };
+
+  // Straight segment
+  const w = SEGMENT * scale;
+  const h = ROAD * scale;
+  const [road, roadLight] = canvasPair(w, h);
+  let ctx = road.getContext("2d")!;
+  ctx.fillStyle = "#2b2e34";
+  ctx.fillRect(0, 0, w, h);
+  grain(ctx, w, h, 5000);
+  for (let i = 0; i < 5; i++) { // tarmac repairs
+    ctx.fillStyle = "rgba(0,0,0,0.3)";
+    ctx.fillRect(Math.random() * w, 10 + Math.random() * (h - 30), 20 + Math.random() * 50, 8 + Math.random() * 14);
+  }
+  ctx.fillStyle = "#15171a"; // gutters
+  ctx.fillRect(0, 6, w, 3);
+  ctx.fillRect(0, h - 9, w, 3);
+  kerb(ctx, w, 0);
+  kerb(ctx, w, h - 6);
+  ctx.fillStyle = "#b9a56a"; // centre line
+  for (let x = 8; x < w; x += 44) ctx.fillRect(x, h / 2 - 1, 24, 2);
+  ctx.strokeStyle = "#0f1012"; // manhole
+  ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.arc(w * 0.62, h * 0.32, 5, 0, Math.PI * 2); ctx.stroke();
+  ctx = roadLight.getContext("2d")!;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, w, h);
+  ctx.globalCompositeOperation = "lighter";
+  for (const [lx, lz] of SEGMENT_LAMPS) pool(ctx, (lx + SEGMENT / 2) * scale, (lz + ROAD / 2) * scale, 17 * scale);
+
+  // Junction
+  const j = ROAD * scale;
+  const [cross, crossLight] = canvasPair(j, j);
+  ctx = cross.getContext("2d")!;
+  ctx.fillStyle = "#2b2e34";
+  ctx.fillRect(0, 0, j, j);
+  grain(ctx, j, j, 900);
+  ctx.fillStyle = "#8f9299";
+  for (let s = 10; s < j - 8; s += 12) { // zebra stripes on each arm
+    ctx.fillRect(s, 2, 6, 14); ctx.fillRect(s, j - 16, 6, 14);
+    ctx.fillRect(2, s, 14, 6); ctx.fillRect(j - 16, s, 14, 6);
+  }
+  ctx = crossLight.getContext("2d")!;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(0, 0, j, j);
+  ctx.globalCompositeOperation = "lighter";
+  pool(ctx, j / 2, j / 2, j * 1.1, 0.34); // spill from the lamps down each arm
+
+  const material = (surface: HTMLCanvasElement, light: HTMLCanvasElement) =>
+    new THREE.MeshLambertMaterial({ map: toTexture(surface), color: 0x5a5a60, emissiveMap: toTexture(lit(surface, light, 1.8)), emissive: 0xffffff, emissiveIntensity: 1 });
+  return {
+    segment: new Batch(new THREE.PlaneGeometry(SEGMENT, ROAD).rotateX(-Math.PI / 2), material(road, roadLight)),
+    junction: new Batch(new THREE.PlaneGeometry(ROAD, ROAD).rotateX(-Math.PI / 2), material(cross, crossLight)),
+  };
+}
+
+/**
+ * A gothic street lamp in instanced parts: a stepped base, a slender iron
+ * post with a collar, a hexagonal lantern glowing dim yellow, and a pointed
+ * cap with a finial. `add` plants one and returns nothing; `finish` puts
+ * every lamp and its halo into the scene.
+ */
+function makeLamps(scene: THREE.Scene, kit: Kit) {
+  const iron = new THREE.MeshLambertMaterial({ color: 0x08080a });
+  const parts = {
+    base: new Batch(new THREE.CylinderGeometry(0.45, 0.75, 1, 6), iron),
+    post: new Batch(new THREE.CylinderGeometry(0.14, 0.22, 1, 6), iron),
+    collar: new Batch(new THREE.CylinderGeometry(0.34, 0.2, 1, 6), iron),
+    lantern: new Batch(new THREE.CylinderGeometry(0.62, 0.42, 1, 6), new THREE.MeshBasicMaterial({ color: 0xd9a03c })),
+    cap: new Batch(new THREE.ConeGeometry(0.85, 1, 6), iron),
+    finial: new Batch(new THREE.ConeGeometry(0.12, 1, 4), iron),
+  };
+  const halos: number[] = [];
+  const spots: XZ[] = [];
+  return {
+    spots,
+    add(x: number, z: number, s = 1) {
+      // About 5 m tall, so every tree stands above it; drawn a little stout so it still reads from the blimp
+      const w = s * 1.5;
+      parts.base.add(x, 0.35 * s, z, w, 0.7 * s, w);
+      parts.post.add(x, 1.7 * s, z, w, 2 * s, w);
+      parts.collar.add(x, 2.85 * s, z, w, 0.3 * s, w);
+      parts.lantern.add(x, 3.45 * s, z, w, 0.9 * s, w);
+      parts.cap.add(x, 4.25 * s, z, w, 0.7 * s, w);
+      parts.finial.add(x, 4.85 * s, z, w, 0.5 * s, w);
+      halos.push(x, 3.45 * s, z);
+      spots.push([x, z]);
+    },
+    finish() {
+      Object.values(parts).forEach((part) => part.addTo(scene));
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute("position", new THREE.Float32BufferAttribute(halos, 3));
+      scene.add(new THREE.Points(geometry, new THREE.PointsMaterial({
+        map: kit.glow, color: 0xffb040, size: 10, sizeAttenuation: true, transparent: true, opacity: 0.42, blending: THREE.AdditiveBlending, depthWrite: false,
+      })));
+    },
+  };
 }
 
 const NEON = new THREE.Color(NEON_RED);
@@ -1113,7 +1425,9 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   };
   const bench = (x: number, z: number, yaw: number) => batch.benches.add(x, 0.5, z, 2.8, 0.7, 0.9, yaw);
 
-  const lamps: number[] = [];
+  const lamps = makeLamps(scene, kit);
+  const lamp = lamps.add;
+  const roads = makeRoadPieces();
   const beacons: number[] = [];
   const people: number[] = [];
   const peopleColors: number[] = [];
@@ -1129,7 +1443,6 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
   for (const { cx, cz, kind, yaw } of cells) {
     // Local (along, across) on the block -> world, turned by the block's yaw
     const at = (a: number, b: number): [number, number] => (yaw ? [cx + b, cz + a] : [cx + a, cz + b]);
-    lamps.push(cx + CELL / 2 - 5, 5, cz + CELL / 2 - 5, cx + CELL / 2 + 5, 5, cz + CELL / 2 + 5);
 
     if (kind === "church") {
       batch.stone.add(cx, 9, cz, 14, 18, 34, yaw);
@@ -1188,7 +1501,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
       for (let n = 0; n < 8; n++) { const [x, z] = at(rand(-20, 20), rand(-20, 20)); person(x, z); }
     } else {
       // Cage fence posts and floodlights round the five-a-side pitch
-      for (const [a, b] of [[-20, -18], [20, -18], [-20, 2], [20, 2]]) { const [x, z] = at(a, b); batch.plain.add(x, 4, z, 0.5, 8, 0.5); lamps.push(x, 8.2, z); }
+      for (const [a, b] of [[-20, -18], [20, -18], [-20, 2], [20, 2]]) { const [x, z] = at(a, b); batch.plain.add(x, 4, z, 0.5, 8, 0.5); lamp(x, z, 0.8); }
       for (let n = 0; n < 10; n++) { const [x, z] = at(rand(-18, 18), rand(-16, 0)); person(x, z); }
       for (let n = 0; n < 5; n++) { const [x, z] = at(rand(-21, 21), rand(8, 21)); tree(x, z, 0.8); }
     }
@@ -1208,6 +1521,50 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
     }
   }
 
+  /* --- Grid roads: a modelled piece between every pair of junctions, two lamps on each --- */
+  const clearRoad = (x: number, z: number) => !inPlaza(x, z) && !inForecourt(x, z);
+  for (let i = -reach - 1; i <= reach; i++) {
+    const line = (i + 0.5) * CELL;
+    for (let j = -reach - 1; j <= reach; j++) {
+      const cross = (j + 0.5) * CELL;
+      if (clearRoad(line, cross)) roads.junction.add(line, 0, cross, 1, 1, 1);
+      if (j < -reach) continue;
+      const mid = j * CELL;
+      // One piece along x (on the line z = `line`) and one along z (on x = `line`)
+      for (const alongX of [true, false]) {
+        const [x, z] = alongX ? [mid, line] : [line, mid];
+        const ends: XZ[] = alongX ? [[x - SEGMENT / 2, z], [x + SEGMENT / 2, z]] : [[x, z - SEGMENT / 2], [x, z + SEGMENT / 2]];
+        if (!ends.every(([ex, ez]) => clearRoad(ex, ez))) continue;
+        roads.segment.add(x, 0, z, 1, 1, 1, alongX ? 0 : Math.PI / 2);
+        // A quarter-turn about Y sends the piece's (x, z) to (z, -x)
+        for (const [lx, lz] of SEGMENT_LAMPS) lamp(alongX ? x + lx : x + lz, alongX ? z + lz : z - lx);
+      }
+    }
+  }
+  roads.segment.addTo(scene);
+  roads.junction.addTo(scene);
+
+  /* --- Boulevards: trees on the verges, lamps along the carriageway --- */
+  const edge = (reach + 0.5) * CELL;
+  for (let d = PLAZA * PLAZA_STRETCH + 16; d < edge; d += 13) {
+    for (const side of [-1, 1]) for (const dir of [-1, 1]) {
+      tree(dir * d, side * 17, 0.95);
+      if (Math.round(d / 13) % 2 === 0) lamp(dir * d, side * 11.5);
+    }
+  }
+  for (let d = PLAZA + 16; d < edge; d += 13) {
+    for (const side of [-1, 1]) {
+      tree(side * 17, -d, 0.95);
+      if (Math.round(d / 13) % 2 === 0) lamp(side * 11.5, -d);
+      if (d > 300) { tree(side * 17, d, 0.95); if (Math.round(d / 13) % 2 === 0) lamp(side * 11.5, d); }
+    }
+  }
+  // Lamps round the outside of the ring road
+  for (let n = 0; n < 84; n++) {
+    const [x, z] = plazaPoint((n / 84) * Math.PI * 2, 1.035);
+    if (Math.abs(z) > 16 && Math.abs(x) > 16) lamp(x, z);
+  }
+
   /* --- The plaza --- */
   const clearOfWays = (x: number, z: number) => Math.abs(z) > 14 && !(Math.abs(x) < 14 && z < 0) && !(Math.abs(x) < 34 && z > 0);
   // A double row of trees and a line of lamps inside the ring road
@@ -1217,7 +1574,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
       if (clearOfWays(x, z)) tree(x, z, rand(0.85, 1.1));
     }
   }
-  for (let n = 0; n < 72; n++) { const [x, z] = plazaPoint((n / 72) * Math.PI * 2, 0.8); lamps.push(x, 5, z); }
+  for (let n = 0; n < 72; n++) { const [x, z] = plazaPoint((n / 72) * Math.PI * 2, 0.8); lamp(x, z, 1.1); }
   // Avenues of trees and benches along each processional way
   for (let d = 0.6; d < 0.82; d += 0.036) {
     for (const side of [-1, 1]) {
@@ -1227,7 +1584,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
       if (Math.random() < 0.7) bench(side * 10.5, -PLAZA * d + 5, Math.PI / 2);
     }
   }
-  for (let z = 150; z < 285; z += 13) for (const side of [-1, 1]) { tree(side * 30, z, 1.05); lamps.push(side * 24, 5, z + 6); }
+  for (let z = 150; z < 285; z += 13) for (const side of [-1, 1]) { tree(side * 30, z, 1.05); lamp(side * 24, z + 6, 1.1); }
 
   for (const spot of spots) {
     if (spot.kind === "pond" || spot.kind === "fountain") {
@@ -1244,7 +1601,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
       for (let n = 0; n < 8; n++) {
         const a = (n / 8) * Math.PI * 2;
         bench(spot.x + Math.cos(a) * 15.5, spot.z + Math.sin(a) * 15.5, -a + Math.PI / 2);
-        lamps.push(spot.x + Math.cos(a + 0.4) * 19, 5, spot.z + Math.sin(a + 0.4) * 19);
+        lamp(spot.x + Math.cos(a + 0.4) * 19, spot.z + Math.sin(a + 0.4) * 19, 1.1);
       }
       for (let n = 0; n < 34; n++) { const a = Math.random() * 6.28; const r = rand(13, 40); const [x, z] = local(Math.cos(a) * r, Math.sin(a) * r * 0.55); person(x, z); }
       if (spot.kind === "fountain") {
@@ -1262,7 +1619,7 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
     } else {
       for (let n = 0; n < 8; n++) { const a = (n / 8) * Math.PI * 2; bench(spot.x + Math.cos(a) * 11.5, spot.z + Math.sin(a) * 11.5, -a + Math.PI / 2); }
       for (let n = 0; n < 26; n++) { const a = Math.random() * 6.28; const r = rand(3, 17); person(spot.x + Math.cos(a) * r, spot.z + Math.sin(a) * r); }
-      lamps.push(spot.x, 6, spot.z);
+      for (let n = 0; n < 4; n++) { const a = n * 1.571 + 0.785; lamp(spot.x + Math.cos(a) * 13.5, spot.z + Math.sin(a) * 13.5, 1.1); }
       if (spot.kind === "obelisk") {
         const obelisk = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 1.7, 15, 4), kit.stone(1, 3));
         obelisk.position.set(spot.x, 7.5, spot.z);
@@ -1280,7 +1637,6 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
         const [x, z] = plazaPoint(a, 0.795);
         batch.stone.add(x, 1.6, z, 5, 3.2, 4, -a);
         batch.awnings.add(x, 3.2, z, 5.6, 1.8, 4.6, -a + Math.PI / 2);
-        lamps.push(x, 3, z);
       }
     }
   }
@@ -1303,16 +1659,16 @@ function buildCity(scene: THREE.Scene, kit: Kit, small: boolean) {
     scene.add(new THREE.Points(geometry, material));
     return material;
   };
-  dots(lamps, new THREE.PointsMaterial({ color: 0xffc98a, size: 2.6, sizeAttenuation: false, transparent: true, opacity: 0.85 }));
+  lamps.finish();
   dots(people, new THREE.PointsMaterial({ size: 1.7, sizeAttenuation: false, vertexColors: true }), peopleColors);
   const beaconMaterial = dots(beacons, new THREE.PointsMaterial({ color: 0xff2d2d, size: 3.4, sizeAttenuation: false, transparent: true }));
 
-  // Wet ground: the plan on a glossy plane, with a plain dark skirt beyond it for the fog to swallow
+  // Matte and tinted almost to black, so the ground only shows where the lamps reach it;
+  // a plain dark skirt beyond it is left for the fog to swallow
+  const plan = makeStreetPlan(reach, cells, spots, lamps.spots);
   const streets = new THREE.Mesh(
     new THREE.PlaneGeometry(PLAN_HALF * 2, PLAN_HALF * 2),
-// Matte and tinted almost to black: no sheen from the moon or the sky, but
-    // coloured light from doors and neon still lands on it
-    new THREE.MeshLambertMaterial({ map: makeStreetPlan(reach, cells, spots), color: 0x55555a }),
+    new THREE.MeshLambertMaterial({ map: plan.map, color: 0x55555a, emissiveMap: plan.glow, emissive: 0xffffff, emissiveIntensity: 1 }),
   );
   streets.rotation.x = -Math.PI / 2;
   streets.position.y = -0.4;
@@ -1599,7 +1955,6 @@ const LOOP = 28;
 const GOAL_AT = 16;
 const RESET_AT = 24;
 
-type XZ = [number, number];
 const HOME_SHAPE: XZ[] = [
   [-48, 0],
   [-32, -22], [-34, -7], [-34, 7], [-32, 22],
@@ -1864,8 +2219,8 @@ export function setupStadium({ scene, camera, renderer, pointer }: Stage) {
     fire.uniforms.uPower.value = burn < 0.004 ? 0 : burn;
     fire.uniforms.uScale.value = pointScale;
     rain.uniforms.uTime.value = time;
-    // Same slow pulse as the outer spires; a home goal pushes it to full
-    kit.glass.uniforms.uGlow.value = Math.min(1, 0.55 + 0.45 * Math.sin(time * 4.4) + homeJoy * 0.5);
+    // Steady light in the cathedral windows; they only flare for a home goal
+    kit.glass.uniforms.uGlow.value = 0.45 + 0.55 * (scorer === 1 && sinceGoal >= 0 ? excite : 0);
     beams.opacity = 0.055 + homeJoy * 0.06;
     (bowlGlow.material as THREE.SpriteMaterial).opacity = 0.26 + homeJoy * 0.3;
     for (const ember of embers) ember.intensity = EMBER * (0.8 + homeJoy * 1.2);
